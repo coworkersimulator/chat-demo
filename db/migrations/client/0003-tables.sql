@@ -4,11 +4,13 @@ CREATE TABLE IF NOT EXISTS "user" (
   username text UNIQUE NOT NULL,
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  deleted_at timestamptz
+  deleted_at timestamptz,
+  meta jsonb
 );
 CREATE INDEX IF NOT EXISTS user_by_idx             ON "user" ("by");
 CREATE INDEX IF NOT EXISTS user_at_idx             ON "user" (at);
 CREATE INDEX IF NOT EXISTS user_deleted_at_idx     ON "user" (deleted_at);
+CREATE INDEX IF NOT EXISTS user_meta_idx           ON "user" USING gin (meta);
 
 
 CREATE TABLE IF NOT EXISTS role (
@@ -17,11 +19,13 @@ CREATE TABLE IF NOT EXISTS role (
   name text UNIQUE NOT NULL,
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  deleted_at timestamptz
+  deleted_at timestamptz,
+  meta jsonb
 );
 CREATE INDEX IF NOT EXISTS role_by_idx             ON role ("by");
 CREATE INDEX IF NOT EXISTS role_at_idx             ON role (at);
 CREATE INDEX IF NOT EXISTS role_deleted_at_idx     ON role (deleted_at);
+CREATE INDEX IF NOT EXISTS role_meta_idx           ON role USING gin (meta);
 
 
 CREATE TABLE IF NOT EXISTS tag (
@@ -30,11 +34,13 @@ CREATE TABLE IF NOT EXISTS tag (
   name text UNIQUE NOT NULL,
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  deleted_at timestamptz
+  deleted_at timestamptz,
+  meta jsonb
 );
 CREATE INDEX IF NOT EXISTS tag_by_idx             ON tag ("by");
 CREATE INDEX IF NOT EXISTS tag_at_idx             ON tag (at);
 CREATE INDEX IF NOT EXISTS tag_deleted_at_idx     ON tag (deleted_at);
+CREATE INDEX IF NOT EXISTS tag_meta_idx           ON tag USING gin (meta);
 
 
 CREATE TABLE IF NOT EXISTS reaction (
@@ -43,11 +49,13 @@ CREATE TABLE IF NOT EXISTS reaction (
   name text UNIQUE NOT NULL,
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  deleted_at timestamptz
+  deleted_at timestamptz,
+  meta jsonb
 );
 CREATE INDEX IF NOT EXISTS reaction_by_idx             ON reaction ("by");
 CREATE INDEX IF NOT EXISTS reaction_at_idx             ON reaction (at);
 CREATE INDEX IF NOT EXISTS reaction_deleted_at_idx     ON reaction (deleted_at);
+CREATE INDEX IF NOT EXISTS reaction_meta_idx           ON reaction USING gin (meta);
 
 
 CREATE TABLE IF NOT EXISTS note (
@@ -57,13 +65,15 @@ CREATE TABLE IF NOT EXISTS note (
   body text NOT NULL,
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  deleted_at timestamptz
+  deleted_at timestamptz,
+  meta jsonb
 );
 CREATE INDEX IF NOT EXISTS note_title_idx           ON note (title);
 CREATE INDEX IF NOT EXISTS note_body_idx            ON note USING gin (to_tsvector('english', body));
 CREATE INDEX IF NOT EXISTS note_by_idx              ON note ("by");
 CREATE INDEX IF NOT EXISTS note_at_idx              ON note (at);
 CREATE INDEX IF NOT EXISTS note_deleted_at_idx      ON note (deleted_at);
+CREATE INDEX IF NOT EXISTS note_meta_idx            ON note USING gin (meta);
 
 
 CREATE TABLE IF NOT EXISTS file (
@@ -74,13 +84,15 @@ CREATE TABLE IF NOT EXISTS file (
   data bytea NOT NULL,
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  deleted_at timestamptz
+  deleted_at timestamptz,
+  meta jsonb
 );
 CREATE INDEX IF NOT EXISTS file_filename_idx       ON file (filename);
 CREATE INDEX IF NOT EXISTS file_mime_idx           ON file (mime);
 CREATE INDEX IF NOT EXISTS file_by_idx             ON file ("by");
 CREATE INDEX IF NOT EXISTS file_at_idx             ON file (at);
 CREATE INDEX IF NOT EXISTS file_deleted_at_idx     ON file (deleted_at);
+CREATE INDEX IF NOT EXISTS file_meta_idx           ON file USING gin (meta);
 
 
 CREATE TABLE IF NOT EXISTS relation (
@@ -100,9 +112,14 @@ CREATE TABLE IF NOT EXISTS relation (
   to_note_id uuid REFERENCES note (id),
   to_file_id uuid REFERENCES file (id),
   to_relation uuid REFERENCES relation (id),
+
+  deleted_at timestamptz,
+  meta jsonb,
   CHECK (num_nonnulls(on_user_id, on_role_id, on_tag_id, on_note_id, on_file_id, on_relation) = 1),
   CHECK (num_nonnulls(to_user_id, to_role_id, to_tag_id, to_note_id, to_file_id, to_relation) > 1)
 );
+CREATE INDEX IF NOT EXISTS relation_deleted_at_idx     ON relation (deleted_at);
+CREATE INDEX IF NOT EXISTS relation_meta_idx           ON relation USING gin (meta);
 CREATE INDEX IF NOT EXISTS relation_on_user_id_idx     ON relation (on_user_id)   WHERE on_user_id   IS NOT NULL;
 CREATE INDEX IF NOT EXISTS relation_on_role_id_idx     ON relation (on_role_id)   WHERE on_role_id   IS NOT NULL;
 CREATE INDEX IF NOT EXISTS relation_on_tag_id_idx      ON relation (on_tag_id)    WHERE on_tag_id    IS NOT NULL;
