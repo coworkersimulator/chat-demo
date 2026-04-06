@@ -166,8 +166,29 @@ describe('reaction emoji guard — affirmative', () => {
   // multi-codepoint emoji using ZWJ and variation selector
   it('allows multi-codepoint emoji (ZWJ sequences, variation selectors)', async () => {
     assert.equal((await insertReaction('❤️')).name, '❤️'); // U+2764 U+FE0F
-    assert.equal((await insertReaction('👍🏽')).name, '👍🏽'); // U+1F44D U+1F3FD skin tone
     assert.equal((await insertReaction('👨‍💻')).name, '👨‍💻'); // man + ZWJ + laptop
+  });
+
+  // base emoji + each Fitzpatrick skin tone modifier
+  it('allows emoji with each skin tone modifier', async () => {
+    assert.equal((await insertReaction('👍🏻')).name, '👍🏻'); // U+1F44D U+1F3FB light
+    assert.equal((await insertReaction('👍🏼')).name, '👍🏼'); // U+1F44D U+1F3FC medium-light
+    assert.equal((await insertReaction('👍🏽')).name, '👍🏽'); // U+1F44D U+1F3FD medium
+    assert.equal((await insertReaction('👍🏾')).name, '👍🏾'); // U+1F44D U+1F3FE medium-dark
+    assert.equal((await insertReaction('👍🏿')).name, '👍🏿'); // U+1F44D U+1F3FF dark
+  });
+
+  // ZWJ family sequences, with and without skin tones
+  it('allows ZWJ family sequences with skin tones', async () => {
+    assert.equal((await insertReaction('👨‍👩‍👧')).name, '👨‍👩‍👧'); // man + ZWJ + woman + ZWJ + girl
+    assert.equal((await insertReaction('👨🏽‍👩🏽‍👧🏽')).name, '👨🏽‍👩🏽‍👧🏽'); // family, all medium skin tone
+    assert.equal((await insertReaction('👩🏽‍💻')).name, '👩🏽‍💻'); // woman + medium skin tone + ZWJ + laptop
+    assert.equal((await insertReaction('🧑🏾‍🤝‍🧑🏻')).name, '🧑🏾‍🤝‍🧑🏻'); // people holding hands, mixed skin tones
+  });
+
+  // 11-token ZWJ sequence: man🏽 + ZWJ + woman🏽 + ZWJ + boy🏽 + ZWJ + boy🏽 — at the regex {1,11} limit
+  it('allows 11-token ZWJ sequence (regex upper limit)', async () => {
+    assert.equal((await insertReaction('👨🏽‍👩🏽‍👦🏽‍👦🏽')).name, '👨🏽‍👩🏽‍👦🏽‍👦🏽');
   });
 });
 
