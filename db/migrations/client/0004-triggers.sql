@@ -247,9 +247,8 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    NEW.meta := jsonb_set(
-      COALESCE(NEW.meta, '{}'::jsonb),
-      '{changes}',
+    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+      'changes',
       COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
@@ -291,9 +290,8 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    NEW.meta := jsonb_set(
-      COALESCE(NEW.meta, '{}'::jsonb),
-      '{changes}',
+    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+      'changes',
       COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
@@ -330,9 +328,8 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    NEW.meta := jsonb_set(
-      COALESCE(NEW.meta, '{}'::jsonb),
-      '{changes}',
+    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+      'changes',
       COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
@@ -369,9 +366,8 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    NEW.meta := jsonb_set(
-      COALESCE(NEW.meta, '{}'::jsonb),
-      '{changes}',
+    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+      'changes',
       COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
@@ -408,9 +404,8 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    NEW.meta := jsonb_set(
-      COALESCE(NEW.meta, '{}'::jsonb),
-      '{changes}',
+    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+      'changes',
       COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
@@ -452,9 +447,8 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    NEW.meta := jsonb_set(
-      COALESCE(NEW.meta, '{}'::jsonb),
-      '{changes}',
+    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+      'changes',
       COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
@@ -496,9 +490,8 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    NEW.meta := jsonb_set(
-      COALESCE(NEW.meta, '{}'::jsonb),
-      '{changes}',
+    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+      'changes',
       COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
