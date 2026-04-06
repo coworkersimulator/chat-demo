@@ -1,9 +1,6 @@
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { uuid_ossp } from '@electric-sql/pglite/contrib/uuid_ossp';
-import { Kysely } from 'kysely';
-import { generate, PostgresDialect } from 'kysely-codegen';
-import { PGliteDialect } from 'kysely-pglite-dialect';
 import fs from 'node:fs';
 
 const pglite = await PGlite.create({
@@ -20,13 +17,6 @@ for (const file of files) {
   await pglite.exec(sql);
 }
 
-const db = new Kysely<any>({ dialect: new PGliteDialect(pglite) });
+export { pglite };
 
-await generate({
-  db,
-  dialect: new PostgresDialect(), // this is kysely-codegen's dialect, not Kysely's
-  outFile: 'src/kysely/db.d.ts',
-});
-
-await db.destroy();
-console.log('Kysely code generated for client');
+export default pglite;
