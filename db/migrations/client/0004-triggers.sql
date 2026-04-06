@@ -74,10 +74,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER relation_type_immutable
-  BEFORE UPDATE ON relation
-  FOR EACH ROW
-  EXECUTE FUNCTION guard_type_immutable();
 
 CREATE TRIGGER user_type_immutable
   BEFORE UPDATE ON "user"
@@ -113,11 +109,44 @@ CREATE TRIGGER file_type_immutable
 CREATE OR REPLACE FUNCTION guard_relation_immutable()
 RETURNS trigger AS $$
 BEGIN
-  IF NEW."on" IS DISTINCT FROM OLD."on" THEN
-    RAISE EXCEPTION 'relation.on cannot be modified';
+  IF NEW.id IS DISTINCT FROM OLD.id THEN
+    RAISE EXCEPTION 'relation.id cannot be modified';
   END IF;
-  IF NEW."to" IS DISTINCT FROM OLD."to" THEN
-    RAISE EXCEPTION 'relation.to cannot be modified';
+  IF NEW.on_user_id IS DISTINCT FROM OLD.on_user_id THEN
+    RAISE EXCEPTION 'relation.on_user_id cannot be modified';
+  END IF;
+  IF NEW.on_role_id IS DISTINCT FROM OLD.on_role_id THEN
+    RAISE EXCEPTION 'relation.on_role_id cannot be modified';
+  END IF;
+  IF NEW.on_tag_id IS DISTINCT FROM OLD.on_tag_id THEN
+    RAISE EXCEPTION 'relation.on_tag_id cannot be modified';
+  END IF;
+  IF NEW.on_note_id IS DISTINCT FROM OLD.on_note_id THEN
+    RAISE EXCEPTION 'relation.on_note_id cannot be modified';
+  END IF;
+  IF NEW.on_file_id IS DISTINCT FROM OLD.on_file_id THEN
+    RAISE EXCEPTION 'relation.on_file_id cannot be modified';
+  END IF;
+  IF NEW.on_relation IS DISTINCT FROM OLD.on_relation THEN
+    RAISE EXCEPTION 'relation.on_relation cannot be modified';
+  END IF;
+  IF NEW.to_user_id IS DISTINCT FROM OLD.to_user_id THEN
+    RAISE EXCEPTION 'relation.to_user_id cannot be modified';
+  END IF;
+  IF NEW.to_role_id IS DISTINCT FROM OLD.to_role_id THEN
+    RAISE EXCEPTION 'relation.to_role_id cannot be modified';
+  END IF;
+  IF NEW.to_tag_id IS DISTINCT FROM OLD.to_tag_id THEN
+    RAISE EXCEPTION 'relation.to_tag_id cannot be modified';
+  END IF;
+  IF NEW.to_note_id IS DISTINCT FROM OLD.to_note_id THEN
+    RAISE EXCEPTION 'relation.to_note_id cannot be modified';
+  END IF;
+  IF NEW.to_file_id IS DISTINCT FROM OLD.to_file_id THEN
+    RAISE EXCEPTION 'relation.to_file_id cannot be modified';
+  END IF;
+  IF NEW.to_relation IS DISTINCT FROM OLD.to_relation THEN
+    RAISE EXCEPTION 'relation.to_relation cannot be modified';
   END IF;
   RETURN NEW;
 END;
@@ -141,18 +170,16 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    UPDATE entity
-    SET meta = jsonb_set(
-      COALESCE(meta, '{}'::jsonb),
+    NEW.meta := jsonb_set(
+      COALESCE(NEW.meta, '{}'::jsonb),
       '{changes}',
-      COALESCE(meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
         'by', current_setting('app.user_id', true),
         'at', now()
       )
-    )
-    WHERE id = NEW.id;
+    );
   END IF;
 
   RETURN NEW;
@@ -160,7 +187,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER relation_log_change
-  AFTER UPDATE ON relation
+  BEFORE UPDATE ON relation
   FOR EACH ROW
   EXECUTE FUNCTION log_relation_change();
 
@@ -182,18 +209,16 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    UPDATE entity
-    SET meta = jsonb_set(
-      COALESCE(meta, '{}'::jsonb),
+    NEW.meta := jsonb_set(
+      COALESCE(NEW.meta, '{}'::jsonb),
       '{changes}',
-      COALESCE(meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
         'by', current_setting('app.user_id', true),
         'at', now()
       )
-    )
-    WHERE id = NEW.id;
+    );
   END IF;
 
   RETURN NEW;
@@ -201,7 +226,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER user_log_change
-  AFTER UPDATE ON "user"
+  BEFORE UPDATE ON "user"
   FOR EACH ROW
   EXECUTE FUNCTION log_user_change();
 
@@ -223,18 +248,16 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    UPDATE entity
-    SET meta = jsonb_set(
-      COALESCE(meta, '{}'::jsonb),
+    NEW.meta := jsonb_set(
+      COALESCE(NEW.meta, '{}'::jsonb),
       '{changes}',
-      COALESCE(meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
         'by', current_setting('app.user_id', true),
         'at', now()
       )
-    )
-    WHERE id = NEW.id;
+    );
   END IF;
 
   RETURN NEW;
@@ -242,7 +265,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER role_log_change
-  AFTER UPDATE ON role
+  BEFORE UPDATE ON role
   FOR EACH ROW
   EXECUTE FUNCTION log_role_change();
 
@@ -264,18 +287,16 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    UPDATE entity
-    SET meta = jsonb_set(
-      COALESCE(meta, '{}'::jsonb),
+    NEW.meta := jsonb_set(
+      COALESCE(NEW.meta, '{}'::jsonb),
       '{changes}',
-      COALESCE(meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
         'by', current_setting('app.user_id', true),
         'at', now()
       )
-    )
-    WHERE id = NEW.id;
+    );
   END IF;
 
   RETURN NEW;
@@ -283,7 +304,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER reaction_log_change
-  AFTER UPDATE ON reaction
+  BEFORE UPDATE ON reaction
   FOR EACH ROW
   EXECUTE FUNCTION log_reaction_change();
 
@@ -305,18 +326,16 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    UPDATE entity
-    SET meta = jsonb_set(
-      COALESCE(meta, '{}'::jsonb),
+    NEW.meta := jsonb_set(
+      COALESCE(NEW.meta, '{}'::jsonb),
       '{changes}',
-      COALESCE(meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
         'by', current_setting('app.user_id', true),
         'at', now()
       )
-    )
-    WHERE id = NEW.id;
+    );
   END IF;
 
   RETURN NEW;
@@ -324,7 +343,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER tag_log_change
-  AFTER UPDATE ON tag
+  BEFORE UPDATE ON tag
   FOR EACH ROW
   EXECUTE FUNCTION log_tag_change();
 
@@ -351,18 +370,16 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    UPDATE entity
-    SET meta = jsonb_set(
-      COALESCE(meta, '{}'::jsonb),
+    NEW.meta := jsonb_set(
+      COALESCE(NEW.meta, '{}'::jsonb),
       '{changes}',
-      COALESCE(meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
         'by', current_setting('app.user_id', true),
         'at', now()
       )
-    )
-    WHERE id = NEW.id;
+    );
   END IF;
 
   RETURN NEW;
@@ -370,7 +387,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER note_log_change
-  AFTER UPDATE ON note
+  BEFORE UPDATE ON note
   FOR EACH ROW
   EXECUTE FUNCTION log_note_change();
 
@@ -397,18 +414,16 @@ BEGIN
   END IF;
 
   IF old_fields != '{}'::jsonb THEN
-    UPDATE entity
-    SET meta = jsonb_set(
-      COALESCE(meta, '{}'::jsonb),
+    NEW.meta := jsonb_set(
+      COALESCE(NEW.meta, '{}'::jsonb),
       '{changes}',
-      COALESCE(meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
         'old', old_fields,
         'new', new_fields,
         'by', current_setting('app.user_id', true),
         'at', now()
       )
-    )
-    WHERE id = NEW.id;
+    );
   END IF;
 
   RETURN NEW;
@@ -416,7 +431,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER file_log_change
-  AFTER UPDATE ON file
+  BEFORE UPDATE ON file
   FOR EACH ROW
   EXECUTE FUNCTION log_file_change();
 
