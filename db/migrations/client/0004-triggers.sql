@@ -280,6 +280,11 @@ BEGIN
     new_fields := new_fields || jsonb_build_object('username', NEW.username);
   END IF;
 
+  IF NEW.name IS DISTINCT FROM OLD.name THEN
+    old_fields := old_fields || jsonb_build_object('name', OLD.name);
+    new_fields := new_fields || jsonb_build_object('name', NEW.name);
+  END IF;
+
   IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
     old_fields := old_fields || jsonb_build_object('deleted_at', OLD.deleted_at);
     new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);

@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS "user" (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
-  username text UNIQUE NOT NULL CHECK (username = trim(username)),
+  username text UNIQUE NOT NULL CHECK (username ~ '^[a-zA-Z0-9]+([._-]+[a-zA-Z0-9]+)*$'),
+  name text CHECK (name = trim(name)),
 
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
