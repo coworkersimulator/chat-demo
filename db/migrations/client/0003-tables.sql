@@ -1,7 +1,9 @@
 CREATE TABLE IF NOT EXISTS "user" (
   id uuid PRIMARY KEY,
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
+
   username text UNIQUE NOT NULL,
+
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
@@ -16,7 +18,9 @@ CREATE INDEX IF NOT EXISTS user_meta_idx           ON "user" USING gin (meta);
 CREATE TABLE IF NOT EXISTS role (
   id uuid PRIMARY KEY,
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
+
   name text UNIQUE NOT NULL,
+
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
@@ -31,7 +35,9 @@ CREATE INDEX IF NOT EXISTS role_meta_idx           ON role USING gin (meta);
 CREATE TABLE IF NOT EXISTS tag (
   id uuid PRIMARY KEY,
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
+
   name text UNIQUE NOT NULL,
+
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
@@ -46,7 +52,9 @@ CREATE INDEX IF NOT EXISTS tag_meta_idx           ON tag USING gin (meta);
 CREATE TABLE IF NOT EXISTS reaction (
   id uuid PRIMARY KEY,
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
+
   name text UNIQUE NOT NULL,
+
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
@@ -61,8 +69,10 @@ CREATE INDEX IF NOT EXISTS reaction_meta_idx           ON reaction USING gin (me
 CREATE TABLE IF NOT EXISTS note (
   id uuid PRIMARY KEY,
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
+
   title text,
   body text NOT NULL,
+
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
@@ -79,9 +89,11 @@ CREATE INDEX IF NOT EXISTS note_meta_idx            ON note USING gin (meta);
 CREATE TABLE IF NOT EXISTS file (
   id uuid PRIMARY KEY,
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
+
   filename text,
   mime text NOT NULL,
   data bytea NOT NULL,
+
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
@@ -113,11 +125,15 @@ CREATE TABLE IF NOT EXISTS relation (
   to_file_id uuid REFERENCES file (id),
   to_relation uuid REFERENCES relation (id),
 
+  by uuid REFERENCES "user" (id),
+  at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb,
   CHECK (num_nonnulls(on_user_id, on_role_id, on_tag_id, on_note_id, on_file_id, on_relation) = 1),
   CHECK (num_nonnulls(to_user_id, to_role_id, to_tag_id, to_note_id, to_file_id, to_relation) > 1)
 );
+CREATE INDEX IF NOT EXISTS relation_by_idx             ON relation ("by");
+CREATE INDEX IF NOT EXISTS relation_at_idx             ON relation (at);
 CREATE INDEX IF NOT EXISTS relation_deleted_at_idx     ON relation (deleted_at);
 CREATE INDEX IF NOT EXISTS relation_meta_idx           ON relation USING gin (meta);
 CREATE INDEX IF NOT EXISTS relation_on_user_id_idx     ON relation (on_user_id)   WHERE on_user_id   IS NOT NULL;
