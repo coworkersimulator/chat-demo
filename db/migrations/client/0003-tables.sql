@@ -71,12 +71,13 @@ CREATE TABLE IF NOT EXISTS note (
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
   title text CHECK (title IS NULL OR title = trim(title)),
-  body text NOT NULL CHECK (body = trim(body)),
+  body text CHECK (body IS NULL OR body = trim(body)),
 
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
-  meta jsonb
+  meta jsonb,
+  CHECK (title IS NOT NULL OR body IS NOT NULL)
 );
 CREATE INDEX IF NOT EXISTS note_title_idx           ON note (title);
 CREATE INDEX IF NOT EXISTS note_body_idx            ON note USING gin (to_tsvector('english', body));
