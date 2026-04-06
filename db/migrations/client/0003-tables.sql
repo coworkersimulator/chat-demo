@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS "user" (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
   username text UNIQUE NOT NULL,
@@ -16,7 +16,7 @@ CREATE INDEX IF NOT EXISTS user_meta_idx           ON "user" USING gin (meta);
 
 
 CREATE TABLE IF NOT EXISTS role (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
   name text UNIQUE NOT NULL,
@@ -33,7 +33,7 @@ CREATE INDEX IF NOT EXISTS role_meta_idx           ON role USING gin (meta);
 
 
 CREATE TABLE IF NOT EXISTS tag (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
   name text UNIQUE NOT NULL,
@@ -50,7 +50,7 @@ CREATE INDEX IF NOT EXISTS tag_meta_idx           ON tag USING gin (meta);
 
 
 CREATE TABLE IF NOT EXISTS reaction (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
   name text UNIQUE NOT NULL,
@@ -67,7 +67,7 @@ CREATE INDEX IF NOT EXISTS reaction_meta_idx           ON reaction USING gin (me
 
 
 CREATE TABLE IF NOT EXISTS note (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
   title text,
@@ -87,7 +87,7 @@ CREATE INDEX IF NOT EXISTS note_meta_idx            ON note USING gin (meta);
 
 
 CREATE TABLE IF NOT EXISTS file (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
   filename text,
@@ -108,7 +108,7 @@ CREATE INDEX IF NOT EXISTS file_meta_idx           ON file USING gin (meta);
 
 
 CREATE TABLE IF NOT EXISTS relation (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
   on_user_id uuid REFERENCES "user" (id),

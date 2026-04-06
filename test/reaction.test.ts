@@ -5,32 +5,18 @@ import db from '../db/kysely';
 after(() => db.destroy());
 
 async function insertReaction(name: string) {
-  return db.transaction().execute(async (trx) => {
-    const entity = await trx
-      .insertInto('entity')
-      .defaultValues()
-      .returningAll()
-      .executeTakeFirstOrThrow();
-    return trx
-      .insertInto('reaction')
-      .values({ id: entity.id, name })
-      .returningAll()
-      .executeTakeFirstOrThrow();
-  });
+  return db
+    .insertInto('reaction')
+    .values({ name })
+    .returningAll()
+    .executeTakeFirstOrThrow();
 }
 
 async function rejectsReaction(name: string) {
-  return db.transaction().execute(async (trx) => {
-    const entity = await trx
-      .insertInto('entity')
-      .defaultValues()
-      .returningAll()
-      .executeTakeFirstOrThrow();
-    return assert.rejects(
-      trx.insertInto('reaction').values({ id: entity.id, name }).execute(),
-      /reaction\.name must be an emoji/,
-    );
-  });
+  return assert.rejects(
+    db.insertInto('reaction').values({ name }).execute(),
+    /reaction\.name must be an emoji/,
+  );
 }
 
 describe('reaction emoji guard — affirmative', () => {
