@@ -516,22 +516,13 @@ CREATE TRIGGER file_log_change
 CREATE OR REPLACE FUNCTION guard_role_relation()
 RETURNS trigger AS $$
 BEGIN
-  IF EXISTS (
-    SELECT 1
-    FROM role r
-    WHERE r.id = NEW."to"
-      AND r.deleted_at IS NULL
-  ) THEN
-    IF NOT EXISTS (
-      SELECT 1
-      FROM "user" u
-      WHERE u.id = NEW."on"
-        AND u.deleted_at IS NULL
-    ) THEN
-      RAISE EXCEPTION 'a role can only be assigned to an active user, got on=%', NEW."on";
+  IF NEW.to_role_id IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM role WHERE id = NEW.to_role_id AND deleted_at IS NOT NULL) THEN
+      RAISE EXCEPTION 'cannot assign a deleted role, got to_role_id=%', NEW.to_role_id;
     END IF;
-  ELSIF EXISTS (SELECT 1 FROM role WHERE id = NEW."to") THEN
-    RAISE EXCEPTION 'cannot assign a deleted role, got to=%', NEW."to";
+    IF NOT EXISTS (SELECT 1 FROM "user" WHERE id = NEW.on_user_id AND deleted_at IS NULL) THEN
+      RAISE EXCEPTION 'a role can only be assigned to an active user, got on_user_id=%', NEW.on_user_id;
+    END IF;
   END IF;
 
   RETURN NEW;
@@ -550,9 +541,9 @@ RETURNS boolean AS $$
   SELECT EXISTS (
     SELECT 1
     FROM relation r
-    JOIN role ro ON ro.id = r."to"
-    JOIN "user" u ON u.id = r."on"
-    WHERE r."on" = current_setting('app.user_id', true)::uuid
+    JOIN role ro ON ro.id = r.to_role_id
+    JOIN "user" u ON u.id = r.on_user_id
+    WHERE r.on_user_id = current_setting('app.user_id', true)::uuid
       AND ro.name = 'admin'
       AND r.deleted_at IS NULL
       AND ro.deleted_at IS NULL
@@ -647,11 +638,11 @@ CREATE TRIGGER role_guard_create
 CREATE OR REPLACE FUNCTION guard_role_assignment()
 RETURNS trigger AS $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM role WHERE id = NEW."to") THEN
+  IF NEW.to_role_id IS NOT NULL THEN
     IF EXISTS (
       SELECT 1
       FROM relation r
-      JOIN role ro ON ro.id = r."to"
+      JOIN role ro ON ro.id = r.to_role_id
       WHERE ro.name = 'admin'
         AND r.deleted_at IS NULL
         AND ro.deleted_at IS NULL
@@ -678,10 +669,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER entity_guard_hard_delete
-  BEFORE DELETE ON entity
-  FOR EACH ROW
-  EXECUTE FUNCTION guard_hard_delete();
 
 CREATE TRIGGER relation_guard_hard_delete
   BEFORE DELETE ON relation
@@ -730,7 +717,7 @@ BEGIN
     IF EXISTS (
       SELECT 1
       FROM relation r
-      JOIN role ro ON ro.id = r."to"
+      JOIN role ro ON ro.id = r.to_role_id
       WHERE r.id = NEW.id
         AND ro.name = 'admin'
     ) THEN
@@ -741,7 +728,7 @@ BEGIN
       IF (
         SELECT count(*)
         FROM relation r
-        JOIN role ro ON ro.id = r."to"
+        JOIN role ro ON ro.id = r.to_role_id
         WHERE ro.name = 'admin'
           AND r.deleted_at IS NULL
           AND r.id != NEW.id
@@ -754,20 +741,20 @@ BEGIN
       IF EXISTS (
         SELECT 1
         FROM relation r
-        JOIN role ro ON ro.id = r."to"
-        WHERE r."on" = NEW.id
+        JOIN role ro ON ro.id = r.to_role_id
+        WHERE r.on_user_id = NEW.id
           AND ro.name = 'admin'
           AND r.deleted_at IS NULL
       ) THEN
         IF (
           SELECT count(*)
           FROM relation r
-          JOIN role ro ON ro.id = r."to"
-          JOIN "user" u ON u.id = r."on"
+          JOIN role ro ON ro.id = r.to_role_id
+          JOIN "user" u ON u.id = r.on_user_id
           WHERE ro.name = 'admin'
             AND r.deleted_at IS NULL
             AND u.deleted_at IS NULL
-            AND r."on" != NEW.id
+            AND r.on_user_id != NEW.id
         ) = 0 THEN
           RAISE EXCEPTION 'cannot delete the last active admin user';
         END IF;
