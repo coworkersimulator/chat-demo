@@ -36,42 +36,51 @@ async function rejectsReaction(name: string) {
 describe('reaction emoji guard — affirmative', () => {
   // [\x{1F000}-\x{1FAFF}] — emoticons, misc symbols & pictographs, transport, supplemental
   it('allows emoticons (1F000–1FAFF)', async () => {
+    assert.equal((await insertReaction('🀀')).name, '🀀'); // U+1F000 mahjong tile east wind (lower bound)
     assert.equal((await insertReaction('👍')).name, '👍'); // U+1F44D thumbs up
     assert.equal((await insertReaction('😊')).name, '😊'); // U+1F60A smiling face
     assert.equal((await insertReaction('🎉')).name, '🎉'); // U+1F389 party popper
     assert.equal((await insertReaction('🚀')).name, '🚀'); // U+1F680 rocket
     assert.equal((await insertReaction('🧠')).name, '🧠'); // U+1F9E0 brain
+    assert.equal((await insertReaction('🫿')).name, '🫿'); // U+1FAFF (upper bound)
   });
 
   // [\x{2600}-\x{27BF}] — miscellaneous symbols and dingbats
   it('allows misc symbols & dingbats (2600–27BF)', async () => {
-    assert.equal((await insertReaction('☀')).name, '☀'); // U+2600 sun
+    assert.equal((await insertReaction('☀')).name, '☀'); // U+2600 sun (lower bound)
     assert.equal((await insertReaction('♻')).name, '♻'); // U+267B recycling
     assert.equal((await insertReaction('✂')).name, '✂'); // U+2702 scissors
     assert.equal((await insertReaction('✈')).name, '✈'); // U+2708 airplane
     assert.equal((await insertReaction('✨')).name, '✨'); // U+2728 sparkles
+    assert.equal((await insertReaction('➿')).name, '➿'); // U+27BF double curly loop (upper bound)
   });
 
   // [\x{2300}-\x{23FF}] — miscellaneous technical
   it('allows misc technical (2300–23FF)', async () => {
+    assert.equal((await insertReaction('⌀')).name, '⌀'); // U+2300 diameter sign (lower bound)
     assert.equal((await insertReaction('⌚')).name, '⌚'); // U+231A watch
     assert.equal((await insertReaction('⌨')).name, '⌨'); // U+2328 keyboard
     assert.equal((await insertReaction('⏰')).name, '⏰'); // U+23F0 alarm clock
     assert.equal((await insertReaction('⏳')).name, '⏳'); // U+23F3 hourglass
+    assert.equal((await insertReaction('⏿')).name, '⏿'); // U+23FF (upper bound)
   });
 
   // [\x{2B00}-\x{2BFF}] — miscellaneous symbols and arrows
   it('allows misc symbols & arrows (2B00–2BFF)', async () => {
-    assert.equal((await insertReaction('⭐')).name, '⭐'); // U+2B50 star
+    assert.equal((await insertReaction('⬀')).name, '⬀'); // U+2B00 north east white arrow (lower bound)
     assert.equal((await insertReaction('⬅')).name, '⬅'); // U+2B05 left arrow
     assert.equal((await insertReaction('⬆')).name, '⬆'); // U+2B06 up arrow
+    assert.equal((await insertReaction('⭐')).name, '⭐'); // U+2B50 star
+    assert.equal((await insertReaction('⯿')).name, '⯿'); // U+2BFF (upper bound)
   });
 
   // [\x{2100}-\x{214F}] — letter-like symbols (™ etc.)
   it('allows letter-like symbols (2100–214F)', async () => {
-    assert.equal((await insertReaction('™')).name, '™'); // U+2122 trade mark
+    assert.equal((await insertReaction('℀')).name, '℀'); // U+2100 account of (lower bound)
     assert.equal((await insertReaction('℃')).name, '℃'); // U+2103 degree celsius
+    assert.equal((await insertReaction('™')).name, '™'); // U+2122 trade mark
     assert.equal((await insertReaction('℉')).name, '℉'); // U+2109 degree fahrenheit
+    assert.equal((await insertReaction('⅏')).name, '⅏'); // U+214F symbol for samaritan source (upper bound)
   });
 
   // \x{00A9} and \x{00AE} — copyright and registered
