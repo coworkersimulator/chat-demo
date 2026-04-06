@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "pglite:server:memory": "pglite-server --extensions pgcrypto,uuid-ossp --db=memory://",
-    "kysely:codegen:client": "tsx db/kysely-codegen-client.ts"
+    "kysely:codegen": "tsx db/kysely-codegen.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.4.3",
