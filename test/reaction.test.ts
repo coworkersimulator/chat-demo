@@ -169,6 +169,14 @@ describe('reaction emoji guard — affirmative', () => {
     assert.equal((await insertReaction('👨‍💻')).name, '👨‍💻'); // man + ZWJ + laptop
   });
 
+  // color variant ZWJ sequences: base emoji + ZWJ + color square (E13.0–E15.1)
+  it('allows color variant ZWJ sequences', async () => {
+    assert.equal((await insertReaction('🐈‍⬛')).name, '🐈‍⬛'); // U+1F408 U+200D U+2B1B black cat
+    assert.equal((await insertReaction('🐦‍⬛')).name, '🐦‍⬛'); // U+1F426 U+200D U+2B1B black bird
+    assert.equal((await insertReaction('🍋‍🟩')).name, '🍋‍🟩'); // U+1F34B U+200D U+1F7E9 lime
+    assert.equal((await insertReaction('🍄‍🟫')).name, '🍄‍🟫'); // U+1F344 U+200D U+1F7EB brown mushroom
+  });
+
   // base emoji + each Fitzpatrick skin tone modifier
   it('allows emoji with each skin tone modifier', async () => {
     assert.equal((await insertReaction('👍🏻')).name, '👍🏻'); // U+1F44D U+1F3FB light
