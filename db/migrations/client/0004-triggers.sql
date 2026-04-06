@@ -6,8 +6,38 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER entity_bump_seq
-  BEFORE UPDATE ON entity
+CREATE TRIGGER user_bump_seq
+  BEFORE UPDATE ON "user"
+  FOR EACH ROW
+  EXECUTE FUNCTION bump_seq();
+
+CREATE TRIGGER role_bump_seq
+  BEFORE UPDATE ON role
+  FOR EACH ROW
+  EXECUTE FUNCTION bump_seq();
+
+CREATE TRIGGER tag_bump_seq
+  BEFORE UPDATE ON tag
+  FOR EACH ROW
+  EXECUTE FUNCTION bump_seq();
+
+CREATE TRIGGER reaction_bump_seq
+  BEFORE UPDATE ON reaction
+  FOR EACH ROW
+  EXECUTE FUNCTION bump_seq();
+
+CREATE TRIGGER note_bump_seq
+  BEFORE UPDATE ON note
+  FOR EACH ROW
+  EXECUTE FUNCTION bump_seq();
+
+CREATE TRIGGER file_bump_seq
+  BEFORE UPDATE ON file
+  FOR EACH ROW
+  EXECUTE FUNCTION bump_seq();
+
+CREATE TRIGGER relation_bump_seq
+  BEFORE UPDATE ON relation
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
