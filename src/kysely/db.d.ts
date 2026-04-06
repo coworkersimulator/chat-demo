@@ -23,12 +23,6 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
-export interface Entity {
-  id: Generated<string>;
-  meta: Json | null;
-  seq: Generated<string>;
-}
-
 export interface File {
   at: Generated<Timestamp>;
   by: string | null;
@@ -36,7 +30,9 @@ export interface File {
   deleted_at: Timestamp | null;
   filename: string | null;
   id: string;
+  meta: Json | null;
   mime: string;
+  seq: Generated<string>;
 }
 
 export interface Note {
@@ -45,6 +41,8 @@ export interface Note {
   by: string | null;
   deleted_at: Timestamp | null;
   id: string;
+  meta: Json | null;
+  seq: Generated<string>;
   title: string | null;
 }
 
@@ -53,7 +51,9 @@ export interface Reaction {
   by: string | null;
   deleted_at: Timestamp | null;
   id: string;
+  meta: Json | null;
   name: string;
+  seq: Generated<string>;
 }
 
 export interface Relation {
@@ -61,8 +61,20 @@ export interface Relation {
   by: string | null;
   deleted_at: Timestamp | null;
   id: string;
-  on: string;
-  to: string;
+  meta: Json | null;
+  on_file_id: string | null;
+  on_note_id: string | null;
+  on_relation: string | null;
+  on_role_id: string | null;
+  on_tag_id: string | null;
+  on_user_id: string | null;
+  seq: Generated<string>;
+  to_file_id: string | null;
+  to_note_id: string | null;
+  to_relation: string | null;
+  to_role_id: string | null;
+  to_tag_id: string | null;
+  to_user_id: string | null;
 }
 
 export interface Role {
@@ -70,7 +82,9 @@ export interface Role {
   by: string | null;
   deleted_at: Timestamp | null;
   id: string;
+  meta: Json | null;
   name: string;
+  seq: Generated<string>;
 }
 
 export interface Tag {
@@ -78,7 +92,9 @@ export interface Tag {
   by: string | null;
   deleted_at: Timestamp | null;
   id: string;
+  meta: Json | null;
   name: string;
+  seq: Generated<string>;
 }
 
 export interface User {
@@ -86,11 +102,12 @@ export interface User {
   by: string | null;
   deleted_at: Timestamp | null;
   id: string;
+  meta: Json | null;
+  seq: Generated<string>;
   username: string;
 }
 
 export interface DB {
-  entity: Entity;
   file: File;
   note: Note;
   reaction: Reaction;
