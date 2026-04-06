@@ -781,17 +781,13 @@ CREATE TRIGGER user_guard_protected_delete
   EXECUTE FUNCTION guard_protected_delete();
 
 
-CREATE OR REPLACE FUNCTION unique_on_delete()
+CREATE OR REPLACE FUNCTION unique_user_on_delete()
 RETURNS trigger AS $$
 DECLARE
   suffix text := '_' || substr(uuid_generate_v4()::text, 1, 8);
 BEGIN
   IF NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
-    IF TG_TABLE_NAME = 'user' THEN
-      NEW.username := NEW.username || suffix;
-    ELSIF TG_TABLE_NAME IN ('role', 'tag', 'reaction') THEN
-      NEW.name := NEW.name || suffix;
-    END IF;
+    NEW.username := NEW.username || suffix;
   END IF;
   RETURN NEW;
 END;
@@ -800,19 +796,58 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER user_unique_on_delete
   BEFORE UPDATE ON "user"
   FOR EACH ROW
-  EXECUTE FUNCTION unique_on_delete();
+  EXECUTE FUNCTION unique_user_on_delete();
+
+
+CREATE OR REPLACE FUNCTION unique_role_on_delete()
+RETURNS trigger AS $$
+DECLARE
+  suffix text := '_' || substr(uuid_generate_v4()::text, 1, 8);
+BEGIN
+  IF NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
+    NEW.name := NEW.name || suffix;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER role_unique_on_delete
   BEFORE UPDATE ON role
   FOR EACH ROW
-  EXECUTE FUNCTION unique_on_delete();
+  EXECUTE FUNCTION unique_role_on_delete();
+
+
+CREATE OR REPLACE FUNCTION unique_tag_on_delete()
+RETURNS trigger AS $$
+DECLARE
+  suffix text := '_' || substr(uuid_generate_v4()::text, 1, 8);
+BEGIN
+  IF NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
+    NEW.name := NEW.name || suffix;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER tag_unique_on_delete
   BEFORE UPDATE ON tag
   FOR EACH ROW
-  EXECUTE FUNCTION unique_on_delete();
+  EXECUTE FUNCTION unique_tag_on_delete();
+
+
+CREATE OR REPLACE FUNCTION unique_reaction_on_delete()
+RETURNS trigger AS $$
+DECLARE
+  suffix text := '_' || substr(uuid_generate_v4()::text, 1, 8);
+BEGIN
+  IF NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
+    NEW.name := NEW.name || suffix;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER reaction_unique_on_delete
   BEFORE UPDATE ON reaction
   FOR EACH ROW
-  EXECUTE FUNCTION unique_on_delete();
+  EXECUTE FUNCTION unique_reaction_on_delete();
