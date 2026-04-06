@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS "user" (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
-  username text UNIQUE NOT NULL,
+  username text UNIQUE NOT NULL CHECK (username = trim(username)),
 
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS role (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
-  name text UNIQUE NOT NULL,
+  name text UNIQUE NOT NULL CHECK (name = trim(name)),
 
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS tag (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
-  name text UNIQUE NOT NULL,
+  name text UNIQUE NOT NULL CHECK (name = trim(name)),
 
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS reaction (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
-  name text UNIQUE NOT NULL,
+  name text UNIQUE NOT NULL CHECK (name = trim(name)),
 
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -70,8 +70,8 @@ CREATE TABLE IF NOT EXISTS note (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
-  title text,
-  body text NOT NULL,
+  title text CHECK (title IS NULL OR title = trim(title)),
+  body text NOT NULL CHECK (body = trim(body)),
 
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -90,8 +90,8 @@ CREATE TABLE IF NOT EXISTS file (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
-  filename text,
-  mime text NOT NULL,
+  filename text CHECK (filename IS NULL OR filename = trim(filename)),
+  mime text NOT NULL CHECK (mime = trim(mime)),
   data bytea NOT NULL,
 
   by uuid REFERENCES "user" (id),
