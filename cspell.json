@@ -5,8 +5,11 @@
   "dictionaries": [],
   "words": [
     "codegen",
+    "keycap",
     "kysely",
-    "pglite"
+    "pglite",
+    "plpgsql",
+    "uuidv7"
   ],
   "ignoreWords": [],
   "import": []
