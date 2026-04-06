@@ -132,6 +132,6 @@ CREATE INDEX IF NOT EXISTS relation_to_tag_id_idx      ON relation (to_tag_id)  
 CREATE INDEX IF NOT EXISTS relation_to_note_id_idx     ON relation (to_note_id)   WHERE to_note_id   IS NOT NULL;
 CREATE INDEX IF NOT EXISTS relation_to_file_id_idx     ON relation (to_file_id)   WHERE to_file_id   IS NOT NULL;
 CREATE INDEX IF NOT EXISTS relation_to_relation_idx    ON relation (to_relation)  WHERE to_relation  IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS relation_on_user_to_role_tag_uniq    ON relation (on_user_id, to_role_id, to_tag_id)   NULLS NOT DISTINCT WHERE on_user_id  IS NOT NULL AND to_role_id  IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS relation_on_user_to_user_tag_uniq    ON relation (on_user_id, to_user_id, to_tag_id)   NULLS NOT DISTINCT WHERE on_user_id  IS NOT NULL AND to_user_id  IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS relation_on_rel_to_rel_tag_uniq      ON relation (on_relation, to_relation, to_tag_id) NULLS NOT DISTINCT WHERE on_relation IS NOT NULL AND to_relation IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS relation_on_user_to_role_tag_uniq    ON relation (on_user_id, to_role_id, to_tag_id)   NULLS NOT DISTINCT WHERE on_user_id  IS NOT NULL AND to_role_id  IS NOT NULL AND deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS relation_on_user_to_user_tag_uniq    ON relation (on_user_id, to_user_id, to_tag_id)   NULLS NOT DISTINCT WHERE on_user_id  IS NOT NULL AND to_user_id  IS NOT NULL AND deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS relation_on_rel_to_rel_tag_uniq      ON relation (on_relation, to_relation, to_tag_id) NULLS NOT DISTINCT WHERE on_relation IS NOT NULL AND to_relation IS NOT NULL AND deleted_at IS NULL;
