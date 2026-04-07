@@ -3,6 +3,7 @@ import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { uuid_ossp } from '@electric-sql/pglite/contrib/uuid_ossp';
 import { CamelCasePlugin, Kysely } from 'kysely';
 import { PGliteDialect } from 'kysely-pglite-dialect';
+import { SoftDeletePlugin } from '../../db/soft-delete-plugin';
 import type { DB } from '../../db/types';
 
 const pglite = await PGlite.create({
@@ -21,7 +22,7 @@ for (const path of Object.keys(migrations).sort()) {
 
 const db = new Kysely<DB>({
   dialect: new PGliteDialect(pglite),
-  plugins: [new CamelCasePlugin()],
+  plugins: [new SoftDeletePlugin(), new CamelCasePlugin()],
 });
 
 export { db, pglite };

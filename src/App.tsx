@@ -38,13 +38,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    db.selectFrom('relation as r')
-      .innerJoin('note as n', (join) =>
-        join
-          .onRef('n.id', '=', 'r.onNoteId')
-          .on('n.deletedAt', 'is not', null),
-      )
-      .where('r.deletedAt', 'is not', null);
+    db.selectFrom('relation as r').innerJoin('note as n', (join) =>
+      join.onRef('n.id', '=', 'r.onNoteId'),
+    );
   }, []);
 
   async function handleUserChange(id: string) {
