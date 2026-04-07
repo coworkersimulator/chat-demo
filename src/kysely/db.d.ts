@@ -103,6 +103,7 @@ export interface User {
   deleted_at: Timestamp | null;
   id: string;
   meta: Json | null;
+  name: string | null;
   seq: Generated<string>;
   username: string;
 }
