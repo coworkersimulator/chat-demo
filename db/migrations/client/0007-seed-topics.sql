@@ -1,5 +1,5 @@
 -- Tags
-INSERT INTO tag (name) VALUES (':topic:'), (':message:');
+INSERT INTO tag (name) VALUES (':topic:'), (':dm:'), (':message:');
 
 
 -- Notes (topics)
