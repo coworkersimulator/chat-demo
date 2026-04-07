@@ -1,7 +1,7 @@
 import { sql } from 'kysely';
 import { useEffect, useState } from 'react';
 import './App.css';
-import db from './db';
+import db from './db/db';
 
 interface User {
   id: string;

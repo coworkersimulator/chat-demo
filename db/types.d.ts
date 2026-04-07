@@ -29,7 +29,7 @@ export interface File {
   data: Buffer;
   deleted_at: Timestamp | null;
   filename: string | null;
-  id: string;
+  id: Generated<string>;
   meta: Json | null;
   mime: string;
   seq: Generated<string>;
@@ -37,10 +37,10 @@ export interface File {
 
 export interface Note {
   at: Generated<Timestamp>;
-  body: string;
+  body: string | null;
   by: string | null;
   deleted_at: Timestamp | null;
-  id: string;
+  id: Generated<string>;
   meta: Json | null;
   seq: Generated<string>;
   title: string | null;
@@ -50,7 +50,7 @@ export interface Reaction {
   at: Generated<Timestamp>;
   by: string | null;
   deleted_at: Timestamp | null;
-  id: string;
+  id: Generated<string>;
   meta: Json | null;
   name: string;
   seq: Generated<string>;
@@ -60,7 +60,7 @@ export interface Relation {
   at: Generated<Timestamp>;
   by: string | null;
   deleted_at: Timestamp | null;
-  id: string;
+  id: Generated<string>;
   meta: Json | null;
   on_file_id: string | null;
   on_note_id: string | null;
@@ -81,7 +81,7 @@ export interface Role {
   at: Generated<Timestamp>;
   by: string | null;
   deleted_at: Timestamp | null;
-  id: string;
+  id: Generated<string>;
   meta: Json | null;
   name: string;
   seq: Generated<string>;
@@ -91,7 +91,7 @@ export interface Tag {
   at: Generated<Timestamp>;
   by: string | null;
   deleted_at: Timestamp | null;
-  id: string;
+  id: Generated<string>;
   meta: Json | null;
   name: string;
   seq: Generated<string>;
@@ -101,7 +101,7 @@ export interface User {
   at: Generated<Timestamp>;
   by: string | null;
   deleted_at: Timestamp | null;
-  id: string;
+  id: Generated<string>;
   meta: Json | null;
   name: string | null;
   seq: Generated<string>;
