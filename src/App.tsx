@@ -41,10 +41,10 @@ function App() {
     db.selectFrom('relation as r')
       .innerJoin('note as n', (join) =>
         join
-          .onRef('n.id', '=', 'r.on_note_id')
-          .on('n.deleted_at', 'is not', null),
+          .onRef('n.id', '=', 'r.onNoteId')
+          .on('n.deletedAt', 'is not', null),
       )
-      .where('r.deleted_at', 'is not', null);
+      .where('r.deletedAt', 'is not', null);
   }, []);
 
   async function handleUserChange(id: string) {

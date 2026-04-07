@@ -4,12 +4,7 @@ import db from './db';
 await generate({
   db,
   dialect: new PostgresDialect(),
-  outFile: 'src/db/types.d.ts',
-});
-
-await generate({
-  db,
-  dialect: new PostgresDialect(),
+  camelCase: true,
   outFile: 'db/types.d.ts',
 });
 

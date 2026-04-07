@@ -27,7 +27,7 @@ export interface File {
   at: Generated<Timestamp>;
   by: string | null;
   data: Buffer;
-  deleted_at: Timestamp | null;
+  deletedAt: Timestamp | null;
   filename: string | null;
   id: Generated<string>;
   meta: Json | null;
@@ -39,7 +39,7 @@ export interface Note {
   at: Generated<Timestamp>;
   body: string | null;
   by: string | null;
-  deleted_at: Timestamp | null;
+  deletedAt: Timestamp | null;
   id: Generated<string>;
   meta: Json | null;
   seq: Generated<string>;
@@ -49,7 +49,7 @@ export interface Note {
 export interface Reaction {
   at: Generated<Timestamp>;
   by: string | null;
-  deleted_at: Timestamp | null;
+  deletedAt: Timestamp | null;
   id: Generated<string>;
   meta: Json | null;
   name: string;
@@ -59,28 +59,28 @@ export interface Reaction {
 export interface Relation {
   at: Generated<Timestamp>;
   by: string | null;
-  deleted_at: Timestamp | null;
+  deletedAt: Timestamp | null;
   id: Generated<string>;
   meta: Json | null;
-  on_file_id: string | null;
-  on_note_id: string | null;
-  on_relation: string | null;
-  on_role_id: string | null;
-  on_tag_id: string | null;
-  on_user_id: string | null;
+  onFileId: string | null;
+  onNoteId: string | null;
+  onRelation: string | null;
+  onRoleId: string | null;
+  onTagId: string | null;
+  onUserId: string | null;
   seq: Generated<string>;
-  to_file_id: string | null;
-  to_note_id: string | null;
-  to_relation: string | null;
-  to_role_id: string | null;
-  to_tag_id: string | null;
-  to_user_id: string | null;
+  toFileId: string | null;
+  toNoteId: string | null;
+  toRelation: string | null;
+  toRoleId: string | null;
+  toTagId: string | null;
+  toUserId: string | null;
 }
 
 export interface Role {
   at: Generated<Timestamp>;
   by: string | null;
-  deleted_at: Timestamp | null;
+  deletedAt: Timestamp | null;
   id: Generated<string>;
   meta: Json | null;
   name: string;
@@ -90,7 +90,7 @@ export interface Role {
 export interface Tag {
   at: Generated<Timestamp>;
   by: string | null;
-  deleted_at: Timestamp | null;
+  deletedAt: Timestamp | null;
   id: Generated<string>;
   meta: Json | null;
   name: string;
@@ -100,7 +100,7 @@ export interface Tag {
 export interface User {
   at: Generated<Timestamp>;
   by: string | null;
-  deleted_at: Timestamp | null;
+  deletedAt: Timestamp | null;
   id: Generated<string>;
   meta: Json | null;
   name: string | null;
