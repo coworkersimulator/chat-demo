@@ -6,6 +6,9 @@ import { PGliteDialect } from 'kysely-pglite-dialect';
 import { SoftDeletePlugin } from '../../db/soft-delete-plugin';
 import type { DB } from '../../db/types';
 
+export const softDeletePlugin = new SoftDeletePlugin();
+export const camelCasePlugin = new CamelCasePlugin();
+
 const pglite = await PGlite.create({
   extensions: { pgcrypto, uuid_ossp },
 });
@@ -22,7 +25,7 @@ for (const path of Object.keys(migrations).sort()) {
 
 const db = new Kysely<DB>({
   dialect: new PGliteDialect(pglite),
-  plugins: [new SoftDeletePlugin(), new CamelCasePlugin()],
+  plugins: [softDeletePlugin, camelCasePlugin],
 });
 
 export { db, pglite };

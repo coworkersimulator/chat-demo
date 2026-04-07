@@ -3,9 +3,9 @@ import {
   BinaryOperationNode,
   ColumnNode,
   ColumnUpdateNode,
-  FunctionNode,
   OperationNodeTransformer,
   OperatorNode,
+  RawNode,
   ReferenceNode,
   TableNode,
   UpdateQueryNode,
@@ -22,12 +22,13 @@ import {
   type RootOperationNode,
   type SelectQueryNode,
   type UnknownRow,
+  type UpdateQueryNode as UpdateQueryNodeType,
 } from 'kysely';
 
-function isNullFilter(tableAlias: string): OperationNode {
+function isNullFilter(tableAlias: string, column: string): OperationNode {
   return BinaryOperationNode.create(
     ReferenceNode.create(
-      ColumnNode.create('deletedAt'),
+      ColumnNode.create(column),
       TableNode.create(tableAlias),
     ),
     OperatorNode.create('is'),
@@ -56,18 +57,28 @@ function tableAliasOf(node: OperationNode): string | null {
 }
 
 class SoftDeleteTransformer extends OperationNodeTransformer {
-  protected override transformSelectQuery(
-    node: SelectQueryNode,
-  ): SelectQueryNode {
+  readonly #column: string;
+
+  constructor(column: string) {
+    super();
+    this.#column = column;
+  }
+
+  protected override transformUpdateQuery(node: UpdateQueryNodeType): UpdateQueryNodeType {
+    node = super.transformUpdateQuery(node);
+    if (!node.table) return node;
+    const alias = tableAliasOf(node.table);
+    if (!alias) return node;
+    return { ...node, where: withWhere(node.where, isNullFilter(alias, this.#column)) };
+  }
+
+  protected override transformSelectQuery(node: SelectQueryNode): SelectQueryNode {
     node = super.transformSelectQuery(node);
 
     const aliases: string[] = [];
 
     if (node.from) {
-      const froms = Array.isArray(node.from.froms)
-        ? node.from.froms
-        : [node.from.froms];
-      for (const from of froms) {
+      for (const from of node.from.froms) {
         const alias = tableAliasOf(from);
         if (alias) aliases.push(alias);
       }
@@ -84,43 +95,52 @@ class SoftDeleteTransformer extends OperationNodeTransformer {
 
     let where = node.where;
     for (const alias of aliases) {
-      where = withWhere(where, isNullFilter(alias));
+      where = withWhere(where, isNullFilter(alias, this.#column));
     }
 
     return { ...node, where };
   }
 }
 
-function softDeleteFromDelete(node: DeleteQueryNode): RootOperationNode {
-  const froms = node.from?.froms;
-  const tableNode = froms
-    ? Array.isArray(froms)
-      ? froms[0]
-      : froms
-    : undefined;
+function softDeleteFromDelete(
+  node: DeleteQueryNode,
+  column: string,
+): RootOperationNode {
+  const fromItem = node.from?.froms[0] as OperationNode | undefined;
+  if (!fromItem) return node;
 
-  if (!tableNode || tableNode.kind !== 'TableNode') return node;
+  const alias = tableAliasOf(fromItem);
+  if (!alias) return node;
 
-  const name = (tableNode as TableNode).table.identifier.name;
+  let updateNode = UpdateQueryNode.create([fromItem]);
 
-  let updateNode = UpdateQueryNode.create(tableNode as TableNode, false);
   updateNode = UpdateQueryNode.cloneWithUpdates(updateNode, [
     ColumnUpdateNode.create(
-      ColumnNode.create('deletedAt'),
-      FunctionNode.create('now', []),
+      ColumnNode.create(column),
+      RawNode.createWithSql('CURRENT_TIMESTAMP'),
     ),
   ]);
 
-  const where = withWhere(node.where, isNullFilter(name));
+  const where = withWhere(node.where, isNullFilter(alias, column));
   return { ...updateNode, where };
 }
 
+export interface SoftDeletePluginOptions {
+  deletedAtColumn?: string;
+}
+
 export class SoftDeletePlugin implements KyselyPlugin {
-  readonly #transformer = new SoftDeleteTransformer();
+  readonly #column: string;
+  readonly #transformer: SoftDeleteTransformer;
+
+  constructor({ deletedAtColumn = 'deletedAt' }: SoftDeletePluginOptions = {}) {
+    this.#column = deletedAtColumn;
+    this.#transformer = new SoftDeleteTransformer(deletedAtColumn);
+  }
 
   transformQuery(args: PluginTransformQueryArgs): RootOperationNode {
     if (args.node.kind === 'DeleteQueryNode') {
-      return softDeleteFromDelete(args.node as DeleteQueryNode);
+      return softDeleteFromDelete(args.node as DeleteQueryNode, this.#column);
     }
     return this.#transformer.transformNode(args.node);
   }
