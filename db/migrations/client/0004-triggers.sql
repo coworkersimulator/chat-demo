@@ -235,22 +235,27 @@ CREATE TRIGGER relation_guard_immutable
   EXECUTE FUNCTION guard_relation_immutable();
 
 
-CREATE OR REPLACE FUNCTION log_relation_change()
+CREATE OR REPLACE FUNCTION log_change()
 RETURNS trigger AS $$
 DECLARE
-  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
-  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
+  old_json jsonb := row_to_json(OLD)::jsonb;
+  new_json jsonb := row_to_json(NEW)::jsonb;
+  old_diff jsonb := '{}'::jsonb;
+  new_diff jsonb := '{}'::jsonb;
+  key text;
 BEGIN
-  IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
-    old_fields := old_fields || jsonb_build_object('deleted_at', OLD.deleted_at);
-    new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
-  END IF;
+  FOR key IN SELECT jsonb_object_keys(new_json) LOOP
+    IF key != 'meta' AND old_json->key IS DISTINCT FROM new_json->key THEN
+      old_diff := old_diff || jsonb_build_object(key, old_json->key);
+      new_diff := new_diff || jsonb_build_object(key, new_json->key);
+    END IF;
+  END LOOP;
 
   NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
     'changes',
     COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-      'old', old_fields,
-      'new', new_fields,
+      'old', old_diff,
+      'new', new_diff,
       'by', current_setting('app.user_id', true),
       'at', now()
     )
@@ -263,238 +268,37 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER relation_log_change
   BEFORE UPDATE ON relation
   FOR EACH ROW
-  EXECUTE FUNCTION log_relation_change();
-
-
-CREATE OR REPLACE FUNCTION log_user_change()
-RETURNS trigger AS $$
-DECLARE
-  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
-  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
-BEGIN
-  IF NEW.username IS DISTINCT FROM OLD.username THEN
-    old_fields := old_fields || jsonb_build_object('username', OLD.username);
-    new_fields := new_fields || jsonb_build_object('username', NEW.username);
-  END IF;
-
-  IF NEW.name IS DISTINCT FROM OLD.name THEN
-    old_fields := old_fields || jsonb_build_object('name', OLD.name);
-    new_fields := new_fields || jsonb_build_object('name', NEW.name);
-  END IF;
-
-  IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
-    old_fields := old_fields || jsonb_build_object('deleted_at', OLD.deleted_at);
-    new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
-  END IF;
-
-  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-    'changes',
-    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-      'old', old_fields,
-      'new', new_fields,
-      'by', current_setting('app.user_id', true),
-      'at', now()
-    )
-  );
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+  EXECUTE FUNCTION log_change();
 
 CREATE TRIGGER user_log_change
   BEFORE UPDATE ON "user"
   FOR EACH ROW
-  EXECUTE FUNCTION log_user_change();
-
-
-CREATE OR REPLACE FUNCTION log_role_change()
-RETURNS trigger AS $$
-DECLARE
-  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
-  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
-BEGIN
-  IF NEW.name IS DISTINCT FROM OLD.name THEN
-    old_fields := old_fields || jsonb_build_object('name', OLD.name);
-    new_fields := new_fields || jsonb_build_object('name', NEW.name);
-  END IF;
-
-  IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
-    old_fields := old_fields || jsonb_build_object('deleted_at', OLD.deleted_at);
-    new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
-  END IF;
-
-  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-    'changes',
-    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-      'old', old_fields,
-      'new', new_fields,
-      'by', current_setting('app.user_id', true),
-      'at', now()
-    )
-  );
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+  EXECUTE FUNCTION log_change();
 
 CREATE TRIGGER role_log_change
   BEFORE UPDATE ON role
   FOR EACH ROW
-  EXECUTE FUNCTION log_role_change();
-
-
-CREATE OR REPLACE FUNCTION log_reaction_change()
-RETURNS trigger AS $$
-DECLARE
-  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
-  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
-BEGIN
-  IF NEW.name IS DISTINCT FROM OLD.name THEN
-    old_fields := old_fields || jsonb_build_object('name', OLD.name);
-    new_fields := new_fields || jsonb_build_object('name', NEW.name);
-  END IF;
-
-  IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
-    old_fields := old_fields || jsonb_build_object('deleted_at', OLD.deleted_at);
-    new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
-  END IF;
-
-  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-    'changes',
-    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-      'old', old_fields,
-      'new', new_fields,
-      'by', current_setting('app.user_id', true),
-      'at', now()
-    )
-  );
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+  EXECUTE FUNCTION log_change();
 
 CREATE TRIGGER reaction_log_change
   BEFORE UPDATE ON reaction
   FOR EACH ROW
-  EXECUTE FUNCTION log_reaction_change();
-
-
-CREATE OR REPLACE FUNCTION log_tag_change()
-RETURNS trigger AS $$
-DECLARE
-  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
-  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
-BEGIN
-  IF NEW.name IS DISTINCT FROM OLD.name THEN
-    old_fields := old_fields || jsonb_build_object('name', OLD.name);
-    new_fields := new_fields || jsonb_build_object('name', NEW.name);
-  END IF;
-
-  IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
-    old_fields := old_fields || jsonb_build_object('deleted_at', OLD.deleted_at);
-    new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
-  END IF;
-
-  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-    'changes',
-    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-      'old', old_fields,
-      'new', new_fields,
-      'by', current_setting('app.user_id', true),
-      'at', now()
-    )
-  );
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+  EXECUTE FUNCTION log_change();
 
 CREATE TRIGGER tag_log_change
   BEFORE UPDATE ON tag
   FOR EACH ROW
-  EXECUTE FUNCTION log_tag_change();
-
-
-CREATE OR REPLACE FUNCTION log_note_change()
-RETURNS trigger AS $$
-DECLARE
-  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
-  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
-BEGIN
-  IF NEW.title IS DISTINCT FROM OLD.title THEN
-    old_fields := old_fields || jsonb_build_object('title', OLD.title);
-    new_fields := new_fields || jsonb_build_object('title', NEW.title);
-  END IF;
-
-  IF NEW.body IS DISTINCT FROM OLD.body THEN
-    old_fields := old_fields || jsonb_build_object('body', OLD.body);
-    new_fields := new_fields || jsonb_build_object('body', NEW.body);
-  END IF;
-
-  IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
-    old_fields := old_fields || jsonb_build_object('deleted_at', OLD.deleted_at);
-    new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
-  END IF;
-
-  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-    'changes',
-    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-      'old', old_fields,
-      'new', new_fields,
-      'by', current_setting('app.user_id', true),
-      'at', now()
-    )
-  );
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+  EXECUTE FUNCTION log_change();
 
 CREATE TRIGGER note_log_change
   BEFORE UPDATE ON note
   FOR EACH ROW
-  EXECUTE FUNCTION log_note_change();
-
-
-CREATE OR REPLACE FUNCTION log_file_change()
-RETURNS trigger AS $$
-DECLARE
-  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
-  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
-BEGIN
-  IF NEW.filename IS DISTINCT FROM OLD.filename THEN
-    old_fields := old_fields || jsonb_build_object('filename', OLD.filename);
-    new_fields := new_fields || jsonb_build_object('filename', NEW.filename);
-  END IF;
-
-  IF NEW.mime IS DISTINCT FROM OLD.mime THEN
-    old_fields := old_fields || jsonb_build_object('mime', OLD.mime);
-    new_fields := new_fields || jsonb_build_object('mime', NEW.mime);
-  END IF;
-
-  IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
-    old_fields := old_fields || jsonb_build_object('deleted_at', OLD.deleted_at);
-    new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
-  END IF;
-
-  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-    'changes',
-    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-      'old', old_fields,
-      'new', new_fields,
-      'by', current_setting('app.user_id', true),
-      'at', now()
-    )
-  );
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+  EXECUTE FUNCTION log_change();
 
 CREATE TRIGGER file_log_change
   BEFORE UPDATE ON file
   FOR EACH ROW
-  EXECUTE FUNCTION log_file_change();
+  EXECUTE FUNCTION log_change();
 
 
 CREATE OR REPLACE FUNCTION guard_role_relation()
