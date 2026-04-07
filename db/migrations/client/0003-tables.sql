@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS relation (
   deleted_at timestamptz,
   meta jsonb,
   CHECK (num_nonnulls(on_user_id, on_role_id, on_tag_id, on_note_id, on_file_id, on_relation) = 1),
-  CHECK (num_nonnulls(to_user_id, to_role_id, to_tag_id, to_note_id, to_file_id, to_relation) > 1)
+  CHECK (num_nonnulls(to_user_id, to_role_id, to_tag_id, to_note_id, to_file_id, to_relation) >= 1)
 );
 CREATE INDEX IF NOT EXISTS relation_by_idx             ON relation ("by");
 CREATE INDEX IF NOT EXISTS relation_at_idx             ON relation (at);
