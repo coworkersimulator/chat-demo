@@ -1,3 +1,7 @@
+-- Tags
+INSERT INTO tag (name) VALUES (':topic:'), (':message:');
+
+
 -- Notes (topics)
 INSERT INTO note (title, body) VALUES
   ('DevOps',                       'DevOps'),
