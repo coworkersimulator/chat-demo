@@ -67,6 +67,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('Hey, quick question, do you have the updated org chart file? The one in the shared drive is still the old version', u_amara, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_kwame);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_amara);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('yep, just updated it this morning. Sharing the link now', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -145,6 +146,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('Can you look at the all-hands draft when you get a moment? I especially want your read on the reorg section, worried it sounds defensive', u_amara, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_sloane);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_amara);
   ts := ts + interval '25 minutes';
   INSERT INTO note (body, by, at) VALUES ('Read it. The reorg section is fine but the opening does feel a bit formal. You usually lead warmer than this', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -203,6 +205,7 @@ BEGIN
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_mei);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_yuki);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_fatima);
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('Yes!! leaving in 10', u_mei, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -269,6 +272,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('Do you have 15 minutes today to talk through the DAU methodology? Want to make sure we''re aligned before the Q2 sync', u_priya, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_ravi);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_priya);
   ts := ts + interval '9 minutes';
   INSERT INTO note (body, by, at) VALUES ('yeah, free at 2. Does that work?', u_ravi, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -344,6 +348,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('Pipeline config is live. The layer caching change is the main thing, should cut times significantly', u_emeka, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_hiroshi);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_emeka);
   ts := ts + interval '20 minutes';
   INSERT INTO note (body, by, at) VALUES ('Reviewing now. The caching strategy is clever, you''re reusing the dependency layer across branches', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -431,6 +436,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('staging deploy failed. Healthcheck timeout is too short, the new service takes 20+ seconds to cold start', u_tariq, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_joon);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_tariq);
   ts := ts + interval '7 minutes';
   INSERT INTO note (body, by, at) VALUES ('Bumping it to 30s and redeploying', u_joon, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -494,6 +500,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('Can you give the all-hands draft a read today? I especially want eyes on the opening', u_layla, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_sloane);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_layla);
   ts := ts + interval '28 minutes';
   INSERT INTO note (body, by, at) VALUES ('read it. The opening is fine but the sentence structure is very long. Try shorter sentences for the first paragraph, it reads more confident', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -552,6 +559,7 @@ BEGIN
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_amara);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_kwame);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_saoirse);
   ts := ts + interval '14 minutes';
   INSERT INTO note (body, by, at) VALUES ('Why not both? morning cook-off, afternoon activities. We''ve done single-format before and it always excludes someone', u_amara, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -606,6 +614,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('Quick flag before Thursday, the revenue target looks aggressive. I want to talk through the pipeline assumptions', u_anders, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_bitsy);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_anders);
   ts := ts + interval '18 minutes';
   INSERT INTO note (body, by, at) VALUES ('I hear you. The number reflects confirmed pipeline only, the two slipped deals are already excluded', u_bitsy, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -666,6 +675,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('Can I get your eyes on the new icon library before I push it? I want a second opinion on the stroke weights', u_nadia, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_luca);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_nadia);
   ts := ts + interval '22 minutes';
   INSERT INTO note (body, by, at) VALUES ('Looked through it. The stroke weights are consistent but the filled vs outlined versions feel inconsistent, some icons switch style at 16px and some don''t', u_luca, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -720,6 +730,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('I''m taking the legacy payment wrapper for tech debt sprint. Want to pair on it?', u_joon, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_tomas);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_joon);
   ts := ts + interval '7 minutes';
   INSERT INTO note (body, by, at) VALUES ('Please yes. I wrote that code in 2019. I want to be there when it dies', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -783,6 +794,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('Brought borscht to the office today if anyone wants some', u_dmitri, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_esperanza);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_dmitri);
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('I already had two bowls. Please bring the recipe', u_esperanza, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -850,6 +862,7 @@ BEGIN
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_hiroshi);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_emeka);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_tariq);
   ts := ts + interval '1 hour 15 minutes';
   INSERT INTO note (body, by, at) VALUES ('Reading now. The token refresh strategy is the part I want to think through, what happens during service restart?', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -913,6 +926,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('sharing my notes from yesterday''s customer call, some strong signals for the search feature. Worth reading before planning', u_priya, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_emeka);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_priya);
   ts := ts + interval '25 minutes';
   INSERT INTO note (body, by, at) VALUES ('Read it. The fuzzy matching request keeps coming up. Are we treating that as a must-have for v1?', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -970,6 +984,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('Are you going to the anniversary event? I need to know if I should save you a seat at the scavenger hunt', u_trip, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_chazz);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_trip);
   ts := ts + interval '12 minutes';
   INSERT INTO note (body, by, at) VALUES ('Obviously. I''m also cooking something for the cook-off', u_chazz, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -1033,6 +1048,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('I want to properly set up the readiness probe this week. Can you pair with me Thursday afternoon?', u_hiroshi, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_joon);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_hiroshi);
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('Yes, 2pm. I already have the ticket open, should we just do it in staging first?', u_joon, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -1093,6 +1109,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('Working from home today, dog has a vet appointment. Fully online though if you need me', u_ingrid, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_saoirse);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_ingrid);
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('No problem at all. How''s she doing?', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -1150,6 +1167,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('K8s dashboard cert is renewed and live. It was expired for four days and nobody noticed', u_tomas, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_emeka);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_tomas);
   ts := ts + interval '10 minutes';
   INSERT INTO note (body, by, at) VALUES ('four days! that''s how you find out that nobody actually checks the dashboard', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -1198,6 +1216,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('My section for the newsletter is ready. Let me know if the tone is off, I tend to go too formal', u_fatima, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_layla);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_fatima);
   ts := ts + interval '35 minutes';
   INSERT INTO note (body, by, at) VALUES ('Read it. The tone is actually really good, warm and specific. The second paragraph has a run-on though, can you split it?', u_layla, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
@@ -1252,6 +1271,7 @@ BEGIN
   INSERT INTO note (body, by, at) VALUES ('I want to look at mutation testing for the data pipeline. The edge cases are subtle enough that line coverage doesn''t catch the real problems', u_ravi, ts) RETURNING id INTO conv;
   INSERT INTO relation (on_note_id, to_tag_id) VALUES (conv, tag_dm);
   INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_tariq);
+  INSERT INTO relation (on_note_id, to_user_id) VALUES (conv, u_ravi);
   ts := ts + interval '18 minutes';
   INSERT INTO note (body, by, at) VALUES ('Interesting. I looked at mutation testing for the auth service a while back. The tooling has improved a lot', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO relation (on_note_id, to_note_id, to_tag_id) VALUES (conv, m, tag_dm);
