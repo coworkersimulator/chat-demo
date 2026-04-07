@@ -6,37 +6,37 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER user_bump_seq
+CREATE TRIGGER _user_bump_seq
   BEFORE UPDATE ON "user"
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER role_bump_seq
+CREATE TRIGGER _role_bump_seq
   BEFORE UPDATE ON role
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER tag_bump_seq
+CREATE TRIGGER _tag_bump_seq
   BEFORE UPDATE ON tag
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER reaction_bump_seq
+CREATE TRIGGER _reaction_bump_seq
   BEFORE UPDATE ON reaction
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER note_bump_seq
+CREATE TRIGGER _note_bump_seq
   BEFORE UPDATE ON note
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER file_bump_seq
+CREATE TRIGGER _file_bump_seq
   BEFORE UPDATE ON file
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER relation_bump_seq
+CREATE TRIGGER _relation_bump_seq
   BEFORE UPDATE ON relation
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
@@ -238,25 +238,23 @@ CREATE TRIGGER relation_guard_immutable
 CREATE OR REPLACE FUNCTION log_relation_change()
 RETURNS trigger AS $$
 DECLARE
-  old_fields jsonb := '{}'::jsonb;
-  new_fields jsonb := '{}'::jsonb;
+  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
+  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
 BEGIN
   IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
     old_fields := old_fields || jsonb_build_object('deleted_at', OLD.deleted_at);
     new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
   END IF;
 
-  IF old_fields != '{}'::jsonb THEN
-    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-      'changes',
-      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-        'old', old_fields,
-        'new', new_fields,
-        'by', current_setting('app.user_id', true),
-        'at', now()
-      )
-    );
-  END IF;
+  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+    'changes',
+    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      'old', old_fields,
+      'new', new_fields,
+      'by', current_setting('app.user_id', true),
+      'at', now()
+    )
+  );
 
   RETURN NEW;
 END;
@@ -271,8 +269,8 @@ CREATE TRIGGER relation_log_change
 CREATE OR REPLACE FUNCTION log_user_change()
 RETURNS trigger AS $$
 DECLARE
-  old_fields jsonb := '{}'::jsonb;
-  new_fields jsonb := '{}'::jsonb;
+  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
+  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
 BEGIN
   IF NEW.username IS DISTINCT FROM OLD.username THEN
     old_fields := old_fields || jsonb_build_object('username', OLD.username);
@@ -289,17 +287,15 @@ BEGIN
     new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
   END IF;
 
-  IF old_fields != '{}'::jsonb THEN
-    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-      'changes',
-      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-        'old', old_fields,
-        'new', new_fields,
-        'by', current_setting('app.user_id', true),
-        'at', now()
-      )
-    );
-  END IF;
+  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+    'changes',
+    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      'old', old_fields,
+      'new', new_fields,
+      'by', current_setting('app.user_id', true),
+      'at', now()
+    )
+  );
 
   RETURN NEW;
 END;
@@ -314,8 +310,8 @@ CREATE TRIGGER user_log_change
 CREATE OR REPLACE FUNCTION log_role_change()
 RETURNS trigger AS $$
 DECLARE
-  old_fields jsonb := '{}'::jsonb;
-  new_fields jsonb := '{}'::jsonb;
+  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
+  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
 BEGIN
   IF NEW.name IS DISTINCT FROM OLD.name THEN
     old_fields := old_fields || jsonb_build_object('name', OLD.name);
@@ -327,17 +323,15 @@ BEGIN
     new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
   END IF;
 
-  IF old_fields != '{}'::jsonb THEN
-    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-      'changes',
-      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-        'old', old_fields,
-        'new', new_fields,
-        'by', current_setting('app.user_id', true),
-        'at', now()
-      )
-    );
-  END IF;
+  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+    'changes',
+    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      'old', old_fields,
+      'new', new_fields,
+      'by', current_setting('app.user_id', true),
+      'at', now()
+    )
+  );
 
   RETURN NEW;
 END;
@@ -352,8 +346,8 @@ CREATE TRIGGER role_log_change
 CREATE OR REPLACE FUNCTION log_reaction_change()
 RETURNS trigger AS $$
 DECLARE
-  old_fields jsonb := '{}'::jsonb;
-  new_fields jsonb := '{}'::jsonb;
+  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
+  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
 BEGIN
   IF NEW.name IS DISTINCT FROM OLD.name THEN
     old_fields := old_fields || jsonb_build_object('name', OLD.name);
@@ -365,17 +359,15 @@ BEGIN
     new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
   END IF;
 
-  IF old_fields != '{}'::jsonb THEN
-    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-      'changes',
-      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-        'old', old_fields,
-        'new', new_fields,
-        'by', current_setting('app.user_id', true),
-        'at', now()
-      )
-    );
-  END IF;
+  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+    'changes',
+    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      'old', old_fields,
+      'new', new_fields,
+      'by', current_setting('app.user_id', true),
+      'at', now()
+    )
+  );
 
   RETURN NEW;
 END;
@@ -390,8 +382,8 @@ CREATE TRIGGER reaction_log_change
 CREATE OR REPLACE FUNCTION log_tag_change()
 RETURNS trigger AS $$
 DECLARE
-  old_fields jsonb := '{}'::jsonb;
-  new_fields jsonb := '{}'::jsonb;
+  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
+  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
 BEGIN
   IF NEW.name IS DISTINCT FROM OLD.name THEN
     old_fields := old_fields || jsonb_build_object('name', OLD.name);
@@ -403,17 +395,15 @@ BEGIN
     new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
   END IF;
 
-  IF old_fields != '{}'::jsonb THEN
-    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-      'changes',
-      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-        'old', old_fields,
-        'new', new_fields,
-        'by', current_setting('app.user_id', true),
-        'at', now()
-      )
-    );
-  END IF;
+  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+    'changes',
+    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      'old', old_fields,
+      'new', new_fields,
+      'by', current_setting('app.user_id', true),
+      'at', now()
+    )
+  );
 
   RETURN NEW;
 END;
@@ -428,8 +418,8 @@ CREATE TRIGGER tag_log_change
 CREATE OR REPLACE FUNCTION log_note_change()
 RETURNS trigger AS $$
 DECLARE
-  old_fields jsonb := '{}'::jsonb;
-  new_fields jsonb := '{}'::jsonb;
+  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
+  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
 BEGIN
   IF NEW.title IS DISTINCT FROM OLD.title THEN
     old_fields := old_fields || jsonb_build_object('title', OLD.title);
@@ -446,17 +436,15 @@ BEGIN
     new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
   END IF;
 
-  IF old_fields != '{}'::jsonb THEN
-    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-      'changes',
-      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-        'old', old_fields,
-        'new', new_fields,
-        'by', current_setting('app.user_id', true),
-        'at', now()
-      )
-    );
-  END IF;
+  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+    'changes',
+    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      'old', old_fields,
+      'new', new_fields,
+      'by', current_setting('app.user_id', true),
+      'at', now()
+    )
+  );
 
   RETURN NEW;
 END;
@@ -471,8 +459,8 @@ CREATE TRIGGER note_log_change
 CREATE OR REPLACE FUNCTION log_file_change()
 RETURNS trigger AS $$
 DECLARE
-  old_fields jsonb := '{}'::jsonb;
-  new_fields jsonb := '{}'::jsonb;
+  old_fields jsonb := jsonb_build_object('seq', OLD.seq);
+  new_fields jsonb := jsonb_build_object('seq', NEW.seq);
 BEGIN
   IF NEW.filename IS DISTINCT FROM OLD.filename THEN
     old_fields := old_fields || jsonb_build_object('filename', OLD.filename);
@@ -489,17 +477,15 @@ BEGIN
     new_fields := new_fields || jsonb_build_object('deleted_at', NEW.deleted_at);
   END IF;
 
-  IF old_fields != '{}'::jsonb THEN
-    NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
-      'changes',
-      COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
-        'old', old_fields,
-        'new', new_fields,
-        'by', current_setting('app.user_id', true),
-        'at', now()
-      )
-    );
-  END IF;
+  NEW.meta := COALESCE(NEW.meta, '{}'::jsonb) || jsonb_build_object(
+    'changes',
+    COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
+      'old', old_fields,
+      'new', new_fields,
+      'by', current_setting('app.user_id', true),
+      'at', now()
+    )
+  );
 
   RETURN NEW;
 END;
