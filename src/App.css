@@ -145,6 +145,30 @@ body {
   flex: 1;
 }
 
+.sidebar-new-topic {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 16px 10px;
+  border-bottom: 1px solid #2c2d30;
+}
+
+.sidebar-new-topic-input {
+  background: #2c2d30;
+  border: 1px solid #4a4b4d;
+  border-radius: 4px;
+  color: #d1d2d3;
+  font-size: 14px;
+  padding: 5px 8px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sidebar-new-topic-input:focus {
+  border-color: #1d9bd1;
+}
+
 .dm-start-btn {
   margin: 6px 16px 10px;
   padding: 5px 12px;

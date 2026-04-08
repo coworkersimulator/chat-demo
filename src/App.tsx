@@ -52,6 +52,8 @@ function App() {
   const [draft, setDraft] = useState('');
   const [newDm, setNewDm] = useState(false);
   const [newDmSelected, setNewDmSelected] = useState<string[]>([]);
+  const [newTopic, setNewTopic] = useState(false);
+  const [newTopicTitle, setNewTopicTitle] = useState('');
   const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,17 +67,44 @@ function App() {
       });
   }, []);
 
-  useEffect(() => {
+  async function loadTopics() {
     if (!userId) return;
-    const q = db
+    const rows = await db
       .selectFrom('tag as t')
       .where('t.name', '=', ':topic:')
       .innerJoin('rel as r', (join) => join.onRef('r.asTagId', '=', 't.id'))
       .innerJoin('note as n', (join) => join.onRef('n.id', '=', 'r.onNoteId'))
       .select(['n.id', 'n.title'])
-      .orderBy(sql`lower(n.title)`, 'asc');
-    void q.execute().then((rows) => setTopics(rows as Topic[]));
+      .orderBy(sql`lower(n.title)`, 'asc')
+      .execute();
+    setTopics(rows as Topic[]);
+  }
+
+  useEffect(() => {
+    void loadTopics();
   }, [userId]);
+
+  async function handleNewTopic() {
+    if (!newTopicTitle.trim()) return;
+    const tag = await db
+      .selectFrom('tag')
+      .where('name', '=', ':topic:')
+      .select('id')
+      .executeTakeFirst();
+    if (!tag) return;
+    const note = await db
+      .insertInto('note')
+      .values({ title: newTopicTitle.trim(), by: userId })
+      .returning('id')
+      .executeTakeFirst();
+    if (!note) return;
+    await db.insertInto('rel').values({ onNoteId: note.id, asTagId: tag.id }).execute();
+    setNewTopic(false);
+    setNewTopicTitle('');
+    await loadTopics();
+    setTopicId(note.id);
+    setDmId(null);
+  }
 
   async function loadDms(selectId?: string) {
     if (!userId) return;
@@ -223,7 +252,32 @@ function App() {
       <div className="app-body">
         <div className="sidebar">
           <div className="sidebar-section">
-            <div className="sidebar-section-header">Topics</div>
+            <div className="sidebar-section-header">
+              Topics
+              <button className="sidebar-new-btn" onClick={() => setNewTopic((v) => !v)}>+</button>
+            </div>
+            {newTopic && (
+              <div className="sidebar-new-topic">
+                <input
+                  className="sidebar-new-topic-input"
+                  value={newTopicTitle}
+                  onChange={(e) => setNewTopicTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void handleNewTopic();
+                    if (e.key === 'Escape') { setNewTopic(false); setNewTopicTitle(''); }
+                  }}
+                  placeholder="Topic name"
+                  autoFocus
+                />
+                <button
+                  className={`dm-start-btn ${newTopicTitle.trim() ? 'dm-start-btn-active' : ''}`}
+                  disabled={!newTopicTitle.trim()}
+                  onClick={() => void handleNewTopic()}
+                >
+                  Create
+                </button>
+              </div>
+            )}
             <ul className="sidebar-list">
               {topics.map((t) => (
                 <li
