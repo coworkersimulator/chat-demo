@@ -10,9 +10,31 @@ import './App.css';
 import PgWorker from './db/pglite-worker.ts?worker';
 import { softDeleteExtension } from './db/prisma-soft-delete';
 
-function createDb(pgliteWorker: PGlite) {
-  const adapter = new PrismaPGlite(pgliteWorker);
-  const base = new PrismaClient({ adapter });
+function createDb(pgliteWorker: PGlite, getUserId: () => string) {
+  const factory = new PrismaPGlite(pgliteWorker as any);
+  const adapter = {
+    provider: factory.provider,
+    adapterName: factory.adapterName,
+    async connect() {
+      const conn = await factory.connect();
+      const origStartTransaction = conn.startTransaction.bind(conn);
+      conn.startTransaction = async (isolationLevel?: Parameters<typeof origStartTransaction>[0]) => {
+        const tx = await origStartTransaction(isolationLevel);
+        const userId = getUserId();
+        if (userId) {
+          await (tx as any).executeRaw({
+            sql: `SET LOCAL app.user_id = '${userId}'`,
+            args: [],
+            argTypes: [],
+          });
+        }
+        return tx;
+      };
+      return conn;
+    },
+    connectToShadowDb: () => factory.connectToShadowDb(),
+  };
+  const base = new PrismaClient({ adapter: adapter as any });
   return base.$extends(softDeleteExtension(base));
 }
 type Db = ReturnType<typeof createDb>;
@@ -243,6 +265,9 @@ function App() {
   const [newTopicTitle, setNewTopicTitle] = useState('');
   const [ready, setReady] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
+  const userIdRef = useRef('');
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   const [db, setDb] = useState<Db | null>(null);
 
@@ -252,7 +277,7 @@ function App() {
       { id: 'pglite' },
     ) as unknown as PGlite;
 
-    const db = createDb(pgliteWorker);
+    const db = createDb(pgliteWorker, () => userIdRef.current);
     setDb(db);
 
     return () => {
@@ -518,6 +543,16 @@ function App() {
     }
   }, [messages]);
 
+  useEffect(() => {
+    if (!userDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!userDropdownRef.current?.contains(e.target as Node))
+        setUserDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [userDropdownOpen]);
+
   async function handleSend() {
     if (!db || !draft.trim() || !channelId) return;
     const note = await db.note.create({
@@ -530,10 +565,9 @@ function App() {
     if (dmId) await loadDms(dmId);
   }
 
-  async function handleUserChange(id: string) {
+  function handleUserChange(id: string) {
     setUserId(id);
-    if (!db) return;
-    await db.$executeRawUnsafe(`SET LOCAL app.user_id = '${id}'`);
+    userIdRef.current = id;
   }
 
   if (!ready) {
@@ -550,17 +584,30 @@ function App() {
         <div />
         <span className="app-title">Work Chat</span>
         <div className="app-header-right">
-          <span className="switch-user-label">Switch user:</span>
-          <select
-            value={userId}
-            onChange={(e) => handleUserChange(e.target.value)}
-          >
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name ? `${u.name} (${u.username})` : u.username}
-              </option>
-            ))}
-          </select>
+          <div className="switch-user-wrapper" ref={userDropdownRef}>
+            <button
+              className="switch-user-label"
+              onClick={() => setUserDropdownOpen((v) => !v)}
+            >
+              Switch user: <span className="switch-user-current">{users.find((u) => u.id === userId)?.name ?? users.find((u) => u.id === userId)?.username}</span>
+            </button>
+            {userDropdownOpen && (
+              <div className="switch-user-dropdown">
+                {users.map((u) => (
+                  <div
+                    key={u.id}
+                    className={`switch-user-option${u.id === userId ? ' active' : ''}`}
+                    onClick={() => {
+                      handleUserChange(u.id);
+                      setUserDropdownOpen(false);
+                    }}
+                  >
+                    {u.name ? `${u.name} (${u.username})` : u.username}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className="app-body">
