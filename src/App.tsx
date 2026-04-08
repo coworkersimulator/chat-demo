@@ -1,9 +1,21 @@
+import type { PGlite } from '@electric-sql/pglite';
+import { PGliteWorker } from '@electric-sql/pglite/worker';
 import multiavatar from '@multiavatar/multiavatar';
+import { PrismaClient } from '@prisma/client/edge';
 import { format, isToday, isYesterday } from 'date-fns';
+import { PrismaPGlite } from 'pglite-prisma-adapter';
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './App.css';
-import db from './db/prisma';
+import PgWorker from './db/pglite-worker.ts?worker';
+import { softDeleteExtension } from './db/prisma-soft-delete';
+
+function createDb(pgliteWorker: PGlite) {
+  const adapter = new PrismaPGlite(pgliteWorker);
+  const base = new PrismaClient({ adapter });
+  return base.$extends(softDeleteExtension(base));
+}
+type Db = ReturnType<typeof createDb>;
 
 interface User {
   id: string;
@@ -46,9 +58,11 @@ function formatDivider(date: Date) {
 }
 
 function isSameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() &&
+  return (
+    a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
+    a.getDate() === b.getDate()
+  );
 }
 
 function ReactionPicker({
@@ -230,7 +244,25 @@ function App() {
   const [ready, setReady] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
 
+  const [db, setDb] = useState<Db | null>(null);
+
   useEffect(() => {
+    const pgliteWorker = new PGliteWorker(
+      new PgWorker({ name: 'pglite-worker' }),
+      { id: 'pglite' },
+    ) as unknown as PGlite;
+
+    const db = createDb(pgliteWorker);
+    setDb(db);
+
+    return () => {
+      db.$disconnect();
+      pgliteWorker?.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!db) return;
     db.user
       .findMany({
         select: { id: true, username: true, name: true },
@@ -240,15 +272,17 @@ function App() {
         setUsers(rows);
         if (rows.length > 0) handleUserChange(rows[0].id);
       });
-  }, []);
+  }, [db]);
 
   useEffect(() => {
+    if (!db) return;
     db.reaction
       .findMany({ select: { id: true, emoji: true, name: true } })
       .then(setAllReactions);
-  }, []);
+  }, [db]);
 
   async function loadReactions(messageIds: string[]) {
+    if (!db) return;
     if (messageIds.length === 0) {
       setReactions({});
       return;
@@ -287,6 +321,7 @@ function App() {
     reactionId: string,
     emoji: string,
   ) {
+    if (!db) return;
     const existing = await db.rel.findFirst({
       where: { onNoteId: noteId, asReactionId: reactionId, by: userId },
       select: { id: true, deletedAt: true },
@@ -308,7 +343,7 @@ function App() {
   }
 
   async function loadTopics() {
-    if (!userId) return;
+    if (!db || !userId) return;
     const rels = await db.rel.findMany({
       where: { asTag: { name: ':topic:' } },
       select: { onNote: { select: { id: true, title: true } } },
@@ -326,7 +361,7 @@ function App() {
   }, [userId]);
 
   async function handleNewTopic() {
-    if (!newTopicTitle.trim()) return;
+    if (!db || !newTopicTitle.trim()) return;
     const tag = await db.tag.findFirst({
       where: { name: ':topic:' },
       select: { id: true },
@@ -345,7 +380,7 @@ function App() {
   }
 
   async function loadDms(selectId?: string) {
-    if (!userId) return;
+    if (!db || !userId) return;
     const dmRels = await db.rel.findMany({
       where: {
         asTag: { name: ':dm:' },
@@ -407,7 +442,7 @@ function App() {
   }, [userId]);
 
   async function handleNewDm() {
-    if (newDmSelected.length === 0) return;
+    if (!db || newDmSelected.length === 0) return;
     const title = newDmSelected
       .map((id) => users.find((u) => u.id === id))
       .map((u) => (u ? (u.name ?? u.username) : ''))
@@ -439,6 +474,7 @@ function App() {
   const channelId = topicId ?? dmId;
 
   async function loadMessages(cId: string) {
+    if (!db) return;
     const rels = await db.rel.findMany({
       where: { asNoteId: cId },
       select: {
@@ -483,7 +519,7 @@ function App() {
   }, [messages]);
 
   async function handleSend() {
-    if (!draft.trim() || !channelId) return;
+    if (!db || !draft.trim() || !channelId) return;
     const note = await db.note.create({
       data: { body: draft.trim(), by: userId },
       select: { id: true },
@@ -496,6 +532,7 @@ function App() {
 
   async function handleUserChange(id: string) {
     setUserId(id);
+    if (!db) return;
     await db.$executeRawUnsafe(`SET LOCAL app.user_id = '${id}'`);
   }
 
@@ -583,7 +620,11 @@ function App() {
               Direct Messages
               <button
                 className="sidebar-new-btn"
-                onClick={() => { setNewDm((v) => !v); setNewDmQuery(''); setNewDmSelected([]); }}
+                onClick={() => {
+                  setNewDm((v) => !v);
+                  setNewDmQuery('');
+                  setNewDmSelected([]);
+                }}
               >
                 +
               </button>
@@ -601,7 +642,9 @@ function App() {
                           <button
                             className="dm-chip-remove"
                             onClick={() =>
-                              setNewDmSelected((prev) => prev.filter((x) => x !== id))
+                              setNewDmSelected((prev) =>
+                                prev.filter((x) => x !== id),
+                              )
                             }
                           >
                             ×
@@ -611,7 +654,9 @@ function App() {
                     })}
                     <input
                       className="dm-composer-input"
-                      placeholder={newDmSelected.length === 0 ? 'Search people' : ''}
+                      placeholder={
+                        newDmSelected.length === 0 ? 'Search people' : ''
+                      }
                       value={newDmQuery}
                       onChange={(e) => setNewDmQuery(e.target.value)}
                       autoFocus
@@ -620,10 +665,16 @@ function App() {
                 </div>
                 <ul className="sidebar-list dm-suggestions">
                   {users
-                    .filter((u) => u.id !== userId && !newDmSelected.includes(u.id))
+                    .filter(
+                      (u) => u.id !== userId && !newDmSelected.includes(u.id),
+                    )
                     .filter((u) => {
                       const q = newDmQuery.toLowerCase();
-                      return !q || (u.name ?? u.username).toLowerCase().includes(q) || u.username.toLowerCase().includes(q);
+                      return (
+                        !q ||
+                        (u.name ?? u.username).toLowerCase().includes(q) ||
+                        u.username.toLowerCase().includes(q)
+                      );
                     })
                     .map((u) => (
                       <li
@@ -682,118 +733,121 @@ function App() {
               </div>
             </div>
           ) : (
-          <>
-          <div className="channel-header">
-            {dmId && (
-              <>
-                <span className="channel-title">{dmTitle}</span>
-                {(dms[dmId]?.length ?? 0) > 2 && (
-                  <span className="channel-subtitle">{dms[dmId].length} members</span>
+            <>
+              <div className="channel-header">
+                {dmId && (
+                  <>
+                    <span className="channel-title">{dmTitle}</span>
+                    {(dms[dmId]?.length ?? 0) > 2 && (
+                      <span className="channel-subtitle">
+                        {dms[dmId].length} members
+                      </span>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-            {topicId && (
-              <>
-                <span className="channel-title">
-                  # {topics.find((t) => t.id === topicId)?.title}
-                </span>
-                <span className="channel-subtitle">Topic</span>
-              </>
-            )}
-          </div>
-          <div className="messages" ref={messagesRef}>
-            {messages.map((m, i) => {
-              const name = m.userName ?? m.username;
-              const prev = messages[i - 1];
-              const at = new Date(m.at);
-              const showDivider = !prev || !isSameDay(new Date(prev.at), at);
-              const isContinuation =
-                !showDivider &&
-                prev &&
-                prev.authorId === m.authorId &&
-                at.getTime() - new Date(prev.at).getTime() < 5 * 60 * 1000;
-              const reactionBar = (
-                <ReactionBar
-                  noteId={m.id}
-                  reactions={reactions[m.id] ?? []}
-                  allReactions={allReactions}
-                  pickerFor={pickerFor}
-                  setPickerFor={setPickerFor}
-                  onToggle={toggleReaction}
-                />
-              );
-              return (
-                <Fragment key={m.id}>
-                  {showDivider && (
-                    <div className="date-divider">
-                      <span>{formatDivider(at)}</span>
-                    </div>
-                  )}
-                  {isContinuation ? (
-                    <div className="message message-continuation">
-                      <div className="message-continuation-time">
-                        {formatAt(at)}
-                      </div>
-                      <p className="message-body">{m.body}</p>
-                      {reactionBar}
-                    </div>
-                  ) : (
-                    <div className="message">
-                      <img
-                        src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.authorId))}`}
-                        width={36}
-                        height={36}
-                        className="message-avatar"
-                      />
-                      <div className="message-content">
-                        <div className="message-meta">
-                          <span className="message-author">{name}</span>
-                          <span className="message-time">
-                            {formatAt(at)}
-                          </span>
-                        </div>
-                        <p className="message-body">{m.body}</p>
-                        {reactionBar}
-                      </div>
-                    </div>
-                  )}
-                </Fragment>
-              );
-            })}
-          </div>
-          <div className="message-entry">
-            <div className="message-entry-box">
-              <textarea
-                className="message-input"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    void handleSend();
-                  }
-                }}
-                placeholder={
-                  topicId
-                    ? `Message #${topics.find((t) => t.id === topicId)?.title ?? ''}`
-                    : dmTitle
-                    ? `Message ${dmTitle}`
-                    : 'Message'
-                }
-                rows={1}
-              />
-              <div className="message-entry-toolbar">
-                <button
-                  className={`send-button ${draft.trim() ? 'send-button-active' : ''}`}
-                  disabled={!draft.trim()}
-                  onClick={() => void handleSend()}
-                >
-                  &#9658;
-                </button>
+                {topicId && (
+                  <>
+                    <span className="channel-title">
+                      # {topics.find((t) => t.id === topicId)?.title}
+                    </span>
+                    <span className="channel-subtitle">Topic</span>
+                  </>
+                )}
               </div>
-            </div>
-          </div>
-          </>
+              <div className="messages" ref={messagesRef}>
+                {messages.map((m, i) => {
+                  const name = m.userName ?? m.username;
+                  const prev = messages[i - 1];
+                  const at = new Date(m.at);
+                  const showDivider =
+                    !prev || !isSameDay(new Date(prev.at), at);
+                  const isContinuation =
+                    !showDivider &&
+                    prev &&
+                    prev.authorId === m.authorId &&
+                    at.getTime() - new Date(prev.at).getTime() < 5 * 60 * 1000;
+                  const reactionBar = (
+                    <ReactionBar
+                      noteId={m.id}
+                      reactions={reactions[m.id] ?? []}
+                      allReactions={allReactions}
+                      pickerFor={pickerFor}
+                      setPickerFor={setPickerFor}
+                      onToggle={toggleReaction}
+                    />
+                  );
+                  return (
+                    <Fragment key={m.id}>
+                      {showDivider && (
+                        <div className="date-divider">
+                          <span>{formatDivider(at)}</span>
+                        </div>
+                      )}
+                      {isContinuation ? (
+                        <div className="message message-continuation">
+                          <div className="message-continuation-time">
+                            {formatAt(at)}
+                          </div>
+                          <p className="message-body">{m.body}</p>
+                          {reactionBar}
+                        </div>
+                      ) : (
+                        <div className="message">
+                          <img
+                            src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.authorId))}`}
+                            width={36}
+                            height={36}
+                            className="message-avatar"
+                          />
+                          <div className="message-content">
+                            <div className="message-meta">
+                              <span className="message-author">{name}</span>
+                              <span className="message-time">
+                                {formatAt(at)}
+                              </span>
+                            </div>
+                            <p className="message-body">{m.body}</p>
+                            {reactionBar}
+                          </div>
+                        </div>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </div>
+              <div className="message-entry">
+                <div className="message-entry-box">
+                  <textarea
+                    className="message-input"
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        void handleSend();
+                      }
+                    }}
+                    placeholder={
+                      topicId
+                        ? `Message #${topics.find((t) => t.id === topicId)?.title ?? ''}`
+                        : dmTitle
+                          ? `Message ${dmTitle}`
+                          : 'Message'
+                    }
+                    rows={1}
+                  />
+                  <div className="message-entry-toolbar">
+                    <button
+                      className={`send-button ${draft.trim() ? 'send-button-active' : ''}`}
+                      disabled={!draft.trim()}
+                      onClick={() => void handleSend()}
+                    >
+                      &#9658;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
