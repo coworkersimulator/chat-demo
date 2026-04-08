@@ -1,3 +1,4 @@
+import multiavatar from '@multiavatar/multiavatar';
 import { format, isToday, isYesterday } from 'date-fns';
 import { sql } from 'kysely';
 import { useEffect, useRef, useState } from 'react';
@@ -32,16 +33,6 @@ interface Message {
   userName: string | null;
 }
 
-const AVATAR_COLORS = [
-  '#e8a838', '#e01e5a', '#36c5f0', '#2eb67d',
-  '#ecb22e', '#7c3aed', '#0ea5e9', '#f97316',
-];
-
-function avatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
 
 function formatAt(date: Date) {
   if (isToday(date)) return format(date, 'p');
@@ -241,7 +232,12 @@ function App() {
               </div>
             ) : (
               <div key={m.id} className="message">
-                <div className="message-avatar" style={{ background: avatarColor(name) }}>{name[0]}</div>
+                <img
+                  src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.authorId))}`}
+                  width={28}
+                  height={28}
+                  style={{ borderRadius: 4, flexShrink: 0 }}
+                />
                 <div className="message-content">
                   <div className="message-meta">
                     <span className="message-author">{name}</span>
