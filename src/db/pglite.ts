@@ -12,7 +12,19 @@ const migrations = import.meta.glob('../db/migrations/client/*.sql', {
   eager: true,
 }) as Record<string, string>;
 
+let currentVersion = '0000';
+try {
+  const result = await pglite.query<{ version: string }>(
+    'SELECT version FROM migration ORDER BY version DESC LIMIT 1',
+  );
+  if (result.rows.length > 0) currentVersion = result.rows[0].version;
+} catch {
+  // migration table doesn't exist yet — run all migrations
+}
+
 for (const path of Object.keys(migrations).sort()) {
+  const fileVersion = (path.split('/').pop() ?? '').slice(0, 4);
+  if (fileVersion <= currentVersion) continue;
   await pglite.exec(migrations[path]);
 }
 

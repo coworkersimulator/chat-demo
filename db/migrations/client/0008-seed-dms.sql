@@ -1,3 +1,5 @@
+INSERT INTO migration (version) VALUES ('0008');
+
 DO $$
 DECLARE
   tag_dm uuid;

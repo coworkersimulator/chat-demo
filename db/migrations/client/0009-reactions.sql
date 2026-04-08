@@ -1,3 +1,5 @@
+INSERT INTO migration (version) VALUES ('0009');
+
 INSERT INTO reaction (emoji, name) VALUES
   -- Smileys & emotion
   ('😀', 'grinning'), ('😃', 'smiley'), ('😄', 'smile'), ('😁', 'grin'), ('😆', 'laughing'), ('😅', 'sweat_smile'), ('🤣', 'rofl'), ('😂', 'joy'), ('🙂', 'slightly_smiling_face'), ('🙃', 'upside_down_face'),

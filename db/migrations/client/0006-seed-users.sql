@@ -1,3 +1,5 @@
+INSERT INTO migration (version) VALUES ('0006');
+
 INSERT INTO "user" (username, name) VALUES
   ('amara.osei',        'Amara Osei'),
   ('fatima_z',          'Fatima Zahra'),

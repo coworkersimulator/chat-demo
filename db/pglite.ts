@@ -12,7 +12,19 @@ const files = fs
   .readdirSync(migrationDir)
   .filter((f) => f.endsWith('.sql'))
   .sort();
+let currentVersion = '0000';
+try {
+  const result = await pglite.query<{ version: string }>(
+    'SELECT version FROM migration ORDER BY version DESC LIMIT 1',
+  );
+  if (result.rows.length > 0) currentVersion = result.rows[0].version;
+} catch {
+  // migration table doesn't exist yet — run all migrations
+}
+
 for (const file of files) {
+  const fileVersion = file.slice(0, 4);
+  if (fileVersion <= currentVersion) continue;
   const sql = fs.readFileSync(`${migrationDir}/${file}`).toString();
   await pglite.exec(sql);
 }

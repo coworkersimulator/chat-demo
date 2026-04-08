@@ -1,3 +1,5 @@
+INSERT INTO migration (version) VALUES ('0007');
+
 INSERT INTO tag (name) VALUES (':topic:'), (':dm:');
 
 
