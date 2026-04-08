@@ -33,14 +33,20 @@ interface Message {
   userName: string | null;
 }
 
-
 function formatAt(date: Date) {
   if (isToday(date)) return format(date, 'p');
   if (isYesterday(date)) return `Yesterday at ${format(date, 'p')}`;
   return format(date, 'MMM d, p');
 }
 
-function ReactionBar({ noteId, reactions, allReactions, pickerFor, setPickerFor, onToggle }: {
+function ReactionBar({
+  noteId,
+  reactions,
+  allReactions,
+  pickerFor,
+  setPickerFor,
+  onToggle,
+}: {
   noteId: string;
   reactions: { emoji: string; count: number; mine: boolean }[];
   allReactions: { id: string; emoji: string; name: string }[];
@@ -62,13 +68,20 @@ function ReactionBar({ noteId, reactions, allReactions, pickerFor, setPickerFor,
           {r.emoji} {r.count}
         </button>
       ))}
-      <button className="reaction-add-btn" onClick={() => setPickerFor(pickerFor === noteId ? null : noteId)}>
+      <button
+        className="reaction-add-btn"
+        onClick={() => setPickerFor(pickerFor === noteId ? null : noteId)}
+      >
         &#x1F642;
       </button>
       {pickerFor === noteId && (
         <div className="reaction-picker">
           {allReactions.map((r) => (
-            <button key={r.id} className="reaction-picker-emoji" onClick={() => onToggle(noteId, r.id, r.emoji)}>
+            <button
+              key={r.id}
+              className="reaction-picker-emoji"
+              onClick={() => onToggle(noteId, r.id, r.emoji)}
+            >
               {r.emoji}
             </button>
           ))}
@@ -87,8 +100,12 @@ function App() {
   const [dmId, setDmId] = useState<string | null>(null);
   const [dmTitle, setDmTitle] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [reactions, setReactions] = useState<Record<string, { emoji: string; count: number; mine: boolean }[]>>({});
-  const [allReactions, setAllReactions] = useState<{ id: string; emoji: string; name: string }[]>([]);
+  const [reactions, setReactions] = useState<
+    Record<string, { emoji: string; count: number; mine: boolean }[]>
+  >({});
+  const [allReactions, setAllReactions] = useState<
+    { id: string; emoji: string; name: string }[]
+  >([]);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [newDm, setNewDm] = useState(false);
@@ -109,30 +126,48 @@ function App() {
   }, []);
 
   useEffect(() => {
-    db.selectFrom('reaction').select(['id', 'emoji', 'name']).execute().then(setAllReactions);
+    db.selectFrom('reaction')
+      .select(['id', 'emoji', 'name'])
+      .execute()
+      .then(setAllReactions);
   }, []);
 
   async function loadReactions(messageIds: string[]) {
-    if (messageIds.length === 0) { setReactions({}); return; }
+    if (messageIds.length === 0) {
+      setReactions({});
+      return;
+    }
     const rows = await db
       .selectFrom('rel as r')
-      .innerJoin('reaction as rx', (join) => join.onRef('rx.id', '=', 'r.asReactionId'))
+      .innerJoin('reaction as rx', (join) =>
+        join.onRef('rx.id', '=', 'r.asReactionId'),
+      )
       .where('r.onNoteId', 'in', messageIds)
       .where('r.asReactionId', 'is not', null)
       .select(['r.onNoteId as noteId', 'rx.emoji as emoji', 'r.by'])
       .execute();
-    const grouped: Record<string, { emoji: string; count: number; mine: boolean }[]> = {};
+    const grouped: Record<
+      string,
+      { emoji: string; count: number; mine: boolean }[]
+    > = {};
     for (const row of rows) {
       if (!row.noteId) continue;
-      const existing = grouped[row.noteId] ??= [];
+      const existing = (grouped[row.noteId] ??= []);
       const slot = existing.find((e) => e.emoji === row.emoji);
-      if (slot) { slot.count++; if (row.by === userId) slot.mine = true; }
-      else existing.push({ emoji: row.emoji, count: 1, mine: row.by === userId });
+      if (slot) {
+        slot.count++;
+        if (row.by === userId) slot.mine = true;
+      } else
+        existing.push({ emoji: row.emoji, count: 1, mine: row.by === userId });
     }
     setReactions(grouped);
   }
 
-  async function toggleReaction(noteId: string, reactionId: string, emoji: string) {
+  async function toggleReaction(
+    noteId: string,
+    reactionId: string,
+    emoji: string,
+  ) {
     const existing = await db
       .selectFrom('rel')
       .where('onNoteId', '=', noteId)
@@ -141,9 +176,14 @@ function App() {
       .select('id')
       .executeTakeFirst();
     if (existing) {
-      await db.deleteFrom('rel').where('id', '=', existing.id).execute();
+      await sql`UPDATE rel SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${existing.id} AND deleted_at IS NULL`.execute(
+        db,
+      );
     } else {
-      await db.insertInto('rel').values({ onNoteId: noteId, asReactionId: reactionId, by: userId }).execute();
+      await db
+        .insertInto('rel')
+        .values({ onNoteId: noteId, asReactionId: reactionId, by: userId })
+        .execute();
     }
     setPickerFor(null);
     await loadReactions(messages.map((m) => m.id));
@@ -180,7 +220,10 @@ function App() {
       .returning('id')
       .executeTakeFirst();
     if (!note) return;
-    await db.insertInto('rel').values({ onNoteId: note.id, asTagId: tag.id }).execute();
+    await db
+      .insertInto('rel')
+      .values({ onNoteId: note.id, asTagId: tag.id })
+      .execute();
     setNewTopic(false);
     setNewTopicTitle('');
     await loadTopics();
@@ -235,7 +278,7 @@ function App() {
     if (newDmSelected.length === 0) return;
     const title = newDmSelected
       .map((id) => users.find((u) => u.id === id))
-      .map((u) => u ? (u.name ?? u.username) : '')
+      .map((u) => (u ? (u.name ?? u.username) : ''))
       .sort()
       .join(', ');
     setDmTitle(title);
@@ -251,11 +294,14 @@ function App() {
       .returning('id')
       .executeTakeFirst();
     if (!note) return;
-    await db.insertInto('rel').values([
-      { onNoteId: note.id, asTagId: tag.id },
-      { onNoteId: note.id, asUserId: userId },
-      ...newDmSelected.map((id) => ({ onNoteId: note.id, asUserId: id })),
-    ]).execute();
+    await db
+      .insertInto('rel')
+      .values([
+        { onNoteId: note.id, asTagId: tag.id },
+        { onNoteId: note.id, asUserId: userId },
+        ...newDmSelected.map((id) => ({ onNoteId: note.id, asUserId: id })),
+      ])
+      .execute();
     setNewDm(false);
     setNewDmSelected([]);
     setTopicId(null);
@@ -271,7 +317,14 @@ function App() {
       .where('r.asNoteId', '=', channelId)
       .innerJoin('note as n', (join) => join.onRef('n.id', '=', 'r.onNoteId'))
       .innerJoin('user as u', (join) => join.onRef('u.id', '=', 'n.by'))
-      .select(['n.id', 'n.body', 'n.at', 'u.id as authorId', 'u.username', 'u.name as userName'])
+      .select([
+        'n.id',
+        'n.body',
+        'n.at',
+        'u.id as authorId',
+        'u.username',
+        'u.name as userName',
+      ])
       .orderBy('n.at', 'asc');
     void q.execute().then((rows) => {
       const msgs = rows as Message[];
@@ -304,7 +357,14 @@ function App() {
       .where('r.asNoteId', '=', channelId)
       .innerJoin('note as n', (join) => join.onRef('n.id', '=', 'r.onNoteId'))
       .innerJoin('user as u', (join) => join.onRef('u.id', '=', 'n.by'))
-      .select(['n.id', 'n.body', 'n.at', 'u.id as authorId', 'u.username', 'u.name as userName'])
+      .select([
+        'n.id',
+        'n.body',
+        'n.at',
+        'u.id as authorId',
+        'u.username',
+        'u.name as userName',
+      ])
       .orderBy('n.at', 'asc')
       .execute();
     const msgs = rows as Message[];
@@ -342,7 +402,12 @@ function App() {
           <div className="sidebar-section">
             <div className="sidebar-section-header">
               Topics
-              <button className="sidebar-new-btn" onClick={() => setNewTopic((v) => !v)}>+</button>
+              <button
+                className="sidebar-new-btn"
+                onClick={() => setNewTopic((v) => !v)}
+              >
+                +
+              </button>
             </div>
             {newTopic && (
               <div className="sidebar-new-topic">
@@ -352,7 +417,10 @@ function App() {
                   onChange={(e) => setNewTopicTitle(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') void handleNewTopic();
-                    if (e.key === 'Escape') { setNewTopic(false); setNewTopicTitle(''); }
+                    if (e.key === 'Escape') {
+                      setNewTopic(false);
+                      setNewTopicTitle('');
+                    }
                   }}
                   placeholder="Topic name"
                   autoFocus
@@ -370,7 +438,10 @@ function App() {
               {topics.map((t) => (
                 <li
                   key={t.id}
-                  onClick={() => { setTopicId(t.id); setDmId(null); }}
+                  onClick={() => {
+                    setTopicId(t.id);
+                    setDmId(null);
+                  }}
                   className={t.id === topicId ? 'active' : undefined}
                 >
                   {t.title}
@@ -381,7 +452,12 @@ function App() {
           <div className="sidebar-section">
             <div className="sidebar-section-header">
               Direct Messages
-              <button className="sidebar-new-btn" onClick={() => setNewDm((v) => !v)}>+</button>
+              <button
+                className="sidebar-new-btn"
+                onClick={() => setNewDm((v) => !v)}
+              >
+                +
+              </button>
             </div>
             {newDm && (
               <div className="sidebar-user-picker">
@@ -398,7 +474,9 @@ function App() {
                               : [...prev, u.id],
                           )
                         }
-                        className={newDmSelected.includes(u.id) ? 'active' : undefined}
+                        className={
+                          newDmSelected.includes(u.id) ? 'active' : undefined
+                        }
                       >
                         {u.name ? `${u.name} (${u.username})` : u.username}
                       </li>
@@ -421,7 +499,11 @@ function App() {
                     setDmId(noteId);
                     setTopicId(null);
                     setDmTitle(
-                      rows.filter((r) => r.userId !== userId).map((r) => r.userName ?? r.username).sort().join(', ')
+                      rows
+                        .filter((r) => r.userId !== userId)
+                        .map((r) => r.userName ?? r.username)
+                        .sort()
+                        .join(', '),
                     );
                   }}
                   className={noteId === dmId ? 'active' : undefined}
@@ -445,49 +527,55 @@ function App() {
               </span>
             )}
           </div>
-        <div className="messages" ref={messagesRef}>
-          {messages.map((m, i) => {
-            const name = m.userName ?? m.username;
-            const prev = messages[i - 1];
-            const isContinuation = prev &&
-              prev.authorId === m.authorId &&
-              new Date(m.at).getTime() - new Date(prev.at).getTime() < 5 * 60 * 1000;
-            const reactionBar = (
-              <ReactionBar
-                noteId={m.id}
-                reactions={reactions[m.id] ?? []}
-                allReactions={allReactions}
-                pickerFor={pickerFor}
-                setPickerFor={setPickerFor}
-                onToggle={toggleReaction}
-              />
-            );
-            return isContinuation ? (
-              <div key={m.id} className="message message-continuation">
-                <div className="message-continuation-time">{formatAt(new Date(m.at))}</div>
-                <p className="message-body">{m.body}</p>
-                {reactionBar}
-              </div>
-            ) : (
-              <div key={m.id} className="message">
-                <img
-                  src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.authorId))}`}
-                  width={28}
-                  height={28}
-                  className="message-avatar"
+          <div className="messages" ref={messagesRef}>
+            {messages.map((m, i) => {
+              const name = m.userName ?? m.username;
+              const prev = messages[i - 1];
+              const isContinuation =
+                prev &&
+                prev.authorId === m.authorId &&
+                new Date(m.at).getTime() - new Date(prev.at).getTime() <
+                  5 * 60 * 1000;
+              const reactionBar = (
+                <ReactionBar
+                  noteId={m.id}
+                  reactions={reactions[m.id] ?? []}
+                  allReactions={allReactions}
+                  pickerFor={pickerFor}
+                  setPickerFor={setPickerFor}
+                  onToggle={toggleReaction}
                 />
-                <div className="message-content">
-                  <div className="message-meta">
-                    <span className="message-author">{name}</span>
-                    <span className="message-time">{formatAt(new Date(m.at))}</span>
+              );
+              return isContinuation ? (
+                <div key={m.id} className="message message-continuation">
+                  <div className="message-continuation-time">
+                    {formatAt(new Date(m.at))}
                   </div>
                   <p className="message-body">{m.body}</p>
                   {reactionBar}
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              ) : (
+                <div key={m.id} className="message">
+                  <img
+                    src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.authorId))}`}
+                    width={28}
+                    height={28}
+                    className="message-avatar"
+                  />
+                  <div className="message-content">
+                    <div className="message-meta">
+                      <span className="message-author">{name}</span>
+                      <span className="message-time">
+                        {formatAt(new Date(m.at))}
+                      </span>
+                    </div>
+                    <p className="message-body">{m.body}</p>
+                    {reactionBar}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           <div className="message-entry">
             <div className="message-entry-box">
               <textarea

@@ -48,7 +48,7 @@ BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id THEN
     RAISE EXCEPTION 'user.id cannot be modified';
   END IF;
-  IF NEW.by IS DISTINCT FROM OLD.by THEN
+  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
     RAISE EXCEPTION 'user.by cannot be modified';
   END IF;
   IF NEW.at IS DISTINCT FROM OLD.at THEN
@@ -70,7 +70,7 @@ BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id THEN
     RAISE EXCEPTION 'role.id cannot be modified';
   END IF;
-  IF NEW.by IS DISTINCT FROM OLD.by THEN
+  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
     RAISE EXCEPTION 'role.by cannot be modified';
   END IF;
   IF NEW.at IS DISTINCT FROM OLD.at THEN
@@ -92,7 +92,7 @@ BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id THEN
     RAISE EXCEPTION 'tag.id cannot be modified';
   END IF;
-  IF NEW.by IS DISTINCT FROM OLD.by THEN
+  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
     RAISE EXCEPTION 'tag.by cannot be modified';
   END IF;
   IF NEW.at IS DISTINCT FROM OLD.at THEN
@@ -114,7 +114,7 @@ BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id THEN
     RAISE EXCEPTION 'reaction.id cannot be modified';
   END IF;
-  IF NEW.by IS DISTINCT FROM OLD.by THEN
+  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
     RAISE EXCEPTION 'reaction.by cannot be modified';
   END IF;
   IF NEW.at IS DISTINCT FROM OLD.at THEN
@@ -136,7 +136,7 @@ BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id THEN
     RAISE EXCEPTION 'note.id cannot be modified';
   END IF;
-  IF NEW.by IS DISTINCT FROM OLD.by THEN
+  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
     RAISE EXCEPTION 'note.by cannot be modified';
   END IF;
   IF NEW.at IS DISTINCT FROM OLD.at THEN
@@ -158,7 +158,7 @@ BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id THEN
     RAISE EXCEPTION 'file.id cannot be modified';
   END IF;
-  IF NEW.by IS DISTINCT FROM OLD.by THEN
+  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
     RAISE EXCEPTION 'file.by cannot be modified';
   END IF;
   IF NEW.at IS DISTINCT FROM OLD.at THEN
@@ -183,7 +183,7 @@ BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id THEN
     RAISE EXCEPTION 'rel.id cannot be modified';
   END IF;
-  IF NEW.by IS DISTINCT FROM OLD.by THEN
+  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
     RAISE EXCEPTION 'rel.by cannot be modified';
   END IF;
   IF NEW.at IS DISTINCT FROM OLD.at THEN
