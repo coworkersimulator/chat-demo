@@ -1,7 +1,8 @@
 import multiavatar from '@multiavatar/multiavatar';
 import { format, isToday, isYesterday } from 'date-fns';
 import { sql } from 'kysely';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './App.css';
 import db from './db/db';
 
@@ -39,6 +40,88 @@ function formatAt(date: Date) {
   return format(date, 'MMM d, p');
 }
 
+function ReactionPicker({ anchor, noteId, allReactions, onToggle, onClose }: {
+  anchor: HTMLElement | null;
+  noteId: string;
+  allReactions: { id: string; emoji: string; name: string }[];
+  onToggle: (noteId: string, reactionId: string, emoji: string) => void;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const [style, setStyle] = useState<React.CSSProperties>({ visibility: 'hidden', top: 0, left: 0 });
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  useLayoutEffect(() => {
+    if (!anchor || !pickerRef.current) return;
+    const btn = anchor.getBoundingClientRect();
+    const pw = pickerRef.current.offsetWidth;
+    const ph = pickerRef.current.offsetHeight;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let top = btn.top - ph - 6;
+    if (top < 8) top = btn.bottom + 6;
+    if (top + ph > vh - 8) top = vh - ph - 8;
+    let left = btn.left;
+    if (left + pw > vw - 8) left = vw - pw - 8;
+    if (left < 8) left = 8;
+    setStyle({ visibility: 'visible', top, left });
+  }, [anchor]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        pickerRef.current && !pickerRef.current.contains(e.target as Node) &&
+        anchor && !anchor.contains(e.target as Node)
+      ) onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [anchor, onClose]);
+
+  const normalized = query.trim().toLowerCase().replace(/\s+/g, '_');
+  const filtered = normalized
+    ? allReactions.filter((r) => r.name.includes(normalized))
+    : allReactions;
+
+  return createPortal(
+    <div ref={pickerRef} className="reaction-picker" style={{ position: 'fixed', ...style }}>
+      <div className="reaction-picker-search">
+        <input
+          ref={inputRef}
+          className="reaction-picker-input"
+          placeholder="Search emoji"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') onClose();
+            if (e.key === 'Enter' && filtered.length > 0)
+              onToggle(noteId, filtered[0].id, filtered[0].emoji);
+          }}
+        />
+      </div>
+      <div className="reaction-picker-grid">
+        {filtered.slice(0, 100).map((r) => (
+          <button
+            key={r.id}
+            className="reaction-picker-emoji"
+            title={`:${r.name}:`}
+            onClick={() => onToggle(noteId, r.id, r.emoji)}
+          >
+            {r.emoji}
+          </button>
+        ))}
+        {filtered.length === 0 && (
+          <div className="reaction-picker-empty">No results</div>
+        )}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function ReactionBar({
   noteId,
   reactions,
@@ -54,12 +137,14 @@ function ReactionBar({
   setPickerFor: (id: string | null) => void;
   onToggle: (noteId: string, reactionId: string, emoji: string) => void;
 }) {
+  const addBtnRef = useRef<HTMLButtonElement>(null);
   return (
     <div className="reaction-bar">
       {reactions.map((r) => (
         <button
           key={r.emoji}
           className={`reaction-chip ${r.mine ? 'reaction-chip-mine' : ''}`}
+          title={`:${allReactions.find((x) => x.emoji === r.emoji)?.name}:`}
           onClick={() => {
             const ar = allReactions.find((x) => x.emoji === r.emoji);
             if (ar) onToggle(noteId, ar.id, r.emoji);
@@ -69,23 +154,20 @@ function ReactionBar({
         </button>
       ))}
       <button
+        ref={addBtnRef}
         className="reaction-add-btn"
         onClick={() => setPickerFor(pickerFor === noteId ? null : noteId)}
       >
         &#x1F642;
       </button>
       {pickerFor === noteId && (
-        <div className="reaction-picker">
-          {allReactions.map((r) => (
-            <button
-              key={r.id}
-              className="reaction-picker-emoji"
-              onClick={() => onToggle(noteId, r.id, r.emoji)}
-            >
-              {r.emoji}
-            </button>
-          ))}
-        </div>
+        <ReactionPicker
+          anchor={addBtnRef.current}
+          noteId={noteId}
+          allReactions={allReactions}
+          onToggle={(nid, rid, emoji) => { onToggle(nid, rid, emoji); }}
+          onClose={() => setPickerFor(null)}
+        />
       )}
     </div>
   );
