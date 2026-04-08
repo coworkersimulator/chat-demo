@@ -38,10 +38,19 @@ function App() {
   }, []);
 
   useEffect(() => {
-    db.selectFrom('relation as r').innerJoin('note as n', (join) =>
-      join.onRef('n.id', '=', 'r.onNoteId'),
-    );
-  }, []);
+    if (!userId) return;
+    // const q = db
+    //   .selectFrom('tag as t')
+    //   .where('t.name', '=', ':dm:')
+    //   .innerJoin('relation as rtn', (join) =>
+    //     join.onRef('rtn.toTagId', '=', 't.id'),
+    //   )
+    //   .innerJoin('relation as rn', (join) =>
+    //     join.onRef('rn.toNoteId', '=', 'rtn.onNoteId'),
+    //   )
+    //   .select(['rtn.onNoteId', 't.name']);
+    // q.execute().then(console.log);
+  }, [userId]);
 
   async function handleUserChange(id: string) {
     setUserId(id);

@@ -36,8 +36,8 @@ CREATE TRIGGER _file_bump_seq
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER _relation_bump_seq
-  BEFORE UPDATE ON relation
+CREATE TRIGGER _rel_bump_seq
+  BEFORE UPDATE ON rel
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
@@ -177,62 +177,62 @@ CREATE TRIGGER file_guard_immutable
   EXECUTE FUNCTION guard_file_immutable();
 
 
-CREATE OR REPLACE FUNCTION guard_relation_immutable()
+CREATE OR REPLACE FUNCTION guard_rel_immutable()
 RETURNS trigger AS $$
 BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id THEN
-    RAISE EXCEPTION 'relation.id cannot be modified';
+    RAISE EXCEPTION 'rel.id cannot be modified';
   END IF;
   IF NEW.by IS DISTINCT FROM OLD.by THEN
-    RAISE EXCEPTION 'relation.by cannot be modified';
+    RAISE EXCEPTION 'rel.by cannot be modified';
   END IF;
   IF NEW.at IS DISTINCT FROM OLD.at THEN
-    RAISE EXCEPTION 'relation.at cannot be modified';
+    RAISE EXCEPTION 'rel.at cannot be modified';
   END IF;
   IF NEW.on_user_id IS DISTINCT FROM OLD.on_user_id THEN
-    RAISE EXCEPTION 'relation.on_user_id cannot be modified';
+    RAISE EXCEPTION 'rel.on_user_id cannot be modified';
   END IF;
   IF NEW.on_role_id IS DISTINCT FROM OLD.on_role_id THEN
-    RAISE EXCEPTION 'relation.on_role_id cannot be modified';
+    RAISE EXCEPTION 'rel.on_role_id cannot be modified';
   END IF;
   IF NEW.on_tag_id IS DISTINCT FROM OLD.on_tag_id THEN
-    RAISE EXCEPTION 'relation.on_tag_id cannot be modified';
+    RAISE EXCEPTION 'rel.on_tag_id cannot be modified';
   END IF;
   IF NEW.on_note_id IS DISTINCT FROM OLD.on_note_id THEN
-    RAISE EXCEPTION 'relation.on_note_id cannot be modified';
+    RAISE EXCEPTION 'rel.on_note_id cannot be modified';
   END IF;
   IF NEW.on_file_id IS DISTINCT FROM OLD.on_file_id THEN
-    RAISE EXCEPTION 'relation.on_file_id cannot be modified';
+    RAISE EXCEPTION 'rel.on_file_id cannot be modified';
   END IF;
-  IF NEW.on_relation IS DISTINCT FROM OLD.on_relation THEN
-    RAISE EXCEPTION 'relation.on_relation cannot be modified';
+  IF NEW.on_rel_id IS DISTINCT FROM OLD.on_rel_id THEN
+    RAISE EXCEPTION 'rel.on_rel_id cannot be modified';
   END IF;
-  IF NEW.to_user_id IS DISTINCT FROM OLD.to_user_id THEN
-    RAISE EXCEPTION 'relation.to_user_id cannot be modified';
+  IF NEW.as_user_id IS DISTINCT FROM OLD.as_user_id THEN
+    RAISE EXCEPTION 'rel.as_user_id cannot be modified';
   END IF;
-  IF NEW.to_role_id IS DISTINCT FROM OLD.to_role_id THEN
-    RAISE EXCEPTION 'relation.to_role_id cannot be modified';
+  IF NEW.as_role_id IS DISTINCT FROM OLD.as_role_id THEN
+    RAISE EXCEPTION 'rel.as_role_id cannot be modified';
   END IF;
-  IF NEW.to_tag_id IS DISTINCT FROM OLD.to_tag_id THEN
-    RAISE EXCEPTION 'relation.to_tag_id cannot be modified';
+  IF NEW.as_tag_id IS DISTINCT FROM OLD.as_tag_id THEN
+    RAISE EXCEPTION 'rel.as_tag_id cannot be modified';
   END IF;
-  IF NEW.to_note_id IS DISTINCT FROM OLD.to_note_id THEN
-    RAISE EXCEPTION 'relation.to_note_id cannot be modified';
+  IF NEW.as_note_id IS DISTINCT FROM OLD.as_note_id THEN
+    RAISE EXCEPTION 'rel.as_note_id cannot be modified';
   END IF;
-  IF NEW.to_file_id IS DISTINCT FROM OLD.to_file_id THEN
-    RAISE EXCEPTION 'relation.to_file_id cannot be modified';
+  IF NEW.as_file_id IS DISTINCT FROM OLD.as_file_id THEN
+    RAISE EXCEPTION 'rel.as_file_id cannot be modified';
   END IF;
-  IF NEW.to_relation IS DISTINCT FROM OLD.to_relation THEN
-    RAISE EXCEPTION 'relation.to_relation cannot be modified';
+  IF NEW.as_rel_id IS DISTINCT FROM OLD.as_rel_id THEN
+    RAISE EXCEPTION 'rel.as_rel_id cannot be modified';
   END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER relation_guard_immutable
-  BEFORE UPDATE ON relation
+CREATE TRIGGER rel_guard_immutable
+  BEFORE UPDATE ON rel
   FOR EACH ROW
-  EXECUTE FUNCTION guard_relation_immutable();
+  EXECUTE FUNCTION guard_rel_immutable();
 
 
 CREATE OR REPLACE FUNCTION log_change()
@@ -265,8 +265,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER relation_log_change
-  BEFORE UPDATE ON relation
+CREATE TRIGGER rel_log_change
+  BEFORE UPDATE ON rel
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
 
@@ -301,12 +301,12 @@ CREATE TRIGGER file_log_change
   EXECUTE FUNCTION log_change();
 
 
-CREATE OR REPLACE FUNCTION guard_role_relation()
+CREATE OR REPLACE FUNCTION guard_role_rel()
 RETURNS trigger AS $$
 BEGIN
-  IF NEW.to_role_id IS NOT NULL THEN
-    IF EXISTS (SELECT 1 FROM role WHERE id = NEW.to_role_id AND deleted_at IS NOT NULL) THEN
-      RAISE EXCEPTION 'cannot assign a deleted role, got to_role_id=%', NEW.to_role_id;
+  IF NEW.as_role_id IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM role WHERE id = NEW.as_role_id AND deleted_at IS NOT NULL) THEN
+      RAISE EXCEPTION 'cannot assign a deleted role, got as_role_id=%', NEW.as_role_id;
     END IF;
     IF NOT EXISTS (SELECT 1 FROM "user" WHERE id = NEW.on_user_id AND deleted_at IS NULL) THEN
       RAISE EXCEPTION 'a role can only be assigned to an active user, got on_user_id=%', NEW.on_user_id;
@@ -317,10 +317,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER relation_guard_role
-  BEFORE INSERT OR UPDATE ON relation
+CREATE TRIGGER rel_guard_role
+  BEFORE INSERT OR UPDATE ON rel
   FOR EACH ROW
-  EXECUTE FUNCTION guard_role_relation();
+  EXECUTE FUNCTION guard_role_rel();
 
 
 
@@ -328,8 +328,8 @@ CREATE OR REPLACE FUNCTION check_admin()
 RETURNS boolean AS $$
   SELECT EXISTS (
     SELECT 1
-    FROM relation r
-    JOIN role ro ON ro.id = r.to_role_id
+    FROM rel r
+    JOIN role ro ON ro.id = r.as_role_id
     JOIN "user" u ON u.id = r.on_user_id
     WHERE r.on_user_id = current_setting('app.user_id', true)::uuid
       AND ro.name = 'admin'
@@ -426,11 +426,11 @@ CREATE TRIGGER role_guard_create
 CREATE OR REPLACE FUNCTION guard_role_assignment()
 RETURNS trigger AS $$
 BEGIN
-  IF NEW.to_role_id IS NOT NULL THEN
+  IF NEW.as_role_id IS NOT NULL THEN
     IF EXISTS (
       SELECT 1
-      FROM relation r
-      JOIN role ro ON ro.id = r.to_role_id
+      FROM rel r
+      JOIN role ro ON ro.id = r.as_role_id
       WHERE ro.name = 'admin'
         AND r.deleted_at IS NULL
         AND ro.deleted_at IS NULL
@@ -444,8 +444,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER relation_guard_role_assignment
-  BEFORE INSERT OR UPDATE ON relation
+CREATE TRIGGER rel_guard_role_assignment
+  BEFORE INSERT OR UPDATE ON rel
   FOR EACH ROW
   EXECUTE FUNCTION guard_role_assignment();
 
@@ -458,8 +458,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE TRIGGER relation_guard_hard_delete
-  BEFORE DELETE ON relation
+CREATE TRIGGER rel_guard_hard_delete
+  BEFORE DELETE ON rel
   FOR EACH ROW
   EXECUTE FUNCTION guard_hard_delete();
 
@@ -504,8 +504,8 @@ BEGIN
 
     IF EXISTS (
       SELECT 1
-      FROM relation r
-      JOIN role ro ON ro.id = r.to_role_id
+      FROM rel r
+      JOIN role ro ON ro.id = r.as_role_id
       WHERE r.id = NEW.id
         AND ro.name = 'admin'
     ) THEN
@@ -515,8 +515,8 @@ BEGIN
 
       IF (
         SELECT count(*)
-        FROM relation r
-        JOIN role ro ON ro.id = r.to_role_id
+        FROM rel r
+        JOIN role ro ON ro.id = r.as_role_id
         WHERE ro.name = 'admin'
           AND r.deleted_at IS NULL
           AND r.id != NEW.id
@@ -528,16 +528,16 @@ BEGIN
     IF EXISTS (SELECT 1 FROM "user" WHERE id = NEW.id) THEN
       IF EXISTS (
         SELECT 1
-        FROM relation r
-        JOIN role ro ON ro.id = r.to_role_id
+        FROM rel r
+        JOIN role ro ON ro.id = r.as_role_id
         WHERE r.on_user_id = NEW.id
           AND ro.name = 'admin'
           AND r.deleted_at IS NULL
       ) THEN
         IF (
           SELECT count(*)
-          FROM relation r
-          JOIN role ro ON ro.id = r.to_role_id
+          FROM rel r
+          JOIN role ro ON ro.id = r.as_role_id
           JOIN "user" u ON u.id = r.on_user_id
           WHERE ro.name = 'admin'
             AND r.deleted_at IS NULL
@@ -558,8 +558,8 @@ CREATE TRIGGER role_guard_protected_delete
   FOR EACH ROW
   EXECUTE FUNCTION guard_protected_delete();
 
-CREATE TRIGGER relation_guard_protected_delete
-  BEFORE UPDATE ON relation
+CREATE TRIGGER rel_guard_protected_delete
+  BEFORE UPDATE ON rel
   FOR EACH ROW
   EXECUTE FUNCTION guard_protected_delete();
 

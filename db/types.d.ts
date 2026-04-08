@@ -56,7 +56,13 @@ export interface Reaction {
   seq: Generated<string>;
 }
 
-export interface Relation {
+export interface Rel {
+  asFileId: string | null;
+  asNoteId: string | null;
+  asRelId: string | null;
+  asRoleId: string | null;
+  asTagId: string | null;
+  asUserId: string | null;
   at: Generated<Timestamp>;
   by: string | null;
   deletedAt: Timestamp | null;
@@ -64,17 +70,11 @@ export interface Relation {
   meta: Json | null;
   onFileId: string | null;
   onNoteId: string | null;
-  onRelation: string | null;
+  onRelId: string | null;
   onRoleId: string | null;
   onTagId: string | null;
   onUserId: string | null;
   seq: Generated<string>;
-  toFileId: string | null;
-  toNoteId: string | null;
-  toRelation: string | null;
-  toRoleId: string | null;
-  toTagId: string | null;
-  toUserId: string | null;
 }
 
 export interface Role {
@@ -112,7 +112,7 @@ export interface DB {
   file: File;
   note: Note;
   reaction: Reaction;
-  relation: Relation;
+  rel: Rel;
   role: Role;
   tag: Tag;
   user: User;

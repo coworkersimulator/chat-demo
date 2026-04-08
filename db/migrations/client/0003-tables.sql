@@ -109,7 +109,7 @@ CREATE INDEX IF NOT EXISTS file_deleted_at_idx     ON file (deleted_at);
 CREATE INDEX IF NOT EXISTS file_meta_idx           ON file USING gin (meta);
 
 
-CREATE TABLE IF NOT EXISTS relation (
+CREATE TABLE IF NOT EXISTS rel (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
@@ -118,38 +118,38 @@ CREATE TABLE IF NOT EXISTS relation (
   on_tag_id uuid REFERENCES tag (id),
   on_note_id uuid REFERENCES note (id),
   on_file_id uuid REFERENCES file (id),
-  on_relation uuid REFERENCES relation (id),
+  on_rel_id uuid REFERENCES rel (id),
 
-  to_user_id uuid REFERENCES "user" (id),
-  to_role_id uuid REFERENCES role (id),
-  to_tag_id uuid REFERENCES tag (id),
-  to_note_id uuid REFERENCES note (id),
-  to_file_id uuid REFERENCES file (id),
-  to_relation uuid REFERENCES relation (id),
+  as_user_id uuid REFERENCES "user" (id),
+  as_role_id uuid REFERENCES role (id),
+  as_tag_id uuid REFERENCES tag (id),
+  as_note_id uuid REFERENCES note (id),
+  as_file_id uuid REFERENCES file (id),
+  as_rel_id uuid REFERENCES rel (id),
 
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb,
-  CHECK (num_nonnulls(on_user_id, on_role_id, on_tag_id, on_note_id, on_file_id, on_relation) = 1),
-  CHECK (num_nonnulls(to_user_id, to_role_id, to_tag_id, to_note_id, to_file_id, to_relation) >= 1)
+  CHECK (num_nonnulls(on_user_id, on_role_id, on_tag_id, on_note_id, on_file_id, on_rel_id) = 1),
+  CHECK (num_nonnulls(as_user_id, as_role_id, as_tag_id, as_note_id, as_file_id, as_rel_id) >= 1)
 );
-CREATE INDEX IF NOT EXISTS relation_by_idx             ON relation ("by");
-CREATE INDEX IF NOT EXISTS relation_at_idx             ON relation (at);
-CREATE INDEX IF NOT EXISTS relation_deleted_at_idx     ON relation (deleted_at);
-CREATE INDEX IF NOT EXISTS relation_meta_idx           ON relation USING gin (meta);
-CREATE INDEX IF NOT EXISTS relation_on_user_id_idx     ON relation (on_user_id)   WHERE on_user_id   IS NOT NULL;
-CREATE INDEX IF NOT EXISTS relation_on_role_id_idx     ON relation (on_role_id)   WHERE on_role_id   IS NOT NULL;
-CREATE INDEX IF NOT EXISTS relation_on_tag_id_idx      ON relation (on_tag_id)    WHERE on_tag_id    IS NOT NULL;
-CREATE INDEX IF NOT EXISTS relation_on_note_id_idx     ON relation (on_note_id)   WHERE on_note_id   IS NOT NULL;
-CREATE INDEX IF NOT EXISTS relation_on_file_id_idx     ON relation (on_file_id)   WHERE on_file_id   IS NOT NULL;
-CREATE INDEX IF NOT EXISTS relation_on_relation_idx    ON relation (on_relation)  WHERE on_relation  IS NOT NULL;
-CREATE INDEX IF NOT EXISTS relation_to_user_id_idx     ON relation (to_user_id)   WHERE to_user_id   IS NOT NULL;
-CREATE INDEX IF NOT EXISTS relation_to_role_id_idx     ON relation (to_role_id)   WHERE to_role_id   IS NOT NULL;
-CREATE INDEX IF NOT EXISTS relation_to_tag_id_idx      ON relation (to_tag_id)    WHERE to_tag_id    IS NOT NULL;
-CREATE INDEX IF NOT EXISTS relation_to_note_id_idx     ON relation (to_note_id)   WHERE to_note_id   IS NOT NULL;
-CREATE INDEX IF NOT EXISTS relation_to_file_id_idx     ON relation (to_file_id)   WHERE to_file_id   IS NOT NULL;
-CREATE INDEX IF NOT EXISTS relation_to_relation_idx    ON relation (to_relation)  WHERE to_relation  IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS relation_on_user_to_role_tag_uniq    ON relation (on_user_id, to_role_id, to_tag_id)   NULLS NOT DISTINCT WHERE on_user_id  IS NOT NULL AND to_role_id  IS NOT NULL AND deleted_at IS NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS relation_on_user_to_user_tag_uniq    ON relation (on_user_id, to_user_id, to_tag_id)   NULLS NOT DISTINCT WHERE on_user_id  IS NOT NULL AND to_user_id  IS NOT NULL AND deleted_at IS NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS relation_on_rel_to_rel_tag_uniq      ON relation (on_relation, to_relation, to_tag_id) NULLS NOT DISTINCT WHERE on_relation IS NOT NULL AND to_relation IS NOT NULL AND deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS rel_as_idx             ON rel ("by");
+CREATE INDEX IF NOT EXISTS rel_at_idx             ON rel (at);
+CREATE INDEX IF NOT EXISTS rel_deleted_at_idx     ON rel (deleted_at);
+CREATE INDEX IF NOT EXISTS rel_meta_idx           ON rel USING gin (meta);
+CREATE INDEX IF NOT EXISTS rel_on_user_id_idx     ON rel (on_user_id)   WHERE on_user_id   IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_on_role_id_idx     ON rel (on_role_id)   WHERE on_role_id   IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_on_tag_id_idx      ON rel (on_tag_id)    WHERE on_tag_id    IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_on_note_id_idx     ON rel (on_note_id)   WHERE on_note_id   IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_on_file_id_idx     ON rel (on_file_id)   WHERE on_file_id   IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_on_rel_idx         ON rel (on_rel_id)    WHERE on_rel_id    IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_as_user_id_idx     ON rel (as_user_id)   WHERE as_user_id   IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_as_role_id_idx     ON rel (as_role_id)   WHERE as_role_id   IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_as_tag_id_idx      ON rel (as_tag_id)    WHERE as_tag_id    IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_as_note_id_idx     ON rel (as_note_id)   WHERE as_note_id   IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_as_file_id_idx     ON rel (as_file_id)   WHERE as_file_id   IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_as_rel_idx         ON rel (as_rel_id)    WHERE as_rel_id    IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS rel_on_user_as_role_tag_uniq    ON rel (on_user_id, as_role_id, as_tag_id)   NULLS NOT DISTINCT WHERE on_user_id  IS NOT NULL AND as_role_id  IS NOT NULL AND deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS rel_on_user_as_user_tag_uniq    ON rel (on_user_id, as_user_id, as_tag_id)   NULLS NOT DISTINCT WHERE on_user_id  IS NOT NULL AND as_user_id  IS NOT NULL AND deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS rel_on_rel_as_rel_tag_uniq      ON rel (on_rel_id, as_rel_id, as_tag_id)     NULLS NOT DISTINCT WHERE on_rel_id   IS NOT NULL AND as_rel_id   IS NOT NULL AND deleted_at IS NULL;
