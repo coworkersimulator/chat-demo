@@ -1,6 +1,6 @@
 import multiavatar from '@multiavatar/multiavatar';
 import { format, isToday, isYesterday } from 'date-fns';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './App.css';
 import db from './db/prisma';
@@ -37,6 +37,18 @@ function formatAt(date: Date) {
   if (isToday(date)) return format(date, 'p');
   if (isYesterday(date)) return `Yesterday at ${format(date, 'p')}`;
   return format(date, 'MMM d, p');
+}
+
+function formatDivider(date: Date) {
+  if (isToday(date)) return 'Today';
+  if (isYesterday(date)) return 'Yesterday';
+  return format(date, 'MMMM d, yyyy');
+}
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
 }
 
 function ReactionPicker({
@@ -212,6 +224,7 @@ function App() {
   const [draft, setDraft] = useState('');
   const [newDm, setNewDm] = useState(false);
   const [newDmSelected, setNewDmSelected] = useState<string[]>([]);
+  const [newDmQuery, setNewDmQuery] = useState('');
   const [newTopic, setNewTopic] = useState(false);
   const [newTopicTitle, setNewTopicTitle] = useState('');
   const [ready, setReady] = useState(false);
@@ -560,7 +573,7 @@ function App() {
                   }}
                   className={t.id === topicId ? 'active' : undefined}
                 >
-                  {t.title}
+                  # {t.title}
                 </li>
               ))}
             </ul>
@@ -570,31 +583,57 @@ function App() {
               Direct Messages
               <button
                 className="sidebar-new-btn"
-                onClick={() => setNewDm((v) => !v)}
+                onClick={() => { setNewDm((v) => !v); setNewDmQuery(''); setNewDmSelected([]); }}
               >
                 +
               </button>
             </div>
             {newDm && (
-              <div className="sidebar-user-picker">
-                <ul className="sidebar-list">
+              <div className="dm-composer">
+                <div className="dm-composer-to">
+                  <span className="dm-composer-to-label">To:</span>
+                  <div className="dm-composer-chips">
+                    {newDmSelected.map((id) => {
+                      const u = users.find((u) => u.id === id);
+                      return (
+                        <span key={id} className="dm-chip">
+                          {u?.name ?? u?.username}
+                          <button
+                            className="dm-chip-remove"
+                            onClick={() =>
+                              setNewDmSelected((prev) => prev.filter((x) => x !== id))
+                            }
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                    <input
+                      className="dm-composer-input"
+                      placeholder={newDmSelected.length === 0 ? 'Search people' : ''}
+                      value={newDmQuery}
+                      onChange={(e) => setNewDmQuery(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <ul className="sidebar-list dm-suggestions">
                   {users
-                    .filter((u) => u.id !== userId)
+                    .filter((u) => u.id !== userId && !newDmSelected.includes(u.id))
+                    .filter((u) => {
+                      const q = newDmQuery.toLowerCase();
+                      return !q || (u.name ?? u.username).toLowerCase().includes(q) || u.username.toLowerCase().includes(q);
+                    })
                     .map((u) => (
                       <li
                         key={u.id}
-                        onClick={() =>
-                          setNewDmSelected((prev) =>
-                            prev.includes(u.id)
-                              ? prev.filter((id) => id !== u.id)
-                              : [...prev, u.id],
-                          )
-                        }
-                        className={
-                          newDmSelected.includes(u.id) ? 'active' : undefined
-                        }
+                        onClick={() => {
+                          setNewDmSelected((prev) => [...prev, u.id]);
+                          setNewDmQuery('');
+                        }}
                       >
-                        {u.name ? `${u.name} (${u.username})` : u.username}
+                        {u.name ?? u.username}
                       </li>
                     ))}
                 </ul>
@@ -626,7 +665,7 @@ function App() {
                 >
                   {rows
                     .filter((r) => r.userId !== userId)
-                    .map((r) => r.username)
+                    .map((r) => r.userName ?? r.username)
                     .sort()
                     .join(', ')}
                 </li>
@@ -635,23 +674,44 @@ function App() {
           </div>
         </div>
         <div className="channel">
+          {!channelId ? (
+            <div className="empty-state">
+              <div className="empty-state-title">Work Chat</div>
+              <div className="empty-state-body">
+                Select a topic or direct message to start chatting.
+              </div>
+            </div>
+          ) : (
+          <>
           <div className="channel-header">
-            {dmId && <span className="channel-title">{dmTitle}</span>}
+            {dmId && (
+              <>
+                <span className="channel-title">{dmTitle}</span>
+                {(dms[dmId]?.length ?? 0) > 2 && (
+                  <span className="channel-subtitle">{dms[dmId].length} members</span>
+                )}
+              </>
+            )}
             {topicId && (
-              <span className="channel-title">
-                # {topics.find((t) => t.id === topicId)?.title}
-              </span>
+              <>
+                <span className="channel-title">
+                  # {topics.find((t) => t.id === topicId)?.title}
+                </span>
+                <span className="channel-subtitle">Topic</span>
+              </>
             )}
           </div>
           <div className="messages" ref={messagesRef}>
             {messages.map((m, i) => {
               const name = m.userName ?? m.username;
               const prev = messages[i - 1];
+              const at = new Date(m.at);
+              const showDivider = !prev || !isSameDay(new Date(prev.at), at);
               const isContinuation =
+                !showDivider &&
                 prev &&
                 prev.authorId === m.authorId &&
-                new Date(m.at).getTime() - new Date(prev.at).getTime() <
-                  5 * 60 * 1000;
+                at.getTime() - new Date(prev.at).getTime() < 5 * 60 * 1000;
               const reactionBar = (
                 <ReactionBar
                   noteId={m.id}
@@ -662,33 +722,42 @@ function App() {
                   onToggle={toggleReaction}
                 />
               );
-              return isContinuation ? (
-                <div key={m.id} className="message message-continuation">
-                  <div className="message-continuation-time">
-                    {formatAt(new Date(m.at))}
-                  </div>
-                  <p className="message-body">{m.body}</p>
-                  {reactionBar}
-                </div>
-              ) : (
-                <div key={m.id} className="message">
-                  <img
-                    src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.authorId))}`}
-                    width={28}
-                    height={28}
-                    className="message-avatar"
-                  />
-                  <div className="message-content">
-                    <div className="message-meta">
-                      <span className="message-author">{name}</span>
-                      <span className="message-time">
-                        {formatAt(new Date(m.at))}
-                      </span>
+              return (
+                <Fragment key={m.id}>
+                  {showDivider && (
+                    <div className="date-divider">
+                      <span>{formatDivider(at)}</span>
                     </div>
-                    <p className="message-body">{m.body}</p>
-                    {reactionBar}
-                  </div>
-                </div>
+                  )}
+                  {isContinuation ? (
+                    <div className="message message-continuation">
+                      <div className="message-continuation-time">
+                        {formatAt(at)}
+                      </div>
+                      <p className="message-body">{m.body}</p>
+                      {reactionBar}
+                    </div>
+                  ) : (
+                    <div className="message">
+                      <img
+                        src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.authorId))}`}
+                        width={36}
+                        height={36}
+                        className="message-avatar"
+                      />
+                      <div className="message-content">
+                        <div className="message-meta">
+                          <span className="message-author">{name}</span>
+                          <span className="message-time">
+                            {formatAt(at)}
+                          </span>
+                        </div>
+                        <p className="message-body">{m.body}</p>
+                        {reactionBar}
+                      </div>
+                    </div>
+                  )}
+                </Fragment>
               );
             })}
           </div>
@@ -704,7 +773,13 @@ function App() {
                     void handleSend();
                   }
                 }}
-                placeholder="Message"
+                placeholder={
+                  topicId
+                    ? `Message #${topics.find((t) => t.id === topicId)?.title ?? ''}`
+                    : dmTitle
+                    ? `Message ${dmTitle}`
+                    : 'Message'
+                }
                 rows={1}
               />
               <div className="message-entry-toolbar">
@@ -718,6 +793,8 @@ function App() {
               </div>
             </div>
           </div>
+          </>
+          )}
         </div>
       </div>
     </div>
