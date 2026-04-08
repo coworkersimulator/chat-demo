@@ -1,5 +1,6 @@
+import { format, isToday, isYesterday } from 'date-fns';
 import { sql } from 'kysely';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import db from './db/db';
 
@@ -26,8 +27,15 @@ interface Message {
   id: string;
   body: string | null;
   at: Date;
+  authorId: string;
   username: string;
   userName: string | null;
+}
+
+function formatAt(date: Date) {
+  if (isToday(date)) return `Today at ${format(date, 'p')}`;
+  if (isYesterday(date)) return `Yesterday at ${format(date, 'p')}`;
+  return format(date, 'MMM d, yyyy, p');
 }
 
 function App() {
@@ -36,6 +44,7 @@ function App() {
   const [dms, setDms] = useState<Record<string, Dm[]>>({});
   const [dmId, setDmId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     db.selectFrom('user')
@@ -98,10 +107,16 @@ function App() {
       .where('r.asNoteId', '=', dmId)
       .innerJoin('note as n', (join) => join.onRef('n.id', '=', 'r.onNoteId'))
       .innerJoin('user as u', (join) => join.onRef('u.id', '=', 'n.by'))
-      .select(['n.id', 'n.body', 'n.at', 'u.username', 'u.name as userName'])
-      .orderBy('n.at', 'desc');
+      .select(['n.id', 'n.body', 'n.at', 'u.id as authorId', 'u.username', 'u.name as userName'])
+      .orderBy('n.at', 'asc');
     void q.execute().then((rows) => setMessages(rows as Message[]));
   }, [dmId]);
+
+  useEffect(() => {
+    if (messagesRef.current) {
+      messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   async function handleUserChange(id: string) {
     setUserId(id);
@@ -111,7 +126,11 @@ function App() {
   return (
     <div className="app">
       <div className="app-header">
-        <select value={userId} onChange={(e) => handleUserChange(e.target.value)}>
+        <span className="switch-user-label">Switch user:</span>
+        <select
+          value={userId}
+          onChange={(e) => handleUserChange(e.target.value)}
+        >
           {users.map((u) => (
             <option key={u.id} value={u.id}>
               {u.name ? `${u.name} (${u.username})` : u.username}
@@ -135,14 +154,26 @@ function App() {
             </li>
           ))}
         </ul>
-        <div className="messages">
-          {messages.map((m) => (
-            <div key={m.id}>
-              <span>{m.username}</span>
-              <span>{m.at.toString()}</span>
-              <p>{m.body}</p>
-            </div>
-          ))}
+        <div className="messages" ref={messagesRef}>
+          {messages.map((m) => {
+            const isMine = m.authorId === userId;
+            return (
+              <div key={m.id} className={`message ${isMine ? 'message-mine' : ''}`}>
+                {!isMine && (
+                  <div className="message-meta">
+                    <span className="message-author">{m.userName ?? m.username}</span>
+                    <span className="message-time">{formatAt(m.at)}</span>
+                  </div>
+                )}
+                <div className="message-bubble">{m.body}</div>
+                {isMine && (
+                  <div className="message-meta message-meta-mine">
+                    <span className="message-time">{formatAt(m.at)}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
