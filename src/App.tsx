@@ -135,6 +135,30 @@ function App() {
     }
   }, [messages]);
 
+  async function handleSend() {
+    if (!draft.trim() || !channelId) return;
+    const note = await db
+      .insertInto('note')
+      .values({ body: draft.trim(), by: userId })
+      .returning('id')
+      .executeTakeFirst();
+    if (!note) return;
+    await db
+      .insertInto('rel')
+      .values({ onNoteId: note.id, asNoteId: channelId })
+      .execute();
+    setDraft('');
+    const rows = await db
+      .selectFrom('rel as r')
+      .where('r.asNoteId', '=', channelId)
+      .innerJoin('note as n', (join) => join.onRef('n.id', '=', 'r.onNoteId'))
+      .innerJoin('user as u', (join) => join.onRef('u.id', '=', 'n.by'))
+      .select(['n.id', 'n.body', 'n.at', 'u.id as authorId', 'u.username', 'u.name as userName'])
+      .orderBy('n.at', 'asc')
+      .execute();
+    setMessages(rows as Message[]);
+  }
+
   async function handleUserChange(id: string) {
     setUserId(id);
     await sql`SET LOCAL app.user_id = ${sql.lit(id)}`.execute(db);
@@ -220,7 +244,10 @@ function App() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) e.preventDefault();
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    void handleSend();
+                  }
                 }}
                 placeholder="Message"
                 rows={1}
@@ -229,6 +256,7 @@ function App() {
                 <button
                   className={`send-button ${draft.trim() ? 'send-button-active' : ''}`}
                   disabled={!draft.trim()}
+                  onClick={() => void handleSend()}
                 >
                   &#9658;
                 </button>
