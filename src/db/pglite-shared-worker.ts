@@ -1,6 +1,18 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { createPglite } from './pglite';
 
+// Private PGlite methods not in the public type
+interface PGlitePrivate {
+  execProtocolRawStream(data: Uint8Array, ...rest: unknown[]): Promise<void>;
+  syncToFs?(): Promise<void>;
+  _handleBlob(blob?: File | Blob): Promise<void>;
+  _getWrittenBlob(): Promise<File | Blob>;
+  _cleanupBlob(): Promise<void>;
+  _checkReady(): Promise<void>;
+  _runExclusiveQuery(fn: () => Promise<void>): void;
+  _runExclusiveTransaction(fn: () => Promise<void>): void;
+}
+
 const WORKER_ID = 'pglite';
 const bc = new BroadcastChannel(`pglite-broadcast:${WORKER_ID}`);
 const connectedTabs = new Set<string>();
@@ -18,6 +30,7 @@ bc.onmessage = async (e: MessageEvent) => {
 };
 
 function connectTab(tabId: string, db: PGlite) {
+  const dbi = db as unknown as PGlitePrivate;
   const tabBc = new BroadcastChannel(`pglite-tab:${tabId}`);
   let releaseQuery: (() => void) | null = null;
   let releaseTransaction: (() => void) | null = null;
@@ -38,31 +51,31 @@ function connectTab(tabId: string, db: PGlite) {
     }),
   );
 
-  const rpc: Record<string, (...args: any[]) => Promise<any>> = {
+  const rpc: Record<string, (...args: unknown[]) => Promise<unknown>> = {
     async getDebugLevel() { return db.debug; },
     async close() { /* never close the shared db */ },
-    async execProtocol(data: Uint8Array) {
-      const r = await db.execProtocol(data);
+    async execProtocol(data: unknown) {
+      const r = await db.execProtocol(data as Uint8Array);
       return { messages: r.messages, data: ownBuffer(r.data) };
     },
-    async execProtocolRaw(data: Uint8Array) {
-      return ownBuffer(await db.execProtocolRaw(data));
+    async execProtocolRaw(data: unknown) {
+      return ownBuffer(await db.execProtocolRaw(data as Uint8Array));
     },
-    async execProtocolStream(data: Uint8Array) {
-      return db.execProtocolStream(data);
+    async execProtocolStream(data: unknown) {
+      return db.execProtocolStream(data as Uint8Array);
     },
-    async execProtocolRawStream(data: Uint8Array, ...rest: any[]) {
-      return (db as any).execProtocolRawStream(data, ...rest);
+    async execProtocolRawStream(data: unknown, ...rest: unknown[]) {
+      return dbi.execProtocolRawStream(data as Uint8Array, ...rest);
     },
-    async dumpDataDir(compression?: any) { return db.dumpDataDir(compression); },
-    async syncToFs() { return (db as any).syncToFs?.(); },
-    async _handleBlob(blob: any) { return (db as any)._handleBlob(blob); },
-    async _getWrittenBlob() { return (db as any)._getWrittenBlob(); },
-    async _cleanupBlob() { return (db as any)._cleanupBlob(); },
-    async _checkReady() { return (db as any)._checkReady(); },
+    async dumpDataDir(compression: unknown) { return db.dumpDataDir(compression as string); },
+    async syncToFs() { return dbi.syncToFs?.(); },
+    async _handleBlob(blob: unknown) { return dbi._handleBlob(blob as File | Blob | undefined); },
+    async _getWrittenBlob() { return dbi._getWrittenBlob(); },
+    async _cleanupBlob() { return dbi._cleanupBlob(); },
+    async _checkReady() { return dbi._checkReady(); },
     async _acquireQueryLock() {
       return new Promise<void>((resolve) => {
-        (db as any)._runExclusiveQuery(
+        dbi._runExclusiveQuery(
           () => new Promise<void>((release) => { releaseQuery = release; resolve(); }),
         );
       });
@@ -70,7 +83,7 @@ function connectTab(tabId: string, db: PGlite) {
     async _releaseQueryLock() { releaseQuery?.(); releaseQuery = null; },
     async _acquireTransactionLock() {
       return new Promise<void>((resolve) => {
-        (db as any)._runExclusiveTransaction(
+        dbi._runExclusiveTransaction(
           () => new Promise<void>((release) => { releaseTransaction = release; resolve(); }),
         );
       });
@@ -80,7 +93,7 @@ function connectTab(tabId: string, db: PGlite) {
 
   tabBc.addEventListener('message', async (e: MessageEvent) => {
     if (e.data.type !== 'rpc-call') return;
-    const { callId, method, args } = e.data;
+    const { callId, method, args } = e.data as { callId: string; method: string; args: unknown[] };
     const fn = rpc[method];
     if (!fn) {
       tabBc.postMessage({ type: 'rpc-error', callId, error: { message: `Unknown method: ${method}` } });
@@ -88,8 +101,9 @@ function connectTab(tabId: string, db: PGlite) {
     }
     try {
       tabBc.postMessage({ type: 'rpc-return', callId, result: await fn(...args) });
-    } catch (err: any) {
-      tabBc.postMessage({ type: 'rpc-error', callId, error: { message: err.message } });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      tabBc.postMessage({ type: 'rpc-error', callId, error: { message } });
     }
   });
 

@@ -2,9 +2,10 @@ import type { PGlite } from '@electric-sql/pglite';
 import { PGliteWorker } from '@electric-sql/pglite/worker';
 import multiavatar from '@multiavatar/multiavatar';
 import { PrismaClient } from '@prisma/client/edge';
+import type { SqlMigrationAwareDriverAdapterFactory } from '@prisma/driver-adapter-utils';
 import { format, isToday, isYesterday } from 'date-fns';
 import { PrismaPGlite } from 'pglite-prisma-adapter';
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './App.css';
 import PgSharedWorker from './db/pglite-shared-worker.ts?sharedworker';
@@ -12,8 +13,8 @@ import { softDeleteExtension } from './db/prisma-soft-delete';
 const githubSvg = '/chat-demo/github.svg';
 
 function createDb(pgliteWorker: PGlite, getUserId: () => string) {
-  const factory = new PrismaPGlite(pgliteWorker as any);
-  const adapter = {
+  const factory = new PrismaPGlite(pgliteWorker);
+  const adapter: SqlMigrationAwareDriverAdapterFactory = {
     provider: factory.provider,
     adapterName: factory.adapterName,
     async connect() {
@@ -25,7 +26,7 @@ function createDb(pgliteWorker: PGlite, getUserId: () => string) {
         const tx = await origStartTransaction(isolationLevel);
         const userId = getUserId();
         if (userId) {
-          await (tx as any).executeRaw({
+          await tx.executeRaw({
             sql: `SET LOCAL app.user_id = '${userId}'`,
             args: [],
             argTypes: [],
@@ -37,7 +38,7 @@ function createDb(pgliteWorker: PGlite, getUserId: () => string) {
     },
     connectToShadowDb: () => factory.connectToShadowDb(),
   };
-  const base = new PrismaClient({ adapter: adapter as any });
+  const base = new PrismaClient({ adapter });
   return base.$extends(softDeleteExtension(base));
 }
 type Db = ReturnType<typeof createDb>;
@@ -106,11 +107,6 @@ function ReactionPicker({
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
-  const [style, setStyle] = useState<React.CSSProperties>({
-    visibility: 'hidden',
-    top: 0,
-    left: 0,
-  });
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -118,9 +114,10 @@ function ReactionPicker({
 
   useLayoutEffect(() => {
     if (!anchor || !pickerRef.current) return;
+    const el = pickerRef.current;
     const btn = anchor.getBoundingClientRect();
-    const pw = pickerRef.current.offsetWidth;
-    const ph = pickerRef.current.offsetHeight;
+    const pw = el.offsetWidth;
+    const ph = el.offsetHeight;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     let top = btn.top - ph - 6;
@@ -129,7 +126,9 @@ function ReactionPicker({
     let left = btn.left;
     if (left + pw > vw - 8) left = vw - pw - 8;
     if (left < 8) left = 8;
-    setStyle({ visibility: 'visible', top, left });
+    el.style.top = `${top}px`;
+    el.style.left = `${left}px`;
+    el.style.visibility = 'visible';
   }, [anchor]);
 
   useEffect(() => {
@@ -155,7 +154,6 @@ function ReactionPicker({
     <div
       ref={pickerRef}
       className="reaction-picker"
-      style={{ position: 'fixed', ...style }}
     >
       <div className="reaction-picker-search">
         <input
@@ -206,7 +204,8 @@ function ReactionBar({
   setPickerFor: (id: string | null) => void;
   onToggle: (noteId: string, reactionId: string, emoji: string) => void;
 }) {
-  const addBtnRef = useRef<HTMLButtonElement>(null);
+  const [addBtnEl, setAddBtnEl] = useState<HTMLButtonElement | null>(null);
+  const addBtnRef = useCallback((el: HTMLButtonElement | null) => setAddBtnEl(el), []);
   return (
     <div className="reaction-bar">
       {reactions.map((r) => (
@@ -231,7 +230,7 @@ function ReactionBar({
       </button>
       {pickerFor === noteId && (
         <ReactionPicker
-          anchor={addBtnRef.current}
+          anchor={addBtnEl}
           noteId={noteId}
           allReactions={allReactions}
           onToggle={(nid, rid, emoji) => {
@@ -329,7 +328,7 @@ function App() {
       .then(setAllReactions);
   }, [db]);
 
-  async function loadReactions(messageIds: string[]) {
+  const loadReactions = useCallback(async (messageIds: string[]) => {
     if (!db) return;
     if (messageIds.length === 0) {
       setReactions({});
@@ -362,12 +361,11 @@ function App() {
         });
     }
     setReactions(grouped);
-  }
+  }, [db, userId]);
 
   async function toggleReaction(
     noteId: string,
     reactionId: string,
-    emoji: string,
   ) {
     if (!db) return;
     const existing = await db.rel.findFirst({
@@ -391,7 +389,7 @@ function App() {
     syncBc.current?.postMessage({});
   }
 
-  async function loadTopics() {
+  const loadTopics = useCallback(async () => {
     if (!db || !userId) return;
     const rels = await db.rel.findMany({
       where: { asTag: { name: ':topic:' } },
@@ -403,11 +401,9 @@ function App() {
         r.onNote ? [{ id: r.onNote.id, title: r.onNote.title }] : [],
       ),
     );
-  }
+  }, [db, userId]);
 
-  useEffect(() => {
-    void loadTopics();
-  }, [userId]);
+  useEffect(() => { void loadTopics(); }, [loadTopics]);
 
   async function handleNewTopic() {
     if (!db || !newTopicTitle.trim()) return;
@@ -428,7 +424,7 @@ function App() {
     setDmId(null);
   }
 
-  async function loadDms(selectId?: string) {
+  const loadDms = useCallback(async (selectId?: string) => {
     if (!db || !userId) return;
     const dmRels = await db.rel.findMany({
       where: {
@@ -483,12 +479,9 @@ function App() {
     const nextDmId = selectId ?? Object.keys(sorted)[0] ?? null;
     setDmId(nextDmId);
     setTopicId(null);
-  }
+  }, [db, userId]);
 
-  useEffect(() => {
-    if (!userId) return;
-    loadDms().then(() => setReady(true));
-  }, [userId]);
+  useEffect(() => { if (!userId) return; loadDms().then(() => setReady(true)); }, [loadDms, userId]);
 
   async function handleNewDm() {
     if (!db || newDmSelected.length === 0) return;
@@ -522,7 +515,7 @@ function App() {
 
   const channelId = topicId ?? dmId;
 
-  async function loadMessages(cId: string) {
+  const loadMessages = useCallback(async (cId: string) => {
     if (!db) return;
     const rels = await db.rel.findMany({
       where: { asNoteId: cId },
@@ -554,12 +547,9 @@ function App() {
     );
     setMessages(msgs);
     await loadReactions(msgs.map((m) => m.id));
-  }
+  }, [db, loadReactions]);
 
-  useEffect(() => {
-    if (!channelId) return;
-    void loadMessages(channelId);
-  }, [channelId]);
+  useEffect(() => { if (!channelId) return; void loadMessages(channelId); }, [channelId, loadMessages]);
 
   useEffect(() => {
     if (messagesRef.current) {

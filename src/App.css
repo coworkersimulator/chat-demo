@@ -582,6 +582,8 @@ body {
 }
 
 .reaction-picker {
+  position: fixed;
+  visibility: hidden;
   background: #1a1d21;
   border: 1px solid #4a4b4d;
   border-radius: 8px;
