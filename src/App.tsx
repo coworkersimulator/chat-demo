@@ -51,6 +51,7 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
   const [newDm, setNewDm] = useState(false);
+  const [newDmSelected, setNewDmSelected] = useState<string[]>([]);
   const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -119,9 +120,14 @@ function App() {
     void loadDms();
   }, [userId]);
 
-  async function handleNewDm(otherUserId: string) {
-    const other = users.find((u) => u.id === otherUserId);
-    setDmTitle(other ? (other.name ?? other.username) : '');
+  async function handleNewDm() {
+    if (newDmSelected.length === 0) return;
+    const title = newDmSelected
+      .map((id) => users.find((u) => u.id === id))
+      .map((u) => u ? (u.name ?? u.username) : '')
+      .sort()
+      .join(', ');
+    setDmTitle(title);
     const tag = await db
       .selectFrom('tag')
       .where('name', '=', ':dm:')
@@ -137,9 +143,10 @@ function App() {
     await db.insertInto('rel').values([
       { onNoteId: note.id, asTagId: tag.id },
       { onNoteId: note.id, asUserId: userId },
-      { onNoteId: note.id, asUserId: otherUserId },
+      ...newDmSelected.map((id) => ({ onNoteId: note.id, asUserId: id })),
     ]).execute();
     setNewDm(false);
+    setNewDmSelected([]);
     setTopicId(null);
     await loadDms(note.id);
   }
@@ -231,15 +238,34 @@ function App() {
               <button className="sidebar-new-btn" onClick={() => setNewDm((v) => !v)}>+</button>
             </div>
             {newDm && (
-              <ul className="sidebar-list sidebar-user-picker">
-                {users
-                  .filter((u) => u.id !== userId)
-                  .map((u) => (
-                    <li key={u.id} onClick={() => void handleNewDm(u.id)}>
-                      {u.name ? `${u.name} (${u.username})` : u.username}
-                    </li>
-                  ))}
-              </ul>
+              <div className="sidebar-user-picker">
+                <ul className="sidebar-list">
+                  {users
+                    .filter((u) => u.id !== userId)
+                    .map((u) => (
+                      <li
+                        key={u.id}
+                        onClick={() =>
+                          setNewDmSelected((prev) =>
+                            prev.includes(u.id)
+                              ? prev.filter((id) => id !== u.id)
+                              : [...prev, u.id],
+                          )
+                        }
+                        className={newDmSelected.includes(u.id) ? 'active' : undefined}
+                      >
+                        {u.name ? `${u.name} (${u.username})` : u.username}
+                      </li>
+                    ))}
+                </ul>
+                <button
+                  className={`dm-start-btn ${newDmSelected.length > 0 ? 'dm-start-btn-active' : ''}`}
+                  disabled={newDmSelected.length === 0}
+                  onClick={() => void handleNewDm()}
+                >
+                  Open
+                </button>
+              </div>
             )}
             <ul className="sidebar-list">
               {Object.entries(dms).map(([noteId, rows]) => (
