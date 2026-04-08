@@ -193,6 +193,7 @@ function App() {
       .orderBy('n.at', 'asc')
       .execute();
     setMessages(rows as Message[]);
+    if (dmId) await loadDms(dmId);
   }
 
   async function handleUserChange(id: string) {
@@ -203,18 +204,21 @@ function App() {
   return (
     <div className="app">
       <div className="app-header">
+        <div />
         <span className="app-title">Work Chat</span>
-        <span className="switch-user-label">Switch user:</span>
-        <select
-          value={userId}
-          onChange={(e) => handleUserChange(e.target.value)}
-        >
-          {users.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name ? `${u.name} (${u.username})` : u.username}
-            </option>
-          ))}
-        </select>
+        <div className="app-header-right">
+          <span className="switch-user-label">Switch user:</span>
+          <select
+            value={userId}
+            onChange={(e) => handleUserChange(e.target.value)}
+          >
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name ? `${u.name} (${u.username})` : u.username}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       <div className="app-body">
         <div className="sidebar">
@@ -284,7 +288,7 @@ function App() {
                     .filter((r) => r.userId !== userId)
                     .map((r) => r.username)
                     .sort()
-                    .join(' ')}
+                    .join(', ')}
                 </li>
               ))}
             </ul>
