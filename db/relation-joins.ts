@@ -9,7 +9,7 @@ import type { Note, Tag } from './types';
 
 type WithAlias<DB, A extends string, T> = DB & { [K in A]: T };
 
-// toTag(qb, 't1', 't1.name', '=', ':dm:') — with tag alias, default relation alias
+// toTag(qb, 't1', 't1.name', '=', ':dm:') — with tag alias, default rel alias
 export function toTag<
   DB extends { tag: Tag },
   TB extends keyof DB,
@@ -24,7 +24,7 @@ export function toTag<
   rhs: OperandValueExpressionOrList<WithAlias<DB, A, Tag>, TB | A, RE>,
 ): SelectQueryBuilderWithInnerJoin<DB, TB, O, `tag as ${A}`>;
 
-// toTag(qb, 't1', 't1.name', '=', ':dm:', 'r1') — with tag alias and explicit relation alias
+// toTag(qb, 't1', 't1.name', '=', ':dm:', 'r1') — with tag alias and explicit rel alias
 export function toTag<
   DB extends { tag: Tag },
   TB extends keyof DB,
@@ -37,10 +37,10 @@ export function toTag<
   lhs: RE,
   op: ComparisonOperatorExpression,
   rhs: OperandValueExpressionOrList<WithAlias<DB, A, Tag>, TB | A, RE>,
-  relationAlias: TB & string,
+  relAlias: TB & string,
 ): SelectQueryBuilderWithInnerJoin<DB, TB, O, `tag as ${A}`>;
 
-// toTag(qb, 'tag.name', '=', ':dm:') — no alias, default relation alias
+// toTag(qb, 'tag.name', '=', ':dm:') — no alias, default rel alias
 export function toTag<
   DB extends { tag: Tag },
   TB extends keyof DB,
@@ -53,7 +53,7 @@ export function toTag<
   rhs: OperandValueExpressionOrList<DB, TB | 'tag', RE>,
 ): SelectQueryBuilderWithInnerJoin<DB, TB, O, 'tag'>;
 
-// toTag(qb, 'tag.name', '=', ':dm:', 'r1') — no alias, explicit relation alias
+// toTag(qb, 'tag.name', '=', ':dm:', 'r1') — no alias, explicit rel alias
 export function toTag<
   DB extends { tag: Tag },
   TB extends keyof DB,
@@ -64,7 +64,7 @@ export function toTag<
   lhs: RE,
   op: ComparisonOperatorExpression,
   rhs: OperandValueExpressionOrList<DB, TB | 'tag', RE>,
-  relationAlias: TB & string,
+  relAlias: TB & string,
 ): SelectQueryBuilderWithInnerJoin<DB, TB, O, 'tag'>;
 
 export function toTag<
@@ -77,19 +77,18 @@ export function toTag<
   aliasOrLhs: A | ReferenceExpression<DB, TB>,
   opOrLhs: ComparisonOperatorExpression | ReferenceExpression<DB, TB>,
   rhsOrOp: ComparisonOperatorExpression | unknown,
-  rhsOrRelation?: unknown,
-  relationAlias = 'relation',
+  rhsOrRel?: unknown,
+  relAlias = 'rel',
 ) {
-  const hasAlias =
-    typeof rhsOrRelation !== 'string' && rhsOrRelation !== undefined;
+  const hasAlias = typeof rhsOrRel !== 'string' && rhsOrRel !== undefined;
   const [table, refId, lhs, op, value, rel] = hasAlias
     ? [
         `tag as ${aliasOrLhs}`,
         `${aliasOrLhs}.id`,
         opOrLhs,
         rhsOrOp as ComparisonOperatorExpression,
-        rhsOrRelation,
-        relationAlias,
+        rhsOrRel,
+        relAlias,
       ]
     : [
         'tag',
@@ -97,7 +96,7 @@ export function toTag<
         aliasOrLhs,
         opOrLhs as ComparisonOperatorExpression,
         rhsOrOp,
-        (rhsOrRelation as string) ?? relationAlias,
+        (rhsOrRel as string) ?? relAlias,
       ];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return qb.innerJoin(table as any, (join: any) =>
@@ -105,7 +104,7 @@ export function toTag<
   );
 }
 
-// onNote(qb, 'n1', 'r1') — explicit relation alias
+// onNote(qb, 'n1', 'r1') — explicit rel alias
 export function onNote<
   DB extends { note: Note },
   TB extends keyof DB,
@@ -114,7 +113,7 @@ export function onNote<
 >(
   qb: SelectQueryBuilder<DB, TB, O>,
   alias: A,
-  relationAlias: TB & string,
+  relAlias: TB & string,
 ): SelectQueryBuilderWithInnerJoin<DB, TB, O, `note as ${A}`>;
 
 // onNote(qb) — no alias, joins as 'note'
@@ -122,7 +121,7 @@ export function onNote<DB extends { note: Note }, TB extends keyof DB, O>(
   qb: SelectQueryBuilder<DB, TB, O>,
 ): SelectQueryBuilderWithInnerJoin<DB, TB, O, 'note'>;
 
-// onNote(qb, 'n1') — explicit alias, default relation alias
+// onNote(qb, 'n1') — explicit alias, default rel alias
 export function onNote<
   DB extends { note: Note },
   TB extends keyof DB,
@@ -138,11 +137,11 @@ export function onNote<
   TB extends keyof DB,
   O,
   A extends string,
->(qb: SelectQueryBuilder<DB, TB, O>, alias?: A, relationAlias = 'relation') {
+>(qb: SelectQueryBuilder<DB, TB, O>, alias?: A, relAlias = 'rel') {
   const table = alias ? `note as ${alias}` : 'note';
   const ref = alias ?? 'note';
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return qb.innerJoin(table as any, (join: any) =>
-    join.onRef(`${ref}.id`, '=', `${relationAlias}.onNoteId`),
+    join.onRef(`${ref}.id`, '=', `${relAlias}.onNoteId`),
   );
 }
