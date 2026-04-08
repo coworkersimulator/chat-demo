@@ -7,8 +7,9 @@ import { PrismaPGlite } from 'pglite-prisma-adapter';
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './App.css';
-import PgWorker from './db/pglite-worker.ts?worker';
+import PgSharedWorker from './db/pglite-shared-worker.ts?sharedworker';
 import { softDeleteExtension } from './db/prisma-soft-delete';
+const githubSvg = '/chat-demo/github.svg';
 
 function createDb(pgliteWorker: PGlite, getUserId: () => string) {
   const factory = new PrismaPGlite(pgliteWorker as any);
@@ -18,7 +19,9 @@ function createDb(pgliteWorker: PGlite, getUserId: () => string) {
     async connect() {
       const conn = await factory.connect();
       const origStartTransaction = conn.startTransaction.bind(conn);
-      conn.startTransaction = async (isolationLevel?: Parameters<typeof origStartTransaction>[0]) => {
+      conn.startTransaction = async (
+        isolationLevel?: Parameters<typeof origStartTransaction>[0],
+      ) => {
         const tx = await origStartTransaction(isolationLevel);
         const userId = getUserId();
         if (userId) {
@@ -271,18 +274,38 @@ function App() {
 
   const [db, setDb] = useState<Db | null>(null);
 
-  useEffect(() => {
-    const pgliteWorker = new PGliteWorker(
-      new PgWorker({ name: 'pglite-worker' }),
-      { id: 'pglite' },
-    ) as unknown as PGlite;
+  // Cross-tab sync: post here after any write; listen to reload the current view
+  const syncBc = useRef<BroadcastChannel | null>(null);
+  const onSyncRef = useRef<() => void>(() => {});
+  // Keep the callback current on every render so the channel handler never captures stale state
+  onSyncRef.current = () => {
+    if (channelId) void loadMessages(channelId);
+    if (dmId) void loadDms(dmId);
+  };
 
-    const db = createDb(pgliteWorker, () => userIdRef.current);
-    setDb(db);
+  useEffect(() => {
+    const sw = new PgSharedWorker({ name: 'pglite' });
+    sw.port.start();
+    const workerAdapter = {
+      postMessage: sw.port.postMessage.bind(sw.port),
+      addEventListener: sw.port.addEventListener.bind(sw.port),
+      removeEventListener: sw.port.removeEventListener.bind(sw.port),
+      terminate: () => sw.port.close(),
+    } as unknown as Worker;
+    const pgWorker = new PGliteWorker(workerAdapter, { id: 'pglite' });
+
+    const dbRef = { current: null as Db | null };
+    pgWorker.waitReady.then(() => {
+      dbRef.current = createDb(
+        pgWorker as unknown as PGlite,
+        () => userIdRef.current,
+      );
+      setDb(dbRef.current);
+    });
 
     return () => {
-      db.$disconnect();
-      pgliteWorker?.close();
+      dbRef.current?.$disconnect();
+      pgWorker.close();
     };
   }, []);
 
@@ -365,6 +388,7 @@ function App() {
     }
     setPickerFor(null);
     await loadReactions(messages.map((m) => m.id));
+    syncBc.current?.postMessage({});
   }
 
   async function loadTopics() {
@@ -458,7 +482,7 @@ function App() {
     setDms(sorted);
     const nextDmId = selectId ?? Object.keys(sorted)[0] ?? null;
     setDmId(nextDmId);
-    if (!selectId) setTopicId(null);
+    setTopicId(null);
   }
 
   useEffect(() => {
@@ -544,6 +568,13 @@ function App() {
   }, [messages]);
 
   useEffect(() => {
+    const bc = new BroadcastChannel('chat-sync');
+    syncBc.current = bc;
+    bc.onmessage = () => onSyncRef.current();
+    return () => { bc.close(); syncBc.current = null; };
+  }, []);
+
+  useEffect(() => {
     if (!userDropdownOpen) return;
     const handler = (e: MouseEvent) => {
       if (!userDropdownRef.current?.contains(e.target as Node))
@@ -563,6 +594,7 @@ function App() {
     setDraft('');
     await loadMessages(channelId);
     if (dmId) await loadDms(dmId);
+    syncBc.current?.postMessage({});
   }
 
   function handleUserChange(id: string) {
@@ -581,7 +613,21 @@ function App() {
   return (
     <div className="app">
       <div className="app-header">
-        <div />
+        <a
+          className="app-header-github"
+          href="https://github.com/coworkersimulator/chat-demo"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src={githubSvg}
+            width={14}
+            height={14}
+            alt=""
+            aria-hidden="true"
+          />
+          View Source
+        </a>
         <span className="app-title">Work Chat</span>
         <div className="app-header-right">
           <div className="switch-user-wrapper" ref={userDropdownRef}>
@@ -589,7 +635,11 @@ function App() {
               className="switch-user-label"
               onClick={() => setUserDropdownOpen((v) => !v)}
             >
-              Switch user: <span className="switch-user-current">{users.find((u) => u.id === userId)?.name ?? users.find((u) => u.id === userId)?.username}</span>
+              Switch user:{' '}
+              <span className="switch-user-current">
+                {users.find((u) => u.id === userId)?.name ??
+                  users.find((u) => u.id === userId)?.username}
+              </span>
             </button>
             {userDropdownOpen && (
               <div className="switch-user-dropdown">

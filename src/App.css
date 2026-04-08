@@ -54,6 +54,29 @@ body {
   flex-shrink: 0;
 }
 
+.app-header-github {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 6px;
+  font-size: 12px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  background: #007a5a;
+  border-radius: 6px;
+  padding: 5px 12px;
+  white-space: nowrap;
+}
+
+.app-header-github:hover {
+  background: #148567;
+}
+
+.app-header-github svg {
+  flex-shrink: 0;
+}
+
 .app-title {
   grid-column: 2;
   font-weight: 700;
