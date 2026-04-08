@@ -46,6 +46,7 @@ function App() {
   const [topicId, setTopicId] = useState<string | null>(null);
   const [dmId, setDmId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [draft, setDraft] = useState('');
   const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -190,6 +191,7 @@ function App() {
             </ul>
           </div>
         </div>
+        <div className="channel">
         <div className="messages" ref={messagesRef}>
           {messages.map((m) => {
             const isMine = m.authorId === userId;
@@ -210,6 +212,29 @@ function App() {
               </div>
             );
           })}
+        </div>
+          <div className="message-entry">
+            <div className="message-entry-box">
+              <textarea
+                className="message-input"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) e.preventDefault();
+                }}
+                placeholder="Message"
+                rows={1}
+              />
+              <div className="message-entry-toolbar">
+                <button
+                  className={`send-button ${draft.trim() ? 'send-button-active' : ''}`}
+                  disabled={!draft.trim()}
+                >
+                  &#9658;
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

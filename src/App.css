@@ -124,6 +124,13 @@ body {
   color: #fff;
 }
 
+.channel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .messages {
   flex: 1;
   overflow-y: auto;
@@ -132,6 +139,76 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.message-entry {
+  flex-shrink: 0;
+  padding: 0 20px 20px;
+  background: #1a1d21;
+}
+
+.message-entry-box {
+  background: #2c2d30;
+  border: 1px solid #4a4b4d;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-entry-box:focus-within {
+  border-color: #1d9bd1;
+}
+
+.message-input {
+  width: 100%;
+  background: transparent;
+  color: #d1d2d3;
+  border: none;
+  padding: 11px 14px 4px;
+  font-size: 15px;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  box-sizing: border-box;
+  line-height: 1.5;
+  min-height: 44px;
+}
+
+.message-input::placeholder {
+  color: #6b6f76;
+}
+
+.message-entry-toolbar {
+  height: 40px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.send-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: #4a4b4d;
+  color: #6b6f76;
+  font-size: 16px;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, color 0.1s;
+}
+
+.send-button-active {
+  background: #007a5a;
+  color: #fff;
+  cursor: pointer;
+}
+
+.send-button-active:hover {
+  background: #148567;
 }
 
 .message {
