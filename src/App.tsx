@@ -47,8 +47,10 @@ function App() {
   const [dms, setDms] = useState<Record<string, Dm[]>>({});
   const [topicId, setTopicId] = useState<string | null>(null);
   const [dmId, setDmId] = useState<string | null>(null);
+  const [dmTitle, setDmTitle] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
+  const [newDm, setNewDm] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,9 +76,9 @@ function App() {
     void q.execute().then((rows) => setTopics(rows as Topic[]));
   }, [userId]);
 
-  useEffect(() => {
+  async function loadDms(selectId?: string) {
     if (!userId) return;
-    const q = db
+    const rows = await db
       .selectFrom('tag as t')
       .where('t.name', '=', ':dm:')
       .innerJoin('rel as rtn', (join) => join.onRef('rtn.asTagId', '=', 't.id'))
@@ -103,19 +105,44 @@ function App() {
         'u.name as userName',
       ])
       .select((eb) => eb.fn.max('n.at').as('lastAt'))
-      .orderBy('lastAt', 'desc');
-    void q.execute().then((rows) => {
-      const grouped = (rows as Dm[]).reduce<Record<string, Dm[]>>(
-        (acc, row) => {
-          (acc[row.noteId] ??= []).push(row);
-          return acc;
-        },
-        {},
-      );
-      setDms(grouped);
-      setDmId(Object.keys(grouped)[0] ?? null);
-    });
+      .orderBy('lastAt', 'desc')
+      .execute();
+    const grouped = (rows as Dm[]).reduce<Record<string, Dm[]>>((acc, row) => {
+      (acc[row.noteId] ??= []).push(row);
+      return acc;
+    }, {});
+    setDms(grouped);
+    setDmId(selectId ?? Object.keys(grouped)[0] ?? null);
+  }
+
+  useEffect(() => {
+    void loadDms();
   }, [userId]);
+
+  async function handleNewDm(otherUserId: string) {
+    const other = users.find((u) => u.id === otherUserId);
+    setDmTitle(other ? (other.name ?? other.username) : '');
+    const tag = await db
+      .selectFrom('tag')
+      .where('name', '=', ':dm:')
+      .select('id')
+      .executeTakeFirst();
+    if (!tag) return;
+    const note = await db
+      .insertInto('note')
+      .values({ body: '', by: userId })
+      .returning('id')
+      .executeTakeFirst();
+    if (!note) return;
+    await db.insertInto('rel').values([
+      { onNoteId: note.id, asTagId: tag.id },
+      { onNoteId: note.id, asUserId: userId },
+      { onNoteId: note.id, asUserId: otherUserId },
+    ]).execute();
+    setNewDm(false);
+    setTopicId(null);
+    await loadDms(note.id);
+  }
 
   const channelId = topicId ?? dmId;
 
@@ -199,12 +226,32 @@ function App() {
             </ul>
           </div>
           <div className="sidebar-section">
-            <div className="sidebar-section-header">Direct Messages</div>
+            <div className="sidebar-section-header">
+              Direct Messages
+              <button className="sidebar-new-btn" onClick={() => setNewDm((v) => !v)}>+</button>
+            </div>
+            {newDm && (
+              <ul className="sidebar-list sidebar-user-picker">
+                {users
+                  .filter((u) => u.id !== userId)
+                  .map((u) => (
+                    <li key={u.id} onClick={() => void handleNewDm(u.id)}>
+                      {u.name ? `${u.name} (${u.username})` : u.username}
+                    </li>
+                  ))}
+              </ul>
+            )}
             <ul className="sidebar-list">
               {Object.entries(dms).map(([noteId, rows]) => (
                 <li
                   key={noteId}
-                  onClick={() => { setDmId(noteId); setTopicId(null); }}
+                  onClick={() => {
+                    setDmId(noteId);
+                    setTopicId(null);
+                    setDmTitle(
+                      rows.filter((r) => r.userId !== userId).map((r) => r.userName ?? r.username).sort().join(', ')
+                    );
+                  }}
                   className={noteId === dmId ? 'active' : undefined}
                 >
                   {rows
@@ -218,6 +265,14 @@ function App() {
           </div>
         </div>
         <div className="channel">
+          <div className="channel-header">
+            {dmId && <span className="channel-title">{dmTitle}</span>}
+            {topicId && (
+              <span className="channel-title">
+                # {topics.find((t) => t.id === topicId)?.title}
+              </span>
+            )}
+          </div>
         <div className="messages" ref={messagesRef}>
           {messages.map((m, i) => {
             const name = m.userName ?? m.username;
