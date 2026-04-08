@@ -214,6 +214,7 @@ function App() {
   const [newDmSelected, setNewDmSelected] = useState<string[]>([]);
   const [newTopic, setNewTopic] = useState(false);
   const [newTopicTitle, setNewTopicTitle] = useState('');
+  const [ready, setReady] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -388,7 +389,8 @@ function App() {
   }
 
   useEffect(() => {
-    void loadDms();
+    if (!userId) return;
+    loadDms().then(() => setReady(true));
   }, [userId]);
 
   async function handleNewDm() {
@@ -482,6 +484,14 @@ function App() {
   async function handleUserChange(id: string) {
     setUserId(id);
     await db.$executeRawUnsafe(`SET LOCAL app.user_id = '${id}'`);
+  }
+
+  if (!ready) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner" />
+      </div>
+    );
   }
 
   return (

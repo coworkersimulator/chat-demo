@@ -10,6 +10,29 @@ body {
   background: #1a1d21;
 }
 
+/* ── Loading screen ─────────────────────────────────────── */
+
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: #1a1d21;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #2c2d30;
+  border-top-color: #007a5a;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── App shell ─────────────────────────────────────────── */
 
 .app {
@@ -232,7 +255,7 @@ body {
 .channel-header {
   flex-shrink: 0;
   height: 44px;
-  padding: 0 20px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   border-bottom: 1px solid #2c2d30;
@@ -258,7 +281,7 @@ body {
 .message {
   display: flex;
   gap: 12px;
-  padding: 8px 20px;
+  padding: 4px 24px;
 }
 
 .message:hover {
@@ -266,13 +289,13 @@ body {
 }
 
 .message-continuation {
-  padding: 1px 20px 1px calc(20px + 28px + 12px);
+  padding: 1px 24px 1px calc(24px + 28px + 12px);
   position: relative;
 }
 
 .message-continuation-time {
   position: absolute;
-  left: 20px;
+  left: 24px;
   top: 50%;
   transform: translateY(-50%);
   width: 28px;
@@ -450,7 +473,7 @@ body {
 
 .message-entry {
   flex-shrink: 0;
-  padding: 0 20px 20px;
+  padding: 0 24px 20px;
   background: #1a1d21;
 }
 
