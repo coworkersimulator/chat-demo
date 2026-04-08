@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION guard_name_emoji()
 RETURNS trigger AS $$
 BEGIN
-  IF NEW.name !~ (
+  IF NEW.emoji !~ (
     '^(('
     -- Emoticons, misc symbols & pictographs, transport, maps, supplemental symbols,
     -- geometric shapes extended, chess symbols, symbols & pictographs extended-A
@@ -61,7 +61,7 @@ BEGIN
     || '|[#*0-9]' || chr(65039) || chr(8419)
     || ')$'
   ) THEN
-    RAISE EXCEPTION 'reaction.name must be an emoji, got: %', NEW.name;
+    RAISE EXCEPTION 'reaction.emoji must be an emoji, got: %', NEW.emoji;
   END IF;
   RETURN NEW;
 END;

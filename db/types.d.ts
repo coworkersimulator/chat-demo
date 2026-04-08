@@ -50,6 +50,7 @@ export interface Reaction {
   at: Generated<Timestamp>;
   by: string | null;
   deletedAt: Timestamp | null;
+  emoji: string;
   id: Generated<string>;
   meta: Json | null;
   name: string;
@@ -59,6 +60,7 @@ export interface Reaction {
 export interface Rel {
   asFileId: string | null;
   asNoteId: string | null;
+  asReactionId: string | null;
   asRelId: string | null;
   asRoleId: string | null;
   asTagId: string | null;
@@ -70,6 +72,7 @@ export interface Rel {
   meta: Json | null;
   onFileId: string | null;
   onNoteId: string | null;
+  onReactionId: string | null;
   onRelId: string | null;
   onRoleId: string | null;
   onTagId: string | null;

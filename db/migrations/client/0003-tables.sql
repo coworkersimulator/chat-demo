@@ -54,13 +54,15 @@ CREATE TABLE IF NOT EXISTS reaction (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
 
-  name text UNIQUE NOT NULL CHECK (name = trim(name)),
+  emoji text UNIQUE NOT NULL,
+  name text UNIQUE NOT NULL CHECK (name ~ '^[a-z0-9_]+$'),
 
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb
 );
+CREATE INDEX IF NOT EXISTS reaction_emoji_idx          ON reaction (emoji);
 CREATE INDEX IF NOT EXISTS reaction_by_idx             ON reaction ("by");
 CREATE INDEX IF NOT EXISTS reaction_at_idx             ON reaction (at);
 CREATE INDEX IF NOT EXISTS reaction_deleted_at_idx     ON reaction (deleted_at);
@@ -119,6 +121,7 @@ CREATE TABLE IF NOT EXISTS rel (
   on_note_id uuid REFERENCES note (id),
   on_file_id uuid REFERENCES file (id),
   on_rel_id uuid REFERENCES rel (id),
+  on_reaction_id uuid REFERENCES reaction (id),
 
   as_user_id uuid REFERENCES "user" (id),
   as_role_id uuid REFERENCES role (id),
@@ -126,13 +129,14 @@ CREATE TABLE IF NOT EXISTS rel (
   as_note_id uuid REFERENCES note (id),
   as_file_id uuid REFERENCES file (id),
   as_rel_id uuid REFERENCES rel (id),
+  as_reaction_id uuid REFERENCES reaction (id),
 
   by uuid REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb,
-  CHECK (num_nonnulls(on_user_id, on_role_id, on_tag_id, on_note_id, on_file_id, on_rel_id) = 1),
-  CHECK (num_nonnulls(as_user_id, as_role_id, as_tag_id, as_note_id, as_file_id, as_rel_id) >= 1)
+  CHECK (num_nonnulls(on_user_id, on_role_id, on_tag_id, on_note_id, on_file_id, on_rel_id, on_reaction_id) = 1),
+  CHECK (num_nonnulls(as_user_id, as_role_id, as_tag_id, as_note_id, as_file_id, as_rel_id, as_reaction_id) >= 1)
 );
 CREATE INDEX IF NOT EXISTS rel_as_idx             ON rel ("by");
 CREATE INDEX IF NOT EXISTS rel_at_idx             ON rel (at);
@@ -144,12 +148,14 @@ CREATE INDEX IF NOT EXISTS rel_on_tag_id_idx      ON rel (on_tag_id)    WHERE on
 CREATE INDEX IF NOT EXISTS rel_on_note_id_idx     ON rel (on_note_id)   WHERE on_note_id   IS NOT NULL;
 CREATE INDEX IF NOT EXISTS rel_on_file_id_idx     ON rel (on_file_id)   WHERE on_file_id   IS NOT NULL;
 CREATE INDEX IF NOT EXISTS rel_on_rel_idx         ON rel (on_rel_id)    WHERE on_rel_id    IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_on_reaction_id_idx ON rel (on_reaction_id) WHERE on_reaction_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS rel_as_user_id_idx     ON rel (as_user_id)   WHERE as_user_id   IS NOT NULL;
 CREATE INDEX IF NOT EXISTS rel_as_role_id_idx     ON rel (as_role_id)   WHERE as_role_id   IS NOT NULL;
 CREATE INDEX IF NOT EXISTS rel_as_tag_id_idx      ON rel (as_tag_id)    WHERE as_tag_id    IS NOT NULL;
 CREATE INDEX IF NOT EXISTS rel_as_note_id_idx     ON rel (as_note_id)   WHERE as_note_id   IS NOT NULL;
 CREATE INDEX IF NOT EXISTS rel_as_file_id_idx     ON rel (as_file_id)   WHERE as_file_id   IS NOT NULL;
 CREATE INDEX IF NOT EXISTS rel_as_rel_idx         ON rel (as_rel_id)    WHERE as_rel_id    IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rel_as_reaction_id_idx ON rel (as_reaction_id) WHERE as_reaction_id IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS rel_on_user_as_role_tag_uniq    ON rel (on_user_id, as_role_id, as_tag_id)   NULLS NOT DISTINCT WHERE on_user_id  IS NOT NULL AND as_role_id  IS NOT NULL AND deleted_at IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS rel_on_user_as_user_tag_uniq    ON rel (on_user_id, as_user_id, as_tag_id)   NULLS NOT DISTINCT WHERE on_user_id  IS NOT NULL AND as_user_id  IS NOT NULL AND deleted_at IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS rel_on_rel_as_rel_tag_uniq      ON rel (on_rel_id, as_rel_id, as_tag_id)     NULLS NOT DISTINCT WHERE on_rel_id   IS NOT NULL AND as_rel_id   IS NOT NULL AND deleted_at IS NULL;
