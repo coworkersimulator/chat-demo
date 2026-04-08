@@ -32,10 +32,21 @@ interface Message {
   userName: string | null;
 }
 
+const AVATAR_COLORS = [
+  '#e8a838', '#e01e5a', '#36c5f0', '#2eb67d',
+  '#ecb22e', '#7c3aed', '#0ea5e9', '#f97316',
+];
+
+function avatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 function formatAt(date: Date) {
-  if (isToday(date)) return `Today at ${format(date, 'p')}`;
+  if (isToday(date)) return format(date, 'p');
   if (isYesterday(date)) return `Yesterday at ${format(date, 'p')}`;
-  return format(date, 'MMM d, yyyy, p');
+  return format(date, 'MMM d, p');
 }
 
 function App() {
@@ -217,22 +228,27 @@ function App() {
         </div>
         <div className="channel">
         <div className="messages" ref={messagesRef}>
-          {messages.map((m) => {
-            const isMine = m.authorId === userId;
-            return (
-              <div key={m.id} className={`message ${isMine ? 'message-mine' : ''}`}>
-                {!isMine && (
+          {messages.map((m, i) => {
+            const name = m.userName ?? m.username;
+            const prev = messages[i - 1];
+            const isContinuation = prev &&
+              prev.authorId === m.authorId &&
+              new Date(m.at).getTime() - new Date(prev.at).getTime() < 5 * 60 * 1000;
+            return isContinuation ? (
+              <div key={m.id} className="message message-continuation">
+                <div className="message-continuation-time">{formatAt(new Date(m.at))}</div>
+                <p className="message-body">{m.body}</p>
+              </div>
+            ) : (
+              <div key={m.id} className="message">
+                <div className="message-avatar" style={{ background: avatarColor(name) }}>{name[0]}</div>
+                <div className="message-content">
                   <div className="message-meta">
-                    <span className="message-author">{m.userName ?? m.username}</span>
-                    <span className="message-time">{formatAt(m.at)}</span>
+                    <span className="message-author">{name}</span>
+                    <span className="message-time">{formatAt(new Date(m.at))}</span>
                   </div>
-                )}
-                <div className="message-bubble">{m.body}</div>
-                {isMine && (
-                  <div className="message-meta message-meta-mine">
-                    <span className="message-time">{formatAt(m.at)}</span>
-                  </div>
-                )}
+                  <p className="message-body">{m.body}</p>
+                </div>
               </div>
             );
           })}
