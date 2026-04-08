@@ -41,7 +41,9 @@ function formatAt(date: Date) {
 function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [userId, setUserId] = useState('');
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [dms, setDms] = useState<Record<string, Dm[]>>({});
+  const [topicId, setTopicId] = useState<string | null>(null);
   const [dmId, setDmId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -56,6 +58,18 @@ function App() {
         if (rows.length > 0) handleUserChange(rows[0].id);
       });
   }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    const q = db
+      .selectFrom('tag as t')
+      .where('t.name', '=', ':topic:')
+      .innerJoin('rel as r', (join) => join.onRef('r.asTagId', '=', 't.id'))
+      .innerJoin('note as n', (join) => join.onRef('n.id', '=', 'r.onNoteId'))
+      .select(['n.id', 'n.title'])
+      .orderBy(sql`lower(n.title)`, 'asc');
+    void q.execute().then((rows) => setTopics(rows as Topic[]));
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -100,17 +114,19 @@ function App() {
     });
   }, [userId]);
 
+  const channelId = topicId ?? dmId;
+
   useEffect(() => {
-    if (!dmId) return;
+    if (!channelId) return;
     const q = db
       .selectFrom('rel as r')
-      .where('r.asNoteId', '=', dmId)
+      .where('r.asNoteId', '=', channelId)
       .innerJoin('note as n', (join) => join.onRef('n.id', '=', 'r.onNoteId'))
       .innerJoin('user as u', (join) => join.onRef('u.id', '=', 'n.by'))
       .select(['n.id', 'n.body', 'n.at', 'u.id as authorId', 'u.username', 'u.name as userName'])
       .orderBy('n.at', 'asc');
     void q.execute().then((rows) => setMessages(rows as Message[]));
-  }, [dmId]);
+  }, [channelId]);
 
   useEffect(() => {
     if (messagesRef.current) {
@@ -126,6 +142,7 @@ function App() {
   return (
     <div className="app">
       <div className="app-header">
+        <span className="app-title">Work Chat</span>
         <span className="switch-user-label">Switch user:</span>
         <select
           value={userId}
@@ -139,21 +156,40 @@ function App() {
         </select>
       </div>
       <div className="app-body">
-        <ul className="dm-list">
-          {Object.entries(dms).map(([noteId, rows]) => (
-            <li
-              key={noteId}
-              onClick={() => setDmId(noteId)}
-              className={noteId === dmId ? 'active' : undefined}
-            >
-              {rows
-                .filter((r) => r.userId !== userId)
-                .map((r) => r.username)
-                .sort()
-                .join(' ')}
-            </li>
-          ))}
-        </ul>
+        <div className="sidebar">
+          <div className="sidebar-section">
+            <div className="sidebar-section-header">Topics</div>
+            <ul className="sidebar-list">
+              {topics.map((t) => (
+                <li
+                  key={t.id}
+                  onClick={() => { setTopicId(t.id); setDmId(null); }}
+                  className={t.id === topicId ? 'active' : undefined}
+                >
+                  {t.title}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="sidebar-section">
+            <div className="sidebar-section-header">Direct Messages</div>
+            <ul className="sidebar-list">
+              {Object.entries(dms).map(([noteId, rows]) => (
+                <li
+                  key={noteId}
+                  onClick={() => { setDmId(noteId); setTopicId(null); }}
+                  className={noteId === dmId ? 'active' : undefined}
+                >
+                  {rows
+                    .filter((r) => r.userId !== userId)
+                    .map((r) => r.username)
+                    .sort()
+                    .join(' ')}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
         <div className="messages" ref={messagesRef}>
           {messages.map((m) => {
             const isMine = m.authorId === userId;
