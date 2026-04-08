@@ -1,0 +1,42 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 8px;
+  border-bottom: 1px solid #ccc;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.dm-list {
+  width: 200px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-right: 1px solid #ccc;
+}
+
+.dm-list li {
+  cursor: default;
+  padding: 8px 12px;
+}
+
+.dm-list li.active {
+  background: #eee;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px;
+}

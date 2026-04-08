@@ -14,17 +14,28 @@ interface Topic {
   title: string | null;
 }
 
+interface Dm {
+  noteId: string;
+  userId: string;
+  username: string;
+  userName: string | null;
+  lastAt: Date;
+}
+
 interface Message {
   id: string;
   body: string | null;
   at: Date;
   username: string;
-  author: string | null;
+  userName: string | null;
 }
 
 function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [userId, setUserId] = useState('');
+  const [dms, setDms] = useState<Record<string, Dm[]>>({});
+  const [dmId, setDmId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     db.selectFrom('user')
@@ -67,8 +78,30 @@ function App() {
       ])
       .select((eb) => eb.fn.max('n.at').as('lastAt'))
       .orderBy('lastAt', 'desc');
-    q.execute().then(console.log);
+    void q.execute().then((rows) => {
+      const grouped = (rows as Dm[]).reduce<Record<string, Dm[]>>(
+        (acc, row) => {
+          (acc[row.noteId] ??= []).push(row);
+          return acc;
+        },
+        {},
+      );
+      setDms(grouped);
+      setDmId(Object.keys(grouped)[0] ?? null);
+    });
   }, [userId]);
+
+  useEffect(() => {
+    if (!dmId) return;
+    const q = db
+      .selectFrom('rel as r')
+      .where('r.asNoteId', '=', dmId)
+      .innerJoin('note as n', (join) => join.onRef('n.id', '=', 'r.onNoteId'))
+      .innerJoin('user as u', (join) => join.onRef('u.id', '=', 'n.by'))
+      .select(['n.id', 'n.body', 'n.at', 'u.username', 'u.name as userName'])
+      .orderBy('n.at', 'desc');
+    void q.execute().then((rows) => setMessages(rows as Message[]));
+  }, [dmId]);
 
   async function handleUserChange(id: string) {
     setUserId(id);
@@ -76,15 +109,43 @@ function App() {
   }
 
   return (
-    <>
-      <select value={userId} onChange={(e) => handleUserChange(e.target.value)}>
-        {users.map((u) => (
-          <option key={u.id} value={u.id}>
-            {u.name ? `${u.name} (${u.username})` : u.username}
-          </option>
-        ))}
-      </select>
-    </>
+    <div className="app">
+      <div className="app-header">
+        <select value={userId} onChange={(e) => handleUserChange(e.target.value)}>
+          {users.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.name ? `${u.name} (${u.username})` : u.username}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="app-body">
+        <ul className="dm-list">
+          {Object.entries(dms).map(([noteId, rows]) => (
+            <li
+              key={noteId}
+              onClick={() => setDmId(noteId)}
+              className={noteId === dmId ? 'active' : undefined}
+            >
+              {rows
+                .filter((r) => r.userId !== userId)
+                .map((r) => r.username)
+                .sort()
+                .join(' ')}
+            </li>
+          ))}
+        </ul>
+        <div className="messages">
+          {messages.map((m) => (
+            <div key={m.id}>
+              <span>{m.username}</span>
+              <span>{m.at.toString()}</span>
+              <p>{m.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
