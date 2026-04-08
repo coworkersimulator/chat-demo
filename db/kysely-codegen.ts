@@ -5,7 +5,7 @@ await generate({
   db,
   dialect: new PostgresDialect(),
   camelCase: true,
-  outFile: 'db/types.d.ts',
+  outFile: 'src/db/types.d.ts',
 });
 
 await db.destroy();

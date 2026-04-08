@@ -6,7 +6,7 @@ const pglite = await PGlite.create({
   extensions: { pgcrypto, uuid_ossp },
 });
 
-const migrations = import.meta.glob('../db/migrations/client/*.sql', {
+const migrations = import.meta.glob('../../db/migrations/client/*.sql', {
   query: '?raw',
   import: 'default',
   eager: true,

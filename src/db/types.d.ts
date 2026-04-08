@@ -35,6 +35,10 @@ export interface File {
   seq: Generated<string>;
 }
 
+export interface Migration {
+  version: string;
+}
+
 export interface Note {
   at: Generated<Timestamp>;
   body: string | null;
@@ -113,6 +117,7 @@ export interface User {
 
 export interface DB {
   file: File;
+  migration: Migration;
   note: Note;
   reaction: Reaction;
   rel: Rel;

@@ -22,5 +22,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["db", "test"]
+  "include": ["db", "src/db/types.d.ts", "src/prisma", "test"]
 }
