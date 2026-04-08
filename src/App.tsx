@@ -1,10 +1,9 @@
 import multiavatar from '@multiavatar/multiavatar';
 import { format, isToday, isYesterday } from 'date-fns';
-import { sql } from 'kysely';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './App.css';
-import db from './db/db';
+import db from './db/prisma';
 
 interface User {
   id: string;
@@ -40,7 +39,13 @@ function formatAt(date: Date) {
   return format(date, 'MMM d, p');
 }
 
-function ReactionPicker({ anchor, noteId, allReactions, onToggle, onClose }: {
+function ReactionPicker({
+  anchor,
+  noteId,
+  allReactions,
+  onToggle,
+  onClose,
+}: {
   anchor: HTMLElement | null;
   noteId: string;
   allReactions: { id: string; emoji: string; name: string }[];
@@ -50,9 +55,15 @@ function ReactionPicker({ anchor, noteId, allReactions, onToggle, onClose }: {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
-  const [style, setStyle] = useState<React.CSSProperties>({ visibility: 'hidden', top: 0, left: 0 });
+  const [style, setStyle] = useState<React.CSSProperties>({
+    visibility: 'hidden',
+    top: 0,
+    left: 0,
+  });
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   useLayoutEffect(() => {
     if (!anchor || !pickerRef.current) return;
@@ -73,9 +84,12 @@ function ReactionPicker({ anchor, noteId, allReactions, onToggle, onClose }: {
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
-        pickerRef.current && !pickerRef.current.contains(e.target as Node) &&
-        anchor && !anchor.contains(e.target as Node)
-      ) onClose();
+        pickerRef.current &&
+        !pickerRef.current.contains(e.target as Node) &&
+        anchor &&
+        !anchor.contains(e.target as Node)
+      )
+        onClose();
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -87,7 +101,11 @@ function ReactionPicker({ anchor, noteId, allReactions, onToggle, onClose }: {
     : allReactions;
 
   return createPortal(
-    <div ref={pickerRef} className="reaction-picker" style={{ position: 'fixed', ...style }}>
+    <div
+      ref={pickerRef}
+      className="reaction-picker"
+      style={{ position: 'fixed', ...style }}
+    >
       <div className="reaction-picker-search">
         <input
           ref={inputRef}
@@ -165,7 +183,9 @@ function ReactionBar({
           anchor={addBtnRef.current}
           noteId={noteId}
           allReactions={allReactions}
-          onToggle={(nid, rid, emoji) => { onToggle(nid, rid, emoji); }}
+          onToggle={(nid, rid, emoji) => {
+            onToggle(nid, rid, emoji);
+          }}
           onClose={() => setPickerFor(null)}
         />
       )}
@@ -197,10 +217,11 @@ function App() {
   const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    db.selectFrom('user')
-      .select(['id', 'username', 'name'])
-      .orderBy('username')
-      .execute()
+    db.user
+      .findMany({
+        select: { id: true, username: true, name: true },
+        orderBy: { username: 'asc' },
+      })
       .then((rows) => {
         setUsers(rows);
         if (rows.length > 0) handleUserChange(rows[0].id);
@@ -208,9 +229,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    db.selectFrom('reaction')
-      .select(['id', 'emoji', 'name'])
-      .execute()
+    db.reaction
+      .findMany({ select: { id: true, emoji: true, name: true } })
       .then(setAllReactions);
   }, []);
 
@@ -219,28 +239,31 @@ function App() {
       setReactions({});
       return;
     }
-    const rows = await db
-      .selectFrom('rel as r')
-      .innerJoin('reaction as rx', (join) =>
-        join.onRef('rx.id', '=', 'r.asReactionId'),
-      )
-      .where('r.onNoteId', 'in', messageIds)
-      .where('r.asReactionId', 'is not', null)
-      .select(['r.onNoteId as noteId', 'rx.emoji as emoji', 'r.by'])
-      .execute();
+    const rels = await db.rel.findMany({
+      where: { onNoteId: { in: messageIds }, asReactionId: { not: null } },
+      select: {
+        onNoteId: true,
+        by: true,
+        asReaction: { select: { emoji: true } },
+      },
+    });
     const grouped: Record<
       string,
       { emoji: string; count: number; mine: boolean }[]
     > = {};
-    for (const row of rows) {
-      if (!row.noteId) continue;
-      const existing = (grouped[row.noteId] ??= []);
-      const slot = existing.find((e) => e.emoji === row.emoji);
+    for (const rel of rels) {
+      if (!rel.onNoteId || !rel.asReaction) continue;
+      const existing = (grouped[rel.onNoteId] ??= []);
+      const slot = existing.find((e) => e.emoji === rel.asReaction!.emoji);
       if (slot) {
         slot.count++;
-        if (row.by === userId) slot.mine = true;
+        if (rel.by === userId) slot.mine = true;
       } else
-        existing.push({ emoji: row.emoji, count: 1, mine: row.by === userId });
+        existing.push({
+          emoji: rel.asReaction.emoji,
+          count: 1,
+          mine: rel.by === userId,
+        });
     }
     setReactions(grouped);
   }
@@ -250,22 +273,21 @@ function App() {
     reactionId: string,
     emoji: string,
   ) {
-    const existing = await db
-      .selectFrom('rel')
-      .where('onNoteId', '=', noteId)
-      .where('asReactionId', '=', reactionId)
-      .where('by', '=', userId)
-      .select('id')
-      .executeTakeFirst();
+    const existing = await db.rel.findFirst({
+      where: { onNoteId: noteId, asReactionId: reactionId, by: userId },
+      select: { id: true, deletedAt: true },
+    });
     if (existing) {
-      await sql`UPDATE rel SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${existing.id} AND deleted_at IS NULL`.execute(
-        db,
-      );
+      if (!existing.deletedAt) {
+        await db.rel.update({
+          where: { id: existing.id },
+          data: { deletedAt: new Date() },
+        });
+      }
     } else {
-      await db
-        .insertInto('rel')
-        .values({ onNoteId: noteId, asReactionId: reactionId, by: userId })
-        .execute();
+      await db.rel.create({
+        data: { onNoteId: noteId, asReactionId: reactionId, by: userId },
+      });
     }
     setPickerFor(null);
     await loadReactions(messages.map((m) => m.id));
@@ -273,15 +295,16 @@ function App() {
 
   async function loadTopics() {
     if (!userId) return;
-    const rows = await db
-      .selectFrom('tag as t')
-      .where('t.name', '=', ':topic:')
-      .innerJoin('rel as r', (join) => join.onRef('r.asTagId', '=', 't.id'))
-      .innerJoin('note as n', (join) => join.onRef('n.id', '=', 'r.onNoteId'))
-      .select(['n.id', 'n.title'])
-      .orderBy(sql`lower(n.title)`, 'asc')
-      .execute();
-    setTopics(rows as Topic[]);
+    const rels = await db.rel.findMany({
+      where: { asTag: { name: ':topic:' } },
+      select: { onNote: { select: { id: true, title: true } } },
+      orderBy: { onNote: { title: 'asc' } },
+    });
+    setTopics(
+      rels.flatMap((r) =>
+        r.onNote ? [{ id: r.onNote.id, title: r.onNote.title }] : [],
+      ),
+    );
   }
 
   useEffect(() => {
@@ -290,22 +313,16 @@ function App() {
 
   async function handleNewTopic() {
     if (!newTopicTitle.trim()) return;
-    const tag = await db
-      .selectFrom('tag')
-      .where('name', '=', ':topic:')
-      .select('id')
-      .executeTakeFirst();
+    const tag = await db.tag.findFirst({
+      where: { name: ':topic:' },
+      select: { id: true },
+    });
     if (!tag) return;
-    const note = await db
-      .insertInto('note')
-      .values({ title: newTopicTitle.trim(), by: userId })
-      .returning('id')
-      .executeTakeFirst();
-    if (!note) return;
-    await db
-      .insertInto('rel')
-      .values({ onNoteId: note.id, asTagId: tag.id })
-      .execute();
+    const note = await db.note.create({
+      data: { title: newTopicTitle.trim(), by: userId },
+      select: { id: true },
+    });
+    await db.rel.create({ data: { onNoteId: note.id, asTagId: tag.id } });
     setNewTopic(false);
     setNewTopicTitle('');
     await loadTopics();
@@ -315,41 +332,57 @@ function App() {
 
   async function loadDms(selectId?: string) {
     if (!userId) return;
-    const rows = await db
-      .selectFrom('tag as t')
-      .where('t.name', '=', ':dm:')
-      .innerJoin('rel as rtn', (join) => join.onRef('rtn.asTagId', '=', 't.id'))
-      .innerJoin('rel as rn', (join) =>
-        join.onRef('rn.asNoteId', '=', 'rtn.onNoteId'),
-      )
-      .innerJoin('rel as rp', (join) =>
-        join
-          .onRef('rp.onNoteId', '=', 'rtn.onNoteId')
-          .on('rp.asUserId', 'is not', null),
-      )
-      .innerJoin('rel as rme', (join) =>
-        join
-          .onRef('rme.onNoteId', '=', 'rtn.onNoteId')
-          .on('rme.asUserId', '=', userId),
-      )
-      .innerJoin('note as n', (join) => join.onRef('rn.onNoteId', '=', 'n.id'))
-      .innerJoin('user as u', (join) => join.onRef('u.id', '=', 'rp.asUserId'))
-      .groupBy(['rtn.onNoteId', 'u.id', 'u.username', 'u.name'])
-      .select([
-        'rtn.onNoteId as noteId',
-        'u.id as userId',
-        'u.username',
-        'u.name as userName',
-      ])
-      .select((eb) => eb.fn.max('n.at').as('lastAt'))
-      .orderBy('lastAt', 'desc')
-      .execute();
-    const grouped = (rows as Dm[]).reduce<Record<string, Dm[]>>((acc, row) => {
-      (acc[row.noteId] ??= []).push(row);
-      return acc;
-    }, {});
-    setDms(grouped);
-    const nextDmId = selectId ?? Object.keys(grouped)[0] ?? null;
+    const dmRels = await db.rel.findMany({
+      where: {
+        asTag: { name: ':dm:' },
+        onNote: { onRels: { some: { asUserId: userId } } },
+      },
+      select: {
+        onNoteId: true,
+        onNote: {
+          select: {
+            asRels: { select: { onNote: { select: { at: true } } } },
+            onRels: {
+              where: { asUserId: { not: null } },
+              select: {
+                asUser: { select: { id: true, username: true, name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const grouped: Record<string, Dm[]> = {};
+    for (const dmRel of dmRels) {
+      const noteId = dmRel.onNoteId!;
+      const times =
+        dmRel.onNote?.asRels
+          .map((r) => r.onNote?.at)
+          .filter((t): t is Date => t != null) ?? [];
+      const lastAt =
+        times.length > 0
+          ? new Date(Math.max(...times.map((t) => t.getTime())))
+          : new Date(0);
+      for (const { asUser: u } of dmRel.onNote?.onRels ?? []) {
+        if (!u) continue;
+        (grouped[noteId] ??= []).push({
+          noteId,
+          userId: u.id,
+          username: u.username,
+          userName: u.name,
+          lastAt,
+        });
+      }
+    }
+
+    const sorted = Object.fromEntries(
+      Object.entries(grouped).sort(
+        ([, a], [, b]) => b[0].lastAt.getTime() - a[0].lastAt.getTime(),
+      ),
+    );
+    setDms(sorted);
+    const nextDmId = selectId ?? Object.keys(sorted)[0] ?? null;
     setDmId(nextDmId);
     if (!selectId) setTopicId(null);
   }
@@ -366,26 +399,22 @@ function App() {
       .sort()
       .join(', ');
     setDmTitle(title);
-    const tag = await db
-      .selectFrom('tag')
-      .where('name', '=', ':dm:')
-      .select('id')
-      .executeTakeFirst();
+    const tag = await db.tag.findFirst({
+      where: { name: ':dm:' },
+      select: { id: true },
+    });
     if (!tag) return;
-    const note = await db
-      .insertInto('note')
-      .values({ body: '', by: userId })
-      .returning('id')
-      .executeTakeFirst();
-    if (!note) return;
-    await db
-      .insertInto('rel')
-      .values([
+    const note = await db.note.create({
+      data: { body: '', by: userId },
+      select: { id: true },
+    });
+    await db.rel.createMany({
+      data: [
         { onNoteId: note.id, asTagId: tag.id },
         { onNoteId: note.id, asUserId: userId },
         ...newDmSelected.map((id) => ({ onNoteId: note.id, asUserId: id })),
-      ])
-      .execute();
+      ],
+    });
     setNewDm(false);
     setNewDmSelected([]);
     setTopicId(null);
@@ -394,27 +423,42 @@ function App() {
 
   const channelId = topicId ?? dmId;
 
+  async function loadMessages(cId: string) {
+    const rels = await db.rel.findMany({
+      where: { asNoteId: cId },
+      select: {
+        onNote: {
+          select: {
+            id: true,
+            body: true,
+            at: true,
+            user: { select: { id: true, username: true, name: true } },
+          },
+        },
+      },
+      orderBy: { onNote: { at: 'asc' } },
+    });
+    const msgs: Message[] = rels.flatMap((r) =>
+      r.onNote && r.onNote.user
+        ? [
+            {
+              id: r.onNote.id,
+              body: r.onNote.body,
+              at: r.onNote.at,
+              authorId: r.onNote.user.id,
+              username: r.onNote.user.username,
+              userName: r.onNote.user.name,
+            },
+          ]
+        : [],
+    );
+    setMessages(msgs);
+    await loadReactions(msgs.map((m) => m.id));
+  }
+
   useEffect(() => {
     if (!channelId) return;
-    const q = db
-      .selectFrom('rel as r')
-      .where('r.asNoteId', '=', channelId)
-      .innerJoin('note as n', (join) => join.onRef('n.id', '=', 'r.onNoteId'))
-      .innerJoin('user as u', (join) => join.onRef('u.id', '=', 'n.by'))
-      .select([
-        'n.id',
-        'n.body',
-        'n.at',
-        'u.id as authorId',
-        'u.username',
-        'u.name as userName',
-      ])
-      .orderBy('n.at', 'asc');
-    void q.execute().then((rows) => {
-      const msgs = rows as Message[];
-      setMessages(msgs);
-      void loadReactions(msgs.map((m) => m.id));
-    });
+    void loadMessages(channelId);
   }, [channelId]);
 
   useEffect(() => {
@@ -425,41 +469,19 @@ function App() {
 
   async function handleSend() {
     if (!draft.trim() || !channelId) return;
-    const note = await db
-      .insertInto('note')
-      .values({ body: draft.trim(), by: userId })
-      .returning('id')
-      .executeTakeFirst();
-    if (!note) return;
-    await db
-      .insertInto('rel')
-      .values({ onNoteId: note.id, asNoteId: channelId })
-      .execute();
+    const note = await db.note.create({
+      data: { body: draft.trim(), by: userId },
+      select: { id: true },
+    });
+    await db.rel.create({ data: { onNoteId: note.id, asNoteId: channelId } });
     setDraft('');
-    const rows = await db
-      .selectFrom('rel as r')
-      .where('r.asNoteId', '=', channelId)
-      .innerJoin('note as n', (join) => join.onRef('n.id', '=', 'r.onNoteId'))
-      .innerJoin('user as u', (join) => join.onRef('u.id', '=', 'n.by'))
-      .select([
-        'n.id',
-        'n.body',
-        'n.at',
-        'u.id as authorId',
-        'u.username',
-        'u.name as userName',
-      ])
-      .orderBy('n.at', 'asc')
-      .execute();
-    const msgs = rows as Message[];
-    setMessages(msgs);
-    await loadReactions(msgs.map((m) => m.id));
+    await loadMessages(channelId);
     if (dmId) await loadDms(dmId);
   }
 
   async function handleUserChange(id: string) {
     setUserId(id);
-    await sql`SET LOCAL app.user_id = ${sql.lit(id)}`.execute(db);
+    await db.$executeRawUnsafe(`SET LOCAL app.user_id = '${id}'`);
   }
 
   return (
