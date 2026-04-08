@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "pglite:server:memory": "pglite-server --extensions pgcrypto,uuid-ossp --db=memory://",
-    "prisma:pull": "prisma db pull --force && tsx prisma/rename-rels.ts && npx prisma-case-format --file prisma/schema.prisma",
+    "prisma:pull": "prisma db pull --force && tsx prisma/rename-rels.ts && npx prisma-case-format --file prisma/schema.prisma && prisma generate",
     "kysely:codegen": "tsx db/kysely-codegen.ts",
     "test": "tsx --test test/**/*.test.ts"
   },
@@ -23,7 +23,8 @@
     "kysely-pglite-dialect": "^1.3.1",
     "pglite-prisma-adapter": "^0.7.2",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "vite-plugin-wasm": "^3.6.0"
   },
   "overrides": {
     "@hono/node-server": "^1.19.13"
