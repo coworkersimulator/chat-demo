@@ -267,7 +267,9 @@ function App() {
       return acc;
     }, {});
     setDms(grouped);
-    setDmId(selectId ?? Object.keys(grouped)[0] ?? null);
+    const nextDmId = selectId ?? Object.keys(grouped)[0] ?? null;
+    setDmId(nextDmId);
+    if (!selectId) setTopicId(null);
   }
 
   useEffect(() => {
