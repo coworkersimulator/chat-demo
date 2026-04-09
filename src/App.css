@@ -879,16 +879,7 @@ body {
   /* ── Message entry ── */
 
   .message-entry {
-    width: 100%;
     padding: 0 10px 10px;
-    box-sizing: border-box;
-    overflow: hidden;
-  }
-
-  .message-entry-box {
-    width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
   }
 
   .message-input {
@@ -900,6 +891,7 @@ body {
 
   .sidebar.dm-composing .sidebar-section:first-child {
     flex: 0 0 0;
+    max-height: 0;
     min-height: 0;
     overflow: hidden;
   }

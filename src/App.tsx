@@ -600,6 +600,14 @@ function App() {
   }, []);
 
   useEffect(() => {
+    // Prevent Chrome Android from scrolling the window when an input is focused
+    // inside a position:fixed container, which shifts content out of view.
+    const reset = () => window.scrollTo(0, 0);
+    window.addEventListener('focusin', reset);
+    return () => window.removeEventListener('focusin', reset);
+  }, []);
+
+  useEffect(() => {
     const bc = new BroadcastChannel('chat-sync');
     syncBc.current = bc;
     bc.onmessage = () => onSyncRef.current();
