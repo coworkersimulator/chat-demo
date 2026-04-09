@@ -67,7 +67,7 @@ function connectTab(tabId: string, db: PGlite) {
     async execProtocolRawStream(data: unknown, ...rest: unknown[]) {
       return dbi.execProtocolRawStream(data as Uint8Array, ...rest);
     },
-    async dumpDataDir(compression: unknown) { return db.dumpDataDir(compression as string); },
+    async dumpDataDir(compression: unknown) { return db.dumpDataDir(compression as 'none' | 'gzip' | 'auto' | undefined); },
     async syncToFs() { return dbi.syncToFs?.(); },
     async _handleBlob(blob: unknown) { return dbi._handleBlob(blob as File | Blob | undefined); },
     async _getWrittenBlob() { return dbi._getWrittenBlob(); },

@@ -36,6 +36,8 @@ jobs:
           node-version: lts/*
       - name: Install dependencies
         run: npm i
+      - name: Generate Prisma client
+        run: npx prisma generate
       - name: Build
         run: npm run build
       - name: Setup Pages
