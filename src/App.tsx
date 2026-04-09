@@ -287,7 +287,7 @@ function App() {
   onSyncRef.current = () => {
     void loadTopics();
     if (channelId) void loadMessages(channelId);
-    void loadDms(dmId ?? undefined);
+    void loadDms(undefined, false);
   };
 
   useEffect(() => {
@@ -439,7 +439,7 @@ function App() {
   }
 
   const loadDms = useCallback(
-    async (selectId?: string) => {
+    async (selectId?: string, navigate = true) => {
       if (!db || !userId) return;
       const dmRels = await db.rel.findMany({
         where: {
@@ -491,9 +491,11 @@ function App() {
         ),
       );
       setDms(sorted);
-      const nextDmId = selectId ?? Object.keys(sorted)[0] ?? null;
-      setDmId(nextDmId);
-      setTopicId(null);
+      if (navigate) {
+        const nextDmId = selectId ?? Object.keys(sorted)[0] ?? null;
+        setDmId(nextDmId);
+        setTopicId(null);
+      }
     },
     [db, userId],
   );
