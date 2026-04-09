@@ -937,7 +937,7 @@ function App() {
                       ) : (
                         <div className="message">
                           <img
-                            src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.authorId))}`}
+                            src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.username))}`}
                             width={36}
                             height={36}
                             className="message-avatar"
