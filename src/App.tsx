@@ -599,6 +599,19 @@ function App() {
     }
   }, [messages, sidebarOpen]);
 
+  // On iOS, position:fixed + keyboard open shrinks the visual viewport but not
+  // the layout viewport. Track visual viewport height and apply it to --vvh so
+  // the app shell shrinks with the keyboard instead of being obscured by it.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () =>
+      document.documentElement.style.setProperty('--vvh', `${vv.height}px`);
+    vv.addEventListener('resize', update);
+    update();
+    return () => vv.removeEventListener('resize', update);
+  }, []);
+
 
 
   useEffect(() => {
