@@ -592,11 +592,17 @@ function App() {
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
-    const update = () =>
+    const update = () => {
       document.documentElement.style.setProperty('--vvh', `${vv.height}px`);
+      document.documentElement.style.setProperty('--vv-top', `${vv.offsetTop}px`);
+    };
     vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
     update();
-    return () => vv.removeEventListener('resize', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
   }, []);
 
   useEffect(() => {
