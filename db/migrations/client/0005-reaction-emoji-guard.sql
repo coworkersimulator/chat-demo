@@ -1,5 +1,3 @@
-INSERT INTO migration (version) VALUES ('0005');
-
 CREATE OR REPLACE FUNCTION guard_name_emoji()
 RETURNS trigger AS $$
 BEGIN

@@ -1,5 +1,3 @@
-INSERT INTO migration (version) VALUES ('0004');
-
 CREATE OR REPLACE FUNCTION bump_seq()
 RETURNS trigger AS $$
 BEGIN

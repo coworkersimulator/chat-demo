@@ -1,11 +1,3 @@
-CREATE TABLE IF NOT EXISTS migration (
-  version text NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS migration_version_idx ON migration (version);
-
-INSERT INTO migration (version) VALUES ('0003');
-
-
 CREATE TABLE IF NOT EXISTS "user" (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
