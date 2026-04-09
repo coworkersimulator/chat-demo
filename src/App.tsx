@@ -277,6 +277,7 @@ function App() {
   const userIdRef = useRef('');
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [db, setDb] = useState<Db | null>(null);
 
@@ -648,7 +649,7 @@ function App() {
             alt=""
             aria-hidden="true"
           />
-          View Source
+          <span className="app-header-github-label">View Source</span>
         </a>
         <span className="app-title">Chat Demo</span>
         <div className="app-header-right">
@@ -682,7 +683,7 @@ function App() {
           </div>
         </div>
       </div>
-      <div className="app-body">
+      <div className={`app-body${sidebarOpen ? '' : ' channel-open'}`}>
         <div className="sidebar">
           <div className="sidebar-section">
             <div className="sidebar-section-header">
@@ -726,6 +727,7 @@ function App() {
                   onClick={() => {
                     setTopicId(t.id);
                     setDmId(null);
+                    setSidebarOpen(false);
                   }}
                   className={t.id === topicId ? 'active' : undefined}
                 >
@@ -823,6 +825,7 @@ function App() {
                   onClick={() => {
                     setDmId(noteId);
                     setTopicId(null);
+                    setSidebarOpen(false);
                     setDmTitle(
                       rows
                         .filter((r) => r.userId !== userId)
@@ -854,23 +857,29 @@ function App() {
           ) : (
             <>
               <div className="channel-header">
+                <button
+                  className="channel-back-btn"
+                  onClick={() => setSidebarOpen(true)}
+                >
+                  ‹
+                </button>
                 {dmId && (
-                  <>
+                  <div className="channel-header-text">
                     <span className="channel-title">{dmTitle}</span>
                     {(dms[dmId]?.length ?? 0) > 2 && (
                       <span className="channel-subtitle">
                         {dms[dmId].length} members
                       </span>
                     )}
-                  </>
+                  </div>
                 )}
                 {topicId && (
-                  <>
+                  <div className="channel-header-text">
                     <span className="channel-title">
                       # {topics.find((t) => t.id === topicId)?.title}
                     </span>
                     <span className="channel-subtitle">Topic</span>
-                  </>
+                  </div>
                 )}
               </div>
               <div className="messages" ref={messagesRef}>
