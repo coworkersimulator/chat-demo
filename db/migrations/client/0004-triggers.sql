@@ -42,17 +42,17 @@ CREATE TRIGGER _rel_bump_seq
   EXECUTE FUNCTION bump_seq();
 
 
-CREATE OR REPLACE FUNCTION guard_user_immutable()
+CREATE OR REPLACE FUNCTION guard_immutable_fields()
 RETURNS trigger AS $$
 BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id THEN
-    RAISE EXCEPTION 'user.id cannot be modified';
+    RAISE EXCEPTION '%.id cannot be modified', TG_TABLE_NAME;
   END IF;
-  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
-    RAISE EXCEPTION 'user.by cannot be modified';
+  IF NEW.by IS DISTINCT FROM OLD.by THEN
+    RAISE EXCEPTION '%.by cannot be modified', TG_TABLE_NAME;
   END IF;
   IF NEW.at IS DISTINCT FROM OLD.at THEN
-    RAISE EXCEPTION 'user.at cannot be modified';
+    RAISE EXCEPTION '%.at cannot be modified', TG_TABLE_NAME;
   END IF;
   RETURN NEW;
 END;
@@ -61,109 +61,42 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER user_guard_immutable
   BEFORE UPDATE ON "user"
   FOR EACH ROW
-  EXECUTE FUNCTION guard_user_immutable();
-
-
-CREATE OR REPLACE FUNCTION guard_role_immutable()
-RETURNS trigger AS $$
-BEGIN
-  IF NEW.id IS DISTINCT FROM OLD.id THEN
-    RAISE EXCEPTION 'role.id cannot be modified';
-  END IF;
-  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
-    RAISE EXCEPTION 'role.by cannot be modified';
-  END IF;
-  IF NEW.at IS DISTINCT FROM OLD.at THEN
-    RAISE EXCEPTION 'role.at cannot be modified';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+  EXECUTE FUNCTION guard_immutable_fields();
 
 CREATE TRIGGER role_guard_immutable
   BEFORE UPDATE ON role
   FOR EACH ROW
-  EXECUTE FUNCTION guard_role_immutable();
-
-
-CREATE OR REPLACE FUNCTION guard_tag_immutable()
-RETURNS trigger AS $$
-BEGIN
-  IF NEW.id IS DISTINCT FROM OLD.id THEN
-    RAISE EXCEPTION 'tag.id cannot be modified';
-  END IF;
-  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
-    RAISE EXCEPTION 'tag.by cannot be modified';
-  END IF;
-  IF NEW.at IS DISTINCT FROM OLD.at THEN
-    RAISE EXCEPTION 'tag.at cannot be modified';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+  EXECUTE FUNCTION guard_immutable_fields();
 
 CREATE TRIGGER tag_guard_immutable
   BEFORE UPDATE ON tag
   FOR EACH ROW
-  EXECUTE FUNCTION guard_tag_immutable();
-
-
-CREATE OR REPLACE FUNCTION guard_reaction_immutable()
-RETURNS trigger AS $$
-BEGIN
-  IF NEW.id IS DISTINCT FROM OLD.id THEN
-    RAISE EXCEPTION 'reaction.id cannot be modified';
-  END IF;
-  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
-    RAISE EXCEPTION 'reaction.by cannot be modified';
-  END IF;
-  IF NEW.at IS DISTINCT FROM OLD.at THEN
-    RAISE EXCEPTION 'reaction.at cannot be modified';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+  EXECUTE FUNCTION guard_immutable_fields();
 
 CREATE TRIGGER reaction_guard_immutable
   BEFORE UPDATE ON reaction
   FOR EACH ROW
-  EXECUTE FUNCTION guard_reaction_immutable();
-
-
-CREATE OR REPLACE FUNCTION guard_note_immutable()
-RETURNS trigger AS $$
-BEGIN
-  IF NEW.id IS DISTINCT FROM OLD.id THEN
-    RAISE EXCEPTION 'note.id cannot be modified';
-  END IF;
-  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
-    RAISE EXCEPTION 'note.by cannot be modified';
-  END IF;
-  IF NEW.at IS DISTINCT FROM OLD.at THEN
-    RAISE EXCEPTION 'note.at cannot be modified';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+  EXECUTE FUNCTION guard_immutable_fields();
 
 CREATE TRIGGER note_guard_immutable
   BEFORE UPDATE ON note
   FOR EACH ROW
-  EXECUTE FUNCTION guard_note_immutable();
+  EXECUTE FUNCTION guard_immutable_fields();
+
+CREATE TRIGGER file_guard_immutable
+  BEFORE UPDATE ON file
+  FOR EACH ROW
+  EXECUTE FUNCTION guard_immutable_fields();
+
+CREATE TRIGGER rel_guard_immutable
+  BEFORE UPDATE ON rel
+  FOR EACH ROW
+  EXECUTE FUNCTION guard_immutable_fields();
 
 
-CREATE OR REPLACE FUNCTION guard_file_immutable()
+CREATE OR REPLACE FUNCTION guard_file_data_immutable()
 RETURNS trigger AS $$
 BEGIN
-  IF NEW.id IS DISTINCT FROM OLD.id THEN
-    RAISE EXCEPTION 'file.id cannot be modified';
-  END IF;
-  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
-    RAISE EXCEPTION 'file.by cannot be modified';
-  END IF;
-  IF NEW.at IS DISTINCT FROM OLD.at THEN
-    RAISE EXCEPTION 'file.at cannot be modified';
-  END IF;
   IF NEW.data IS DISTINCT FROM OLD.data THEN
     RAISE EXCEPTION 'file.data cannot be modified, delete and create a new file instead';
   END IF;
@@ -171,24 +104,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER file_guard_immutable
+CREATE TRIGGER file_guard_data_immutable
   BEFORE UPDATE ON file
   FOR EACH ROW
-  EXECUTE FUNCTION guard_file_immutable();
+  EXECUTE FUNCTION guard_file_data_immutable();
 
 
-CREATE OR REPLACE FUNCTION guard_rel_immutable()
+CREATE OR REPLACE FUNCTION guard_rel_fk_immutable()
 RETURNS trigger AS $$
 BEGIN
-  IF NEW.id IS DISTINCT FROM OLD.id THEN
-    RAISE EXCEPTION 'rel.id cannot be modified';
-  END IF;
-  IF NEW."by" IS DISTINCT FROM OLD."by" THEN
-    RAISE EXCEPTION 'rel.by cannot be modified';
-  END IF;
-  IF NEW.at IS DISTINCT FROM OLD.at THEN
-    RAISE EXCEPTION 'rel.at cannot be modified';
-  END IF;
   IF NEW.on_user_id IS DISTINCT FROM OLD.on_user_id THEN
     RAISE EXCEPTION 'rel.on_user_id cannot be modified';
   END IF;
@@ -229,10 +153,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER rel_guard_immutable
+CREATE TRIGGER rel_guard_fk_immutable
   BEFORE UPDATE ON rel
   FOR EACH ROW
-  EXECUTE FUNCTION guard_rel_immutable();
+  EXECUTE FUNCTION guard_rel_fk_immutable();
 
 
 CREATE OR REPLACE FUNCTION log_change()
