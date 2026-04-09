@@ -597,7 +597,7 @@ function App() {
     if (messagesRef.current) {
       messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, sidebarOpen]);
 
 
 
