@@ -604,6 +604,10 @@ body {
   }
 }
 
+@media (hover: none) {
+  .reaction-add-btn { opacity: 1; }
+}
+
 .reaction-add-btn:hover {
   background: #2c2d30;
   color: #d1d2d3;
