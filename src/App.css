@@ -203,6 +203,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .sidebar-new-btn {
@@ -348,6 +350,7 @@ body {
 }
 
 .sidebar-list {
+  overflow-x: hidden;
   overflow-y: auto;
   margin: 0;
   padding: 2px 0 8px;
@@ -364,6 +367,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .sidebar-list li:hover {
