@@ -890,8 +890,15 @@ body {
   /* DM composer takes full sidebar space */
   .dm-composer {
     flex: 1;
+    flex-shrink: 1;
     max-height: none;
     overflow: hidden;
+    min-height: 0;
+  }
+
+  .sidebar-section:has(.dm-composer) {
+    min-height: 0;
+    flex-shrink: 1;
   }
 
   .dm-list-hidden {
