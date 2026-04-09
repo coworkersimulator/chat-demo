@@ -784,15 +784,20 @@ body {
   .app-body {
     position: relative;
     overflow: hidden;
+    isolation: isolate;
   }
 
   .sidebar {
     position: absolute;
-    inset: 0;
-    z-index: 10;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
     overflow: hidden;
     transform: translateX(0);
     transition: transform 0.22s ease;
+    will-change: transform;
   }
 
   .app-body.channel-open .sidebar {
@@ -802,14 +807,18 @@ body {
 
   .channel {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 100%;
     width: 100%;
-    transform: translateX(100%);
-    transition: transform 0.22s ease;
+    height: 100%;
+    z-index: 1;
+    transform: translateX(0);
+    transition: left 0.22s ease;
+    will-change: left;
   }
 
   .app-body.channel-open .channel {
-    transform: translateX(0);
+    left: 0;
   }
 
   /* Channel header with back button */
@@ -862,11 +871,14 @@ body {
 
   .message-entry {
     padding: 0 10px 10px;
+    box-sizing: border-box;
+    width: 100%;
   }
 
   .message-entry-box {
     width: 100%;
     min-width: 0;
+    box-sizing: border-box;
   }
 
   .message-input {
