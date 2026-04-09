@@ -401,12 +401,15 @@ function App() {
     const rels = await db.rel.findMany({
       where: { asTag: { name: ':topic:' } },
       select: { onNote: { select: { id: true, title: true } } },
-      orderBy: { onNote: { title: 'asc' } },
     });
     setTopics(
-      rels.flatMap((r) =>
-        r.onNote ? [{ id: r.onNote.id, title: r.onNote.title }] : [],
-      ),
+      rels
+        .flatMap((r) =>
+          r.onNote ? [{ id: r.onNote.id, title: r.onNote.title }] : [],
+        )
+        .sort((a, b) =>
+          (a.title ?? '').toLowerCase().localeCompare((b.title ?? '').toLowerCase()),
+        ),
     );
   }, [db, userId]);
 
