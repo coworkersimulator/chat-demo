@@ -588,6 +588,16 @@ function App() {
   }, [messages]);
 
   useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () =>
+      document.documentElement.style.setProperty('--vvh', `${vv.height}px`);
+    vv.addEventListener('resize', update);
+    update();
+    return () => vv.removeEventListener('resize', update);
+  }, []);
+
+  useEffect(() => {
     const bc = new BroadcastChannel('chat-sync');
     syncBc.current = bc;
     bc.onmessage = () => onSyncRef.current();
