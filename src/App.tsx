@@ -278,6 +278,16 @@ function App() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(
+    () => window.matchMedia('(max-width: 680px)').matches,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 680px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const [db, setDb] = useState<Db | null>(null);
 
@@ -599,13 +609,6 @@ function App() {
     return () => vv.removeEventListener('resize', update);
   }, []);
 
-  useEffect(() => {
-    // Prevent Chrome Android from scrolling the window when an input is focused
-    // inside a position:fixed container, which shifts content out of view.
-    const reset = () => window.scrollTo(0, 0);
-    window.addEventListener('focusin', reset);
-    return () => window.removeEventListener('focusin', reset);
-  }, []);
 
   useEffect(() => {
     const bc = new BroadcastChannel('chat-sync');
@@ -866,7 +869,7 @@ function App() {
             </ul>
           </div>
         </div>
-        <div className="channel">
+        {(!isMobile || !sidebarOpen) && <div className="channel">
           {!channelId ? (
             <div className="empty-state">
               <div className="empty-state-title">Chat Demo</div>
@@ -998,7 +1001,7 @@ function App() {
               </div>
             </>
           )}
-        </div>
+        </div>}
       </div>
     </div>
   );
