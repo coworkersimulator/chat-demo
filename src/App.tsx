@@ -643,16 +643,17 @@ function App() {
 
   async function handleSend() {
     if (!db || !draft.trim() || !channelId) return;
+    const body = draft.trim();
+    setDraft('');
+    messageInputRef.current?.focus();
     const note = await db.note.create({
-      data: { body: draft.trim(), by: userId },
+      data: { body, by: userId },
       select: { id: true },
     });
     await db.rel.create({ data: { onNoteId: note.id, asNoteId: channelId } });
-    setDraft('');
     await loadMessages(channelId);
     if (dmId) await loadDms(dmId);
     syncBc.current?.postMessage({});
-    messageInputRef.current?.focus();
   }
 
   function handleUserChange(id: string) {
