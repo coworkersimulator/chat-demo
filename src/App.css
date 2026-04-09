@@ -795,7 +795,10 @@ body {
   }
 
   /* Prevent browser auto-zoom on input focus (triggered when font-size < 16px) */
-  input, textarea {
+  .message-input,
+  .dm-composer-input,
+  .sidebar-new-topic-input,
+  .reaction-picker-input {
     font-size: 16px;
   }
 

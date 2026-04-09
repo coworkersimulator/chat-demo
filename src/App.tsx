@@ -657,6 +657,10 @@ function App() {
   function handleUserChange(id: string) {
     setUserId(id);
     userIdRef.current = id;
+    setTopicId(null);
+    setDmId(null);
+    setMessages([]);
+    setSidebarOpen(true);
   }
 
   if (!ready) {
