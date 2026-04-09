@@ -702,7 +702,7 @@ function App() {
         </div>
       </div>
       <div className={`app-body${sidebarOpen ? '' : ' channel-open'}`}>
-        <div className="sidebar">
+        <div className={`sidebar${newDm ? ' dm-composing' : ''}`}>
           <div className="sidebar-section">
             <div className="sidebar-section-header">
               Topics

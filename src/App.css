@@ -188,6 +188,8 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .sidebar-section + .sidebar-section {
@@ -887,18 +889,22 @@ body {
     box-sizing: border-box;
   }
 
-  /* DM composer takes full sidebar space */
-  .dm-composer {
-    flex: 1;
-    flex-shrink: 1;
-    max-height: none;
+  /* DM composer: collapse topics section, expand DM section */
+  .sidebar.dm-composing .sidebar-section:first-child {
+    flex: 0;
     overflow: hidden;
+  }
+
+  .sidebar.dm-composing .sidebar-section:last-child {
+    flex: 1;
     min-height: 0;
   }
 
-  .sidebar-section:has(.dm-composer) {
+  .dm-composer {
+    flex: 1;
+    max-height: none;
+    overflow: hidden;
     min-height: 0;
-    flex-shrink: 1;
   }
 
   .dm-list-hidden {
