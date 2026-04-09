@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "pglite:server": "pglite-server --extensions pgcrypto,@electric-sql/pglite/contrib/uuid_ossp:uuid_ossp --db=memory://",
     "pglite:server:dev": "tsx db/server.ts",
