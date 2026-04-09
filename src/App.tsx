@@ -116,7 +116,10 @@ function ReactionPicker({
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    // Don't auto-focus on touch devices — it reopens the keyboard over the picker
+    if (window.matchMedia('(hover: hover)').matches) {
+      inputRef.current?.focus();
+    }
   }, []);
 
   useLayoutEffect(() => {
@@ -125,11 +128,15 @@ function ReactionPicker({
     const btn = anchor.getBoundingClientRect();
     const pw = el.offsetWidth;
     const ph = el.offsetHeight;
+    const vv = window.visualViewport;
     const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    // Use visual viewport bounds so the picker stays above the keyboard on iOS
+    const visTop = vv ? vv.offsetTop : 0;
+    const visBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
     let top = btn.top - ph - 6;
-    if (top < 8) top = btn.bottom + 6;
-    if (top + ph > vh - 8) top = vh - ph - 8;
+    if (top < visTop + 8) top = btn.bottom + 6;
+    if (top + ph > visBottom - 8) top = visBottom - ph - 8;
+    if (top < visTop + 8) top = visTop + 8;
     let left = btn.left;
     if (left + pw > vw - 8) left = vw - pw - 8;
     if (left < 8) left = 8;
