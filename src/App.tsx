@@ -257,7 +257,9 @@ function App() {
   const [dms, setDms] = useState<Record<string, Dm[]>>({});
   const [topicId, setTopicId] = useState<string | null>(null);
   const [dmId, setDmId] = useState<string | null>(null);
-  const [dmTitle, setDmTitle] = useState<string>('');
+  const dmTitle = dmId && dms[dmId]
+    ? dms[dmId].filter((r) => r.userId !== userId).map((r) => r.userName ?? r.username).sort().join(', ')
+    : '';
   const [messages, setMessages] = useState<Message[]>([]);
   const [reactions, setReactions] = useState<
     Record<string, { emoji: string; count: number; mine: boolean }[]>
@@ -538,12 +540,6 @@ function App() {
 
   async function handleNewDm() {
     if (!db || newDmSelected.length === 0) return;
-    const title = newDmSelected
-      .map((id) => users.find((u) => u.id === id))
-      .map((u) => (u ? (u.name ?? u.username) : ''))
-      .sort()
-      .join(', ');
-    setDmTitle(title);
     const tag = await db.tag.findFirst({
       where: { name: ':dm:' },
       select: { id: true },
@@ -864,13 +860,6 @@ function App() {
                     setDmId(noteId);
                     setTopicId(null);
                     setSidebarOpen(false);
-                    setDmTitle(
-                      rows
-                        .filter((r) => r.userId !== userId)
-                        .map((r) => r.userName ?? r.username)
-                        .sort()
-                        .join(', '),
-                    );
                   }}
                   className={noteId === dmId ? 'active' : undefined}
                 >
