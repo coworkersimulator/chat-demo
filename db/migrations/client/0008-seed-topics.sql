@@ -77,6 +77,17 @@ DECLARE
   m  uuid;
   ts timestamptz;
 
+  r_thumbsup uuid;
+  r_heart    uuid;
+  r_joy      uuid;
+  r_tada     uuid;
+  r_eyes     uuid;
+  r_fire     uuid;
+  r_clap     uuid;
+  r_rocket   uuid;
+  r_white_check_mark uuid;
+  r_100      uuid;
+
 BEGIN
   SELECT id INTO u_amara     FROM "user" WHERE username = 'amara.osei';
   SELECT id INTO u_fatima    FROM "user" WHERE username = 'fatima_z';
@@ -128,6 +139,17 @@ BEGIN
   SELECT id INTO t_foodies   FROM note WHERE title = 'Foodies';
   SELECT id INTO t_coffee    FROM note WHERE title = 'Coffee & Chat';
 
+  SELECT id INTO r_thumbsup FROM reaction WHERE name = 'thumbsup';
+  SELECT id INTO r_heart    FROM reaction WHERE name = 'heart';
+  SELECT id INTO r_joy      FROM reaction WHERE name = 'joy';
+  SELECT id INTO r_tada     FROM reaction WHERE name = 'tada';
+  SELECT id INTO r_eyes     FROM reaction WHERE name = 'eyes';
+  SELECT id INTO r_fire     FROM reaction WHERE name = 'fire';
+  SELECT id INTO r_clap     FROM reaction WHERE name = 'clap';
+  SELECT id INTO r_rocket   FROM reaction WHERE name = 'rocket';
+  SELECT id INTO r_white_check_mark FROM reaction WHERE name = 'white_check_mark';
+  SELECT id INTO r_100      FROM reaction WHERE name = '100';
+
 
   -- ============================================================
   -- DevOps, Mon Feb 23 2026, 09:15
@@ -135,6 +157,9 @@ BEGIN
   ts := '2026-02-23 09:15:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Pushed new pipeline config, should cut build times ~40%. Please test and report back', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_hiroshi);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_tariq);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_joon);
   ts := ts + interval '18 minutes';
   INSERT INTO note (body, by, at) VALUES ('nice diff. Clever layer caching. Did you consider parallelising the unit tests too?', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
@@ -144,9 +169,12 @@ BEGIN
   ts := ts + interval '4 hours 22 minutes';
   INSERT INTO note (body, by, at) VALUES ('staging deploy failed this morning. Looks like the healthcheck timeout is too short for cold starts', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_hiroshi);
   ts := ts + interval '11 minutes';
   INSERT INTO note (body, by, at) VALUES ('Bumped it to 30s in the helm values. Pushing now', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_tariq);
   ts := ts + interval '24 minutes';
   INSERT INTO note (body, by, at) VALUES ('Should we add a readiness probe separate from liveness? cold starts are always going to be slow', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
@@ -156,12 +184,17 @@ BEGIN
   ts := '2026-02-24 02:07:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('prod alert at 2am, memory spike on the worker nodes. Turned out to be the new log aggregator, was buffering everything in memory', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_priya);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_hiroshi);
   ts := '2026-02-24 08:55:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('oof. Are you ok? 2am is brutal', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('On-call life. Coffee is my religion now', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_priya);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_tariq);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_joon);
   ts := ts + interval '14 minutes';
   INSERT INTO note (body, by, at) VALUES ('We should set a memory limit on that container. It shouldnt be able to take down a node', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
@@ -171,6 +204,8 @@ BEGIN
   ts := ts + interval '2 hours 40 minutes';
   INSERT INTO note (body, by, at) VALUES ('K8s dashboard is back up btw. The cert was expired, renewed and deployed', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_hiroshi);
   ts := ts + interval '9 minutes';
   INSERT INTO note (body, by, at) VALUES ('Can we set up cert-manager so this stops happening manually', u_ravi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
@@ -192,12 +227,18 @@ BEGIN
   ts := '2026-02-27 16:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('build times down to 4min from 7min. The caching is working 🎉', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_hiroshi);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_priya);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_rocket, u_tariq);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_joon);
   ts := ts + interval '5 minutes';
   INSERT INTO note (body, by, at) VALUES ('Now lets get it under 3', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('lol never satisfied', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_tariq);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_emeka);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('Thats the job', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_devops);
@@ -209,6 +250,8 @@ BEGIN
   ts := '2026-02-24 10:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('draft of the all-hands email is in the shared doc. Would love eyes before i send, especially the tone of the reorg section', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_comms);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_sloane);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_amara);
   ts := ts + interval '22 minutes';
   INSERT INTO note (body, by, at) VALUES ('Read it. The reorg section is fine but the opening feels a bit formal. We usually lead with something warmer', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_comms);
@@ -227,6 +270,8 @@ BEGIN
   ts := '2026-02-25 09:05:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Internal newsletter going out friday. If your team has something to share, get it to me by thursday noon', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_comms);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_nadia);
   ts := ts + interval '35 minutes';
   INSERT INTO note (body, by, at) VALUES ('Engineering has a section, will send it over today', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_comms);
@@ -242,6 +287,8 @@ BEGIN
   ts := ts + interval '14 minutes';
   INSERT INTO note (body, by, at) VALUES ('Biweekly +1 from me. Gives more time to actually write good content', u_fatima, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_comms);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_layla);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_kwame);
   ts := ts + interval '9 minutes';
   INSERT INTO note (body, by, at) VALUES ('lets try it for a month and see', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_comms);
@@ -254,6 +301,8 @@ BEGIN
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('same. Three sentences is harder than three paragraphs', u_fatima, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_comms);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_layla);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_amara);
 
 
   -- ============================================================
@@ -262,6 +311,9 @@ BEGIN
   ts := '2026-02-25 14:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Q2 OKRs are locked. Sharing the deck now, please review before thursday''s sync', u_bitsy, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_q2);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_anders);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_trip);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_priya);
   ts := ts + interval '42 minutes';
   INSERT INTO note (body, by, at) VALUES ('The revenue target feels aggressive given current pipeline. Are we accounting for the two large deals slipping?', u_anders, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_q2);
@@ -283,6 +335,8 @@ BEGIN
   ts := '2026-02-26 10:15:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Budget approval came through for the infrastructure upgrade. Can engineering confirm timeline?', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_q2);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_hiroshi);
   ts := ts + interval '31 minutes';
   INSERT INTO note (body, by, at) VALUES ('6-8 weeks from kickoff. We need two weeks of prep before we touch anything in prod', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_q2);
@@ -307,6 +361,9 @@ BEGIN
   ts := '2026-03-30 14:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Q2 is looking strong. Sales is at 73% of target with 6 weeks left', u_anders, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_q2);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_trip);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_bitsy);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_chazz);
   ts := ts + interval '16 minutes';
   INSERT INTO note (body, by, at) VALUES ('great position. What does the close rate look like on remaining pipeline?', u_trip, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_q2);
@@ -333,6 +390,8 @@ BEGIN
   ts := ts + interval '22 minutes';
   INSERT INTO note (body, by, at) VALUES ('There is definitely something from before 2024 in the back corner. Not naming names', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_facilities);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_saoirse);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_amara);
   ts := '2026-03-03 11:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Standing desk request for the east wing, can we get 3 more? the waitlist is 6 people', u_bitsy, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_facilities);
@@ -360,6 +419,9 @@ BEGIN
   ts := ts + interval '27 minutes';
   INSERT INTO note (body, by, at) VALUES ('Explains a lot about tuesday mornings', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_facilities);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_kwame);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_amara);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_ingrid);
 
 
   -- ============================================================
@@ -380,9 +442,14 @@ BEGIN
   ts := ts + interval '44 minutes';
   INSERT INTO note (body, by, at) VALUES ('can we do a cook-off? everyone brings a dish from their culture', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_events);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_dmitri);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_saoirse);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_kwame);
   ts := ts + interval '11 minutes';
   INSERT INTO note (body, by, at) VALUES ('I would cook for that. Would be chaos but beautiful chaos', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_events);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_layla);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_kwame);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('Combine both, morning cook-off, afternoon scavenger hunt', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_events);
@@ -407,6 +474,8 @@ BEGIN
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('noted for next year''s venue selection criteria', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_events);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_ingrid);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_saoirse);
 
 
   -- ============================================================
@@ -415,6 +484,9 @@ BEGIN
   ts := '2026-03-04 09:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('RFC: moving auth to a dedicated service. Draft is up for review. Would love feedback before friday', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_eng);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_hiroshi);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_ravi);
   ts := ts + interval '1 hour 12 minutes';
   INSERT INTO note (body, by, at) VALUES ('Read it. The token refresh strategy needs more thought, what happens during the service restart window?', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_eng);
@@ -433,12 +505,17 @@ BEGIN
   ts := ts + interval '14 minutes';
   INSERT INTO note (body, by, at) VALUES ('finally. I have nightmares about that code', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_eng);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_joon);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_emeka);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('Who wrote it originally?', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_eng);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('Git blame says... Me. 2019. I was young', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_eng);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_priya);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_joon);
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('lol. We''ve all been there', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_eng);
@@ -469,6 +546,9 @@ BEGIN
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('blockers only in standup, all other discussion goes async or in a follow-up. Ill enforce it', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_eng);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_priya);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_tomas);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_100, u_joon);
 
 
   -- ============================================================
@@ -477,6 +557,9 @@ BEGIN
   ts := '2026-03-09 10:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('PTO policy reminder: Q2 is historically the worst for taking time off. Please use it, it doesnt roll over', u_amara, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_hr);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_saoirse);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_kwame);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_anders);
   ts := ts + interval '14 minutes';
   INSERT INTO note (body, by, at) VALUES ('noted. Putting a week on the calendar now before it fills up', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_hr);
@@ -501,6 +584,9 @@ BEGIN
   ts := ts + interval '22 minutes';
   INSERT INTO note (body, by, at) VALUES ('Our team will host a welcome lunch on thursday. All invited', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_hr);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_amara);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_saoirse);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_nadia);
   ts := '2026-03-25 10:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Performance review season starts in 6 weeks. Self-review forms will be sent out then', u_nadia, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_hr);
@@ -524,6 +610,8 @@ BEGIN
   ts := '2026-03-10 14:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Expense reports for march are due friday. Please submit in Expensify, the old form is no longer accepted', u_bitsy, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_finance);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_anders);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_chazz);
   ts := ts + interval '27 minutes';
   INSERT INTO note (body, by, at) VALUES ('the conference reimbursement, does the $500 cap include transport or just the ticket?', u_anders, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_finance);
@@ -533,6 +621,8 @@ BEGIN
   ts := '2026-03-11 09:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Budget variance report for Q1 is out. We came in 4% under on opex, 2% over on infrastructure', u_trip, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_finance);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_sloane);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_bitsy);
   ts := ts + interval '19 minutes';
   INSERT INTO note (body, by, at) VALUES ('The infra overage, is that the logging service we talked about?', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_finance);
@@ -565,6 +655,8 @@ BEGIN
   ts := '2026-03-11 09:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Spring campaign brief is ready. Theme: "built for scale", targeting mid-market engineering teams', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_marketing);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_sloane);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_fatima);
   ts := ts + interval '38 minutes';
   INSERT INTO note (body, by, at) VALUES ('love the theme. The case studies will be key, do we have any mid-market customers willing to participate?', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_marketing);
@@ -580,6 +672,8 @@ BEGIN
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('perfect. Linkedin posts with a real engineer voice tend to outperform the polished ones', u_fatima, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_marketing);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_layla);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_emeka);
   ts := '2026-03-16 11:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('SEO audit results are back. Our blog is in good shape but product pages are thin on content', u_esperanza, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_marketing);
@@ -598,6 +692,8 @@ BEGIN
   ts := '2026-03-24 10:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Webinar next thursday, 120 signups so far. Promotion has been strong', u_fatima, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_marketing);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_layla);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_sloane);
   ts := ts + interval '18 minutes';
   INSERT INTO note (body, by, at) VALUES ('Great number. Do we have a follow-up sequence ready for attendees?', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_marketing);
@@ -612,6 +708,10 @@ BEGIN
   ts := '2026-03-16 10:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Closed the Meridian deal. $180k ARR. Took 4 months but we got there', u_chazz, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_sales);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_anders);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_trip);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_bitsy);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_rocket, u_emeka);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('yes!! huge win. What finally moved them?', u_anders, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_sales);
@@ -621,6 +721,8 @@ BEGIN
   ts := ts + interval '14 minutes';
   INSERT INTO note (body, by, at) VALUES ('noted, security docs are a sales tool now. Worth making them more accessible', u_trip, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_sales);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_tariq);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_chazz);
   ts := '2026-03-17 09:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Demo environment was down yesterday during a prospect call. Please flag outages so we can reschedule', u_anders, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_sales);
@@ -653,6 +755,8 @@ BEGIN
   ts := '2026-03-17 09:15:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('New design system components are in Figma. Please use them for anything going into the next sprint', u_yuki, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_design);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_nadia);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_luca);
   ts := ts + interval '33 minutes';
   INSERT INTO note (body, by, at) VALUES ('The button variants look great. One thing, the disabled state could use more contrast', u_mei, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_design);
@@ -686,6 +790,8 @@ BEGIN
   ts := ts + interval '22 minutes';
   INSERT INTO note (body, by, at) VALUES ('ill sit in. Always humbling to watch someone use something you designed', u_luca, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_design);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_nadia);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_yuki);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('That is the best way to get better. Bring tissues', u_mei, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_design);
@@ -703,6 +809,8 @@ BEGIN
   ts := '2026-03-18 11:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('phishing simulation went out yesterday. 8% click rate, down from 14% last quarter. Progress', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_security);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_tomas);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_hiroshi);
   ts := ts + interval '12 minutes';
   INSERT INTO note (body, by, at) VALUES ('Who clicked the most? asking for a friend', u_chazz, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_security);
@@ -730,6 +838,9 @@ BEGIN
   ts := '2026-03-30 09:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('MFA is now required for all admin access as of monday. No exceptions', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_security);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_tariq);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_hiroshi);
   ts := ts + interval '16 minutes';
   INSERT INTO note (body, by, at) VALUES ('What authenticator app are we standardising on?', u_anders, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_security);
@@ -785,6 +896,9 @@ BEGIN
   ts := '2026-03-24 09:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('the analytics pipeline is now real-time. Events are landing in the warehouse within 30 seconds', u_ravi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_data);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_rocket, u_priya);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_joon);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_emeka);
   ts := ts + interval '19 minutes';
   INSERT INTO note (body, by, at) VALUES ('That is going to change a lot of how we make decisions. Nice work', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_data);
@@ -818,6 +932,9 @@ BEGIN
   ts := '2026-04-01 11:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('New cohort analysis shows 30-day retention improved 3 points since the onboarding redesign. Statistically significant', u_ravi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_data);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_priya);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_joon);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_emeka);
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('huge. That''s what we were hoping to see. Design team will be pleased', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_data);
@@ -832,6 +949,9 @@ BEGIN
   ts := '2026-03-25 10:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Q3 roadmap draft is up. Biggest bets: collaboration features, API v2, mobile. Feedback welcome', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_product);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_joon);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_nadia);
   ts := ts + interval '48 minutes';
   INSERT INTO note (body, by, at) VALUES ('Mobile should be higher priority, we''re losing deals to competitors who have it', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_product);
@@ -853,6 +973,8 @@ BEGIN
   ts := '2026-03-26 14:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('User research findings from last month are now in the product wiki. Key insight: users want bulk actions everywhere', u_ravi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_product);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_joon);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_100, u_nadia);
   ts := ts + interval '22 minutes';
   INSERT INTO note (body, by, at) VALUES ('Bulk actions, we hear this constantly in support too. Should be higher in the backlog', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_product);
@@ -882,9 +1004,14 @@ BEGIN
   ts := '2026-03-30 09:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('V2.4.0 is out. Highlights: bulk export, webhook retry logic, search speed improvements. Full notes in the doc', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_releases);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_joon);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_rocket, u_hiroshi);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_priya);
   ts := ts + interval '14 minutes';
   INSERT INTO note (body, by, at) VALUES ('The webhook retry was a long time coming. Customers are going to love that', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_releases);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_tariq);
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('Any breaking changes?', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_releases);
@@ -923,6 +1050,10 @@ BEGIN
   ts := '2026-03-31 09:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Happy hour this friday, rooftop bar on 5th, 5:30pm. Everyone is invited, bring good vibes', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_happyhour);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_luca);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_fatima);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_kwame);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_sloane);
   ts := ts + interval '11 minutes';
   INSERT INTO note (body, by, at) VALUES ('Finally. Ill be there', u_luca, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_happyhour);
@@ -959,6 +1090,8 @@ BEGIN
   ts := '2026-04-04 21:15:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Great turnout last night. 30 people made it', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_happyhour);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_luca);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_kwame);
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('It was a really good night. Same time next month?', u_luca, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_happyhour);
@@ -968,6 +1101,8 @@ BEGIN
   ts := ts + interval '11 minutes';
   INSERT INTO note (body, by, at) VALUES ('the view from that rooftop is ridiculous by the way. Someone find us an excuse to go back', u_fatima, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_happyhour);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_sloane);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_luca);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('done. Next month''s happy hour is officially there', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_happyhour);
@@ -979,6 +1114,8 @@ BEGIN
   ts := '2026-02-24 12:15:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Made shakshuka this morning and had leftovers for lunch. Eating well today', u_fatima, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_lunch);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_dmitri);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_yuki);
   ts := ts + interval '14 minutes';
   INSERT INTO note (body, by, at) VALUES ('Shakshuka at lunch is elite tier. Recipe?', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_lunch);
@@ -997,6 +1134,8 @@ BEGIN
   ts := '2026-03-02 12:05:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('homemade borscht today. Judge me', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_lunch);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_esperanza);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_luca);
   ts := ts + interval '9 minutes';
   INSERT INTO note (body, by, at) VALUES ('no judgement only admiration. How long did that take?', u_esperanza, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_lunch);
@@ -1006,6 +1145,8 @@ BEGIN
   ts := '2026-03-04 13:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Sad desk salad reporting in. Dream of better days', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_lunch);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_amara);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_fatima);
   ts := ts + interval '12 minutes';
   INSERT INTO note (body, by, at) VALUES ('there is a place downstairs that does really good grain bowls if you want a rescue', u_amara, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_lunch);
@@ -1021,6 +1162,9 @@ BEGIN
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('luca is actually a witch and the parmesan rind is a spell', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_lunch);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_sloane);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_joon);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_esperanza);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('It is exactly that', u_luca, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_lunch);
@@ -1032,6 +1176,8 @@ BEGIN
   ts := '2026-02-26 08:45:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Bjørn discovered puddles today. Took 40 minutes to get him away from one', u_ingrid, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_dogs);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_kwame);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_saoirse);
   ts := ts + interval '22 minutes';
   INSERT INTO note (body, by, at) VALUES ('A man of culture. What kind of dog is Bjørn?', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_dogs);
@@ -1047,6 +1193,9 @@ BEGIN
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('The airpods survived. The case did not. Biko shows no remorse', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_dogs);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_saoirse);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_ingrid);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_anders);
   ts := '2026-03-10 17:45:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('my border collie Finn figured out how to open the garden gate. We have a genius and a problem', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_dogs);
@@ -1056,6 +1205,9 @@ BEGIN
   ts := ts + interval '9 minutes';
   INSERT INTO note (body, by, at) VALUES ('He already has a job: herding my children. Unsolicited but thorough', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_dogs);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_ingrid);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_kwame);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_trip);
   ts := '2026-03-18 08:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Dog park saturday morning, anyone in? the one by the river', u_anders, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_dogs);
@@ -1071,6 +1223,8 @@ BEGIN
   ts := '2026-03-21 11:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Good turnout at the dog park. Bjørn made three friends and one enemy', u_ingrid, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_dogs);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_kwame);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_saoirse);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('the enemy was a dachshund, wasn''t it', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_dogs);
@@ -1091,6 +1245,9 @@ BEGIN
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('it was to my manager and it said "jjjjjjjjjjjjjjjjjkkkk". Luckily she found it charming', u_mei, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_cats);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_yuki);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_fatima);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_nadia);
   ts := '2026-03-04 21:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('My two cats have declared war on each other over the heating vent. Ongoing negotiations', u_nadia, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_cats);
@@ -1100,9 +1257,14 @@ BEGIN
   ts := ts + interval '7 minutes';
   INSERT INTO note (body, by, at) VALUES ('The older one holds the vent during the day. The younger one ambushes at night. A cold war with shifts', u_nadia, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_cats);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_fatima);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_mei);
   ts := '2026-03-11 19:45:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('my cat Pushkin found a spider and stared at it for two hours without touching it. Art installation', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_cats);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_yuki);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_mei);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_nadia);
   ts := ts + interval '16 minutes';
   INSERT INTO note (body, by, at) VALUES ('Cats understand something about contemplation that we do not', u_yuki, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_cats);
@@ -1132,9 +1294,13 @@ BEGIN
   ts := '2026-03-02 20:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('book club pick for this month: Piranesi by Susanna Clarke. Short, strange, perfect', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_books);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_saoirse);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_tomas);
   ts := ts + interval '14 minutes';
   INSERT INTO note (body, by, at) VALUES ('I read this last year and didnt talk to anyone for a day afterward. Excellent choice', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_books);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_layla);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_ingrid);
   ts := ts + interval '22 minutes';
   INSERT INTO note (body, by, at) VALUES ('Starting tonight. How long is it?', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_books);
@@ -1150,6 +1316,8 @@ BEGIN
   ts := ts + interval '12 minutes';
   INSERT INTO note (body, by, at) VALUES ('The house itself is the best character. It''s like nothing else i''ve read', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_books);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_priya);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_ingrid);
   ts := '2026-03-16 20:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('What are we reading next month?', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_books);
@@ -1171,6 +1339,9 @@ BEGIN
   ts := ts + interval '19 minutes';
   INSERT INTO note (body, by, at) VALUES ('Babel wins. See you all in four weeks. No spoilers in other channels please', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_books);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_priya);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_saoirse);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_bitsy);
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('Babel is long. I''m starting now', u_bitsy, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_books);
@@ -1182,6 +1353,8 @@ BEGIN
   ts := '2026-02-26 17:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('5-a-side football sunday morning, need 2 more. Who''s in?', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_weekend);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_joon);
   ts := ts + interval '18 minutes';
   INSERT INTO note (body, by, at) VALUES ('i''m in. What time?', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_weekend);
@@ -1215,12 +1388,16 @@ BEGIN
   ts := '2026-03-09 10:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Trail run recap: 13km, one blister, one very photogenic fog bank over the water. 10/10 would suffer again', u_anders, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_weekend);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_ingrid);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_emeka);
   ts := ts + interval '9 minutes';
   INSERT INTO note (body, by, at) VALUES ('The fog was something else. Felt like we were running inside a cloud', u_ingrid, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_weekend);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('my legs are still angry but my head is very calm', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_weekend);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_anders);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_ingrid);
 
 
   -- ============================================================
@@ -1229,6 +1406,9 @@ BEGIN
   ts := '2026-02-25 12:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Made mole negro from scratch this weekend. 35 ingredients. Took all day. Worth every minute', u_esperanza, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_foodies);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_fatima);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_dmitri);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_luca);
   ts := ts + interval '18 minutes';
   INSERT INTO note (body, by, at) VALUES ('From scratch mole is a love language. Did you toast the chilis yourself?', u_fatima, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_foodies);
@@ -1259,9 +1439,13 @@ BEGIN
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('There is definitely shame', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_foodies);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_joon);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_amara);
   ts := '2026-03-18 17:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('sourdough update: the starter is alive and well. Baked a batard this weekend, best crumb yet', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_foodies);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_luca);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_esperanza);
   ts := ts + interval '19 minutes';
   INSERT INTO note (body, by, at) VALUES ('Bring some in. We will not judge. We will only eat', u_luca, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_foodies);
@@ -1271,6 +1455,8 @@ BEGIN
   ts := '2026-03-26 12:15:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('The jollof at the place by the market is now officially the best in the city. I won''t argue', u_amara, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_foodies);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_fatima);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_dmitri);
   ts := ts + interval '11 minutes';
   INSERT INTO note (body, by, at) VALUES ('bold claim. Is this better than your aunt''s?', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_foodies);
@@ -1285,6 +1471,8 @@ BEGIN
   ts := '2026-02-23 08:45:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Good morning everyone. Coffee is strong today, which is the correct setting', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_coffee);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_tomas);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_luca);
   ts := ts + interval '9 minutes';
   INSERT INTO note (body, by, at) VALUES ('Mornings should not exist before 9am', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_coffee);
@@ -1297,9 +1485,13 @@ BEGIN
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('This is dangerous information', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_coffee);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_luca);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_fatima);
   ts := '2026-03-02 09:30:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Hot take: oat milk in coffee is fine actually', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_coffee);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_nadia);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_luca);
   ts := ts + interval '7 minutes';
   INSERT INTO note (body, by, at) VALUES ('it is not fine', u_luca, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_coffee);
@@ -1318,6 +1510,8 @@ BEGIN
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('3pm is when i switch from coffee to tea and accept whatever the day was', u_ingrid, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_coffee);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_layla);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_nadia);
   ts := '2026-03-17 09:00:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('Walking meeting culture, who''s for it and who''s against', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_coffee);
@@ -1330,12 +1524,16 @@ BEGIN
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('Against it when it''s raining, which is always', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_coffee);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_kwame);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_amara);
   ts := '2026-03-30 09:15:00'::timestamptz;
   INSERT INTO note (body, by, at) VALUES ('What''s everyone listening to lately? need something new for the commute', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_coffee);
   ts := ts + interval '18 minutes';
   INSERT INTO note (body, by, at) VALUES ('Khruangbin if you want something that feels like driving through a warm night', u_esperanza, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_coffee);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_joon);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_fatima);
   ts := ts + interval '11 minutes';
   INSERT INTO note (body, by, at) VALUES ('been on a big Coltrane kick. A Love Supreme on repeat', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, t_coffee);

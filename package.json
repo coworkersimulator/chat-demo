@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "pglite:server:memory": "pglite-server --extensions pgcrypto,uuid-ossp --db=memory://",
+    "pglite:server": "pglite-server --extensions pgcrypto,@electric-sql/pglite/contrib/uuid_ossp:uuid_ossp --db=memory://",
+    "pglite:server:dev": "tsx db/server.ts",
     "prisma:pull": "prisma db pull --force && tsx prisma/rename-rels.ts && npx prisma-case-format --file prisma/schema.prisma && prisma generate",
     "kysely:codegen": "tsx db/kysely-codegen.ts",
     "test": "tsx --test test/**/*.test.ts"

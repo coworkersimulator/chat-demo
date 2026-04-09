@@ -31,12 +31,6 @@ model File {
   @@map("file")
 }
 
-model Migration {
-  version String @unique(map: "migration_version_idx")
-
-  @@map("migration")
-}
-
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model Note {

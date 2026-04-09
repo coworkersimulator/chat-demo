@@ -31,6 +31,17 @@ DECLARE
   m    uuid;
   ts   timestamptz;
 
+  r_thumbsup uuid;
+  r_heart    uuid;
+  r_joy      uuid;
+  r_tada     uuid;
+  r_eyes     uuid;
+  r_fire     uuid;
+  r_clap     uuid;
+  r_rocket   uuid;
+  r_white_check_mark    uuid;
+  r_100      uuid;
+
 BEGIN
   SELECT id INTO tag_dm FROM tag WHERE name = ':dm:';
 
@@ -59,6 +70,17 @@ BEGIN
   SELECT id INTO u_trip      FROM "user" WHERE username = 'trip.hartwell';
   SELECT id INTO u_chazz     FROM "user" WHERE username = 'chazz';
 
+  SELECT id INTO r_thumbsup FROM reaction WHERE name = 'thumbsup';
+  SELECT id INTO r_heart    FROM reaction WHERE name = 'heart';
+  SELECT id INTO r_joy      FROM reaction WHERE name = 'joy';
+  SELECT id INTO r_tada     FROM reaction WHERE name = 'tada';
+  SELECT id INTO r_eyes     FROM reaction WHERE name = 'eyes';
+  SELECT id INTO r_fire     FROM reaction WHERE name = 'fire';
+  SELECT id INTO r_clap     FROM reaction WHERE name = 'clap';
+  SELECT id INTO r_rocket   FROM reaction WHERE name = 'rocket';
+  SELECT id INTO r_white_check_mark FROM reaction WHERE name = 'white_check_mark';
+  SELECT id INTO r_100      FROM reaction WHERE name = '100';
+
 
   -- ============================================================
   -- amara ↔ kwame  (org chart, onboarding, welcome lunch)
@@ -72,6 +94,7 @@ BEGIN
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('yep, just updated it this morning. Sharing the link now', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_amara);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('Perfect, thank you! the new reporting lines look much cleaner', u_amara, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -135,9 +158,11 @@ BEGIN
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('Already done, invited you to all three', u_amara, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_kwame);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('you''re two steps ahead as always', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_amara);
 
 
   -- ============================================================
@@ -167,6 +192,7 @@ BEGIN
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('oh that''s a good catch. The tense was doing a lot of damage', u_amara, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_sloane);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('you have good instincts for this. You just get in your own head sometimes', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -179,6 +205,7 @@ BEGIN
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('Cut. Thank you. I''m sending it', u_amara, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_sloane);
   ts := ts + interval '5 days 2 hours 18 minutes';
   INSERT INTO note (body, by, at) VALUES ('I''m thinking about restructuring the whole comms calendar for Q3. Can we grab 30 minutes this week?', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -191,6 +218,7 @@ BEGIN
   ts := ts + interval '3 days 1 hour 5 minutes';
   INSERT INTO note (body, by, at) VALUES ('Good session Thursday. I think quarterly themes is the right frame', u_amara, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_sloane);
   ts := ts + interval '20 minutes';
   INSERT INTO note (body, by, at) VALUES ('agreed. I''ll write it up as a proposal and share with Layla', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -227,6 +255,8 @@ BEGIN
   ts := ts + interval '1 minute';
   INSERT INTO note (body, by, at) VALUES ('I do not regret it. I simply have a different palette', u_mei, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_fatima);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_yuki);
   ts := ts + interval '2 hours 15 minutes';
   INSERT INTO note (body, by, at) VALUES ('That was so good. Going back thursday if you''re both in', u_yuki, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -254,6 +284,8 @@ BEGIN
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('ok sold. Tuna mayo, salmon, and umeboshi', u_mei, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_yuki);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_fatima);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('Perfect. I''m already looking forward to it', u_fatima, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -266,6 +298,8 @@ BEGIN
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('This is going to be chaotic and I cannot wait', u_mei, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_fatima);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_yuki);
 
 
   -- ============================================================
@@ -316,6 +350,7 @@ BEGIN
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('Index added. Down to 0.3 seconds', u_ravi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_priya);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('nice. Classic missing index fix', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -325,6 +360,7 @@ BEGIN
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('You caught it when it mattered. That''s what counts', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_ravi);
   ts := ts + interval '8 days 2 hours 10 minutes';
   INSERT INTO note (body, by, at) VALUES ('Retention chart in the dashboard looks off today, the day-7 cohort is showing higher than day-1 which makes no sense', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -334,6 +370,7 @@ BEGIN
   ts := ts + interval '25 minutes';
   INSERT INTO note (body, by, at) VALUES ('Fixed. Chart looks correct now', u_ravi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_priya);
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('Thank you. The numbers make sense again. Timezone bugs are the worst', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -343,6 +380,7 @@ BEGIN
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('please do. And add yourself to the hero column in the sprint board', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_ravi);
 
 
   -- ============================================================
@@ -372,6 +410,7 @@ BEGIN
   ts := ts + interval '4 days 7 hours 30 minutes';
   INSERT INTO note (body, by, at) VALUES ('Build times are down to 4 minutes from 7. Caching is working', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_hiroshi);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('good result. Now let''s get it under 3', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -405,9 +444,12 @@ BEGIN
   ts := ts + interval '35 minutes';
   INSERT INTO note (body, by, at) VALUES ('Fixed. All tests passing in parallel now. 2:41 total', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_hiroshi);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_rocket, u_hiroshi);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('Under 3. I told you', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_emeka);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('you did. Next goal: under 2', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -432,6 +474,7 @@ BEGIN
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('agreed. I''ll file tickets for the main uncovered paths', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_emeka);
 
 
   -- ============================================================
@@ -449,6 +492,7 @@ BEGIN
   ts := ts + interval '12 minutes';
   INSERT INTO note (body, by, at) VALUES ('Deployed. Green', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_tariq);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('nice. We should add a separate readiness probe so cold starts don''t keep hitting this', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -482,12 +526,14 @@ BEGIN
   ts := ts + interval '4 days 3 hours 10 minutes';
   INSERT INTO note (body, by, at) VALUES ('Phase 1 auth is live. No incidents in the first two hours', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_joon);
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('Readiness probe also behaving well. Zero false positives since thursday', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('Clean release. Good work', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_joon);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('team effort. When''s phase 2?', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -535,9 +581,11 @@ BEGIN
   ts := ts + interval '14 days 1 hour 0 minutes';
   INSERT INTO note (body, by, at) VALUES ('first biweekly issue went out. Highest open rate we''ve had', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_sloane);
   ts := ts + interval '15 minutes';
   INSERT INTO note (body, by, at) VALUES ('Told you. People read what they can finish', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_layla);
   ts := ts + interval '5 minutes';
   INSERT INTO note (body, by, at) VALUES ('You''re getting a co-author credit on the strategy doc', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -547,6 +595,8 @@ BEGIN
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('"people and work", spotlights on individuals, honest takes on how teams operate. Less announcement, more story', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_sloane);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_sloane);
   ts := ts + interval '5 minutes';
   INSERT INTO note (body, by, at) VALUES ('I love that. The engineering standup story you teased me about, is that one of them?', u_sloane, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -598,12 +648,16 @@ BEGIN
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('My cooking isn''t going to win anything and I know it', u_kwame, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_saoirse);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_amara);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('fair enough. Judge it is', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
   ts := ts + interval '7 days 2 hours 30 minutes';
   INSERT INTO note (body, by, at) VALUES ('brief is approved by leadership! we''re doing the full mixed format', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_amara);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_kwame);
   ts := ts + interval '5 minutes';
   INSERT INTO note (body, by, at) VALUES ('Yes! this is going to be the best one yet', u_amara, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -613,6 +667,7 @@ BEGIN
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('Absolutely. This is going to be amazing', u_amara, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_saoirse);
 
 
   -- ============================================================
@@ -666,6 +721,8 @@ BEGIN
   ts := ts + interval '7 days 1 hour 22 minutes';
   INSERT INTO note (body, by, at) VALUES ('Security questionnaire submitted. Legal deal just closed. We''re at 73% now', u_anders, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_bitsy);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_bitsy);
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('Incredible. What''s the close probability on the remaining enterprise deal?', u_bitsy, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -675,6 +732,7 @@ BEGIN
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('Keep me posted. This could be a great quarter', u_bitsy, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_anders);
 
 
   -- ============================================================
@@ -701,6 +759,7 @@ BEGIN
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('Good. Also, the color tokens update looks great by the way. The new contrast ratios are much better', u_luca, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_nadia);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('thank you. Took longer than expected because I was going through every component manually', u_nadia, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -716,6 +775,8 @@ BEGIN
   ts := ts + interval '7 days 2 hours 10 minutes';
   INSERT INTO note (body, by, at) VALUES ('typography scale is finalized. I''m really happy with how it came out', u_nadia, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_luca);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_luca);
   ts := ts + interval '15 minutes';
   INSERT INTO note (body, by, at) VALUES ('It looks great. The display sizes especially, they have real personality without being loud', u_luca, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -725,6 +786,7 @@ BEGIN
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('You nailed it. I''m already using it in the new dashboard components', u_luca, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_nadia);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('let me know if anything feels off in context. Theory and practice are different', u_nadia, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -745,6 +807,7 @@ BEGIN
   ts := ts + interval '7 minutes';
   INSERT INTO note (body, by, at) VALUES ('Please yes. I wrote that code in 2019. I want to be there when it dies', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_joon);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('haha. Bring a photo to delete it ceremonially', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -784,12 +847,17 @@ BEGIN
   ts := ts + interval '7 days 3 hours 20 minutes';
   INSERT INTO note (body, by, at) VALUES ('payment wrapper is fully deleted. Refund flow has been on the new impl for 48 hours with zero incidents', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_tomas);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_rocket, u_tomas);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('This is the best day of my professional life', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_joon);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('I''m putting it in the release notes. "RIP payment wrapper 2019-2026"', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_tomas);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_tomas);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('Please actually do that', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -810,6 +878,7 @@ BEGIN
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('I already had two bowls. Please bring the recipe', u_esperanza, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_dmitri);
   ts := ts + interval '5 minutes';
   INSERT INTO note (body, by, at) VALUES ('The recipe is basically: use good beets, don''t skip the vinegar at the end, and let it sit overnight', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -843,12 +912,16 @@ BEGIN
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('Breadhead is not just a username', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_esperanza);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_esperanza);
   ts := ts + interval '1 minute';
   INSERT INTO note (body, by, at) VALUES ('I love this place', u_esperanza, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
   ts := ts + interval '20 days 19 hours 25 minutes';
   INSERT INTO note (body, by, at) VALUES ('My sourdough finally worked. Three months of failures, and today, perfection', u_esperanza, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_dmitri);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_dmitri);
   ts := ts + interval '12 minutes';
   INSERT INTO note (body, by, at) VALUES ('what changed?', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -864,6 +937,7 @@ BEGIN
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('I will be at the office at 8:59', u_dmitri, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_esperanza);
 
 
   -- ============================================================
@@ -909,6 +983,8 @@ BEGIN
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('that''s solid. RFC is well thought out overall. +1 to proceed', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_tariq);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_emeka);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('Same. The multi-key rotation change addresses my main concern', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -918,12 +994,16 @@ BEGIN
   ts := ts + interval '25 days 3 hours 40 minutes';
   INSERT INTO note (body, by, at) VALUES ('Phase 1 is live and clean. 72 hours, zero auth failures', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_hiroshi);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_emeka);
   ts := ts + interval '10 minutes';
   INSERT INTO note (body, by, at) VALUES ('excellent. Latency within the threshold?', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('P99 is actually lower than baseline, the new token validation is faster', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_rocket, u_hiroshi);
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('Bonus improvement. Nice', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -947,6 +1027,7 @@ BEGIN
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('Yes. Five of the seven customers mentioned it. Without it they can''t replace their current tool', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_eyes, u_emeka);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('ok. Fuzzy matching adds 2 weeks to the estimate. I''m moving it to must-have in the spec', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -974,6 +1055,7 @@ BEGIN
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('Customer calls give good signal. Keep sharing them', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_priya);
   ts := ts + interval '13 days 1 hour 15 minutes';
   INSERT INTO note (body, by, at) VALUES ('search spec changed, the filter panel got scoped out of v1. Too much surface area', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -986,6 +1068,7 @@ BEGIN
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('I can ship that. 3 weeks from today, assuming no major blockers', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_priya);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('let''s put it in writing. I''ll update the roadmap', u_priya, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1015,6 +1098,8 @@ BEGIN
   ts := ts + interval '22 days 2 hours 30 minutes';
   INSERT INTO note (body, by, at) VALUES ('We closed the enterprise deal this morning. The big one that was in legal for three weeks', u_chazz, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_trip);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_fire, u_trip);
   ts := ts + interval '6 minutes';
   INSERT INTO note (body, by, at) VALUES ('That''s the one anders told me about? the eight-figure one?', u_trip, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1045,12 +1130,15 @@ BEGIN
   ts := ts + interval '3 days 4 hours 10 minutes';
   INSERT INTO note (body, by, at) VALUES ('it closed. Q2 is done and we beat target', u_chazz, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_trip);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_rocket, u_trip);
   ts := ts + interval '5 minutes';
   INSERT INTO note (body, by, at) VALUES ('I knew it. Brilliant work', u_trip, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('Team effort. I just closed. Anders built the pipeline', u_chazz, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_trip);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('still. Buy yourself something nice', u_trip, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1092,6 +1180,7 @@ BEGIN
   ts := ts + interval '4 hours 20 minutes';
   INSERT INTO note (body, by, at) VALUES ('Two-pod test passed. Traffic drained cleanly to the healthy pods during the restart', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_white_check_mark, u_hiroshi);
   ts := ts + interval '8 minutes';
   INSERT INTO note (body, by, at) VALUES ('exactly what we want. Ship it Thursday', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1104,6 +1193,7 @@ BEGIN
   ts := ts + interval '5 minutes';
   INSERT INTO note (body, by, at) VALUES ('I''m announcing it Monday, 15 minute hard cap, blockers only. I''ll enforce it', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_joon);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('You have my full support. The team will thank you', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1113,6 +1203,7 @@ BEGIN
   ts := ts + interval '1 minute';
   INSERT INTO note (body, by, at) VALUES ('the ones who talk the most will complain the most', u_joon, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_hiroshi);
   ts := ts + interval '1 minute';
   INSERT INTO note (body, by, at) VALUES ('I know exactly which ones', u_hiroshi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1145,6 +1236,7 @@ BEGIN
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('we should do a dog walk sometime. There''s a great trail near the office', u_ingrid, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_saoirse);
   ts := ts + interval '5 minutes';
   INSERT INTO note (body, by, at) VALUES ('Yes! Saturday morning?', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1166,12 +1258,15 @@ BEGIN
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('There are actually some great dog-friendly retreat venues within 2 hours of us. I''m bookmarking them', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_ingrid);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_ingrid);
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('you''re the best event planner I know', u_ingrid, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('I prefer "logistics visionary"', u_saoirse, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_ingrid);
   ts := ts + interval '1 minute';
   INSERT INTO note (body, by, at) VALUES ('I''m updating your Slack title', u_ingrid, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1189,6 +1284,7 @@ BEGIN
   ts := ts + interval '10 minutes';
   INSERT INTO note (body, by, at) VALUES ('four days! that''s how you find out that nobody actually checks the dashboard', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_tomas);
   ts := ts + interval '5 minutes';
   INSERT INTO note (body, by, at) VALUES ('exactly. Ravi asked about cert-manager in the channel, I think we should just do it', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1213,6 +1309,8 @@ BEGIN
   ts := ts + interval '36 days 4 hours 5 minutes';
   INSERT INTO note (body, by, at) VALUES ('cert-manager is fully set up by Dmitri. Tested in staging, auto-renewed without any human involvement', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_tada, u_emeka);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_clap, u_emeka);
   ts := ts + interval '9 minutes';
   INSERT INTO note (body, by, at) VALUES ('Finally. The days of manually renewing certs are over', u_emeka, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1225,6 +1323,7 @@ BEGIN
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('he''ll be embarrassed and secretly love it', u_tomas, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_emeka);
 
 
   -- ============================================================
@@ -1251,6 +1350,7 @@ BEGIN
   ts := ts + interval '5 minutes';
   INSERT INTO note (body, by, at) VALUES ('You write well. The stress is misplaced', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_fatima);
   ts := ts + interval '14 days 2 hours 15 minutes';
   INSERT INTO note (body, by, at) VALUES ('For the Q3 newsletter I''m thinking of doing a profile on the data science team, would you be open to an interview?', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1272,6 +1372,7 @@ BEGIN
   ts := ts + interval '8 days 3 hours 0 minutes';
   INSERT INTO note (body, by, at) VALUES ('That interview was so much fun. You''re a natural', u_layla, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_heart, u_fatima);
   ts := ts + interval '12 minutes';
   INSERT INTO note (body, by, at) VALUES ('I enjoyed it too. Your questions made it easy', u_fatima, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1281,6 +1382,7 @@ BEGIN
   ts := ts + interval '3 minutes';
   INSERT INTO note (body, by, at) VALUES ('I trust you completely. But yes, please send it', u_fatima, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_joy, u_layla);
 
 
   -- ============================================================
@@ -1307,6 +1409,7 @@ BEGIN
   ts := ts + interval '9 minutes';
   INSERT INTO note (body, by, at) VALUES ('Yes, sending it over. Note: I had to tune the timeout, the default is too aggressive for async tests', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_ravi);
   ts := ts + interval '5 minutes';
   INSERT INTO note (body, by, at) VALUES ('Good tip. I''ll watch for that. What was the mutation score on the auth service?', u_ravi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
@@ -1325,12 +1428,14 @@ BEGIN
   ts := ts + interval '4 minutes';
   INSERT INTO note (body, by, at) VALUES ('good instinct. Passing tests and good tests are not the same thing', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_100, u_ravi);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('exactly. I''ll set it up this week and report back on the results', u_ravi, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
   ts := ts + interval '2 minutes';
   INSERT INTO note (body, by, at) VALUES ('Curious to see what it finds. Let me know', u_tariq, ts) RETURNING id INTO m;
   INSERT INTO rel (on_note_id, as_note_id) VALUES (m, conv);
+  INSERT INTO rel (on_note_id, as_reaction_id, by) VALUES (m, r_thumbsup, u_ravi);
 
 END;
 $$;
