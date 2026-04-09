@@ -268,6 +268,7 @@ function App() {
     { id: string; emoji: string; name: string }[]
   >([]);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
+  const [activeMsg, setActiveMsg] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [newDm, setNewDm] = useState(false);
   const [newDmSelected, setNewDmSelected] = useState<string[]>([]);
@@ -939,7 +940,10 @@ function App() {
                         </div>
                       )}
                       {isContinuation ? (
-                        <div className="message message-continuation">
+                        <div
+                          className={`message message-continuation${activeMsg === m.id ? ' message-active' : ''}`}
+                          onClick={() => setActiveMsg(activeMsg === m.id ? null : m.id)}
+                        >
                           <div className="message-continuation-time">
                             {formatAt(at)}
                           </div>
@@ -947,7 +951,10 @@ function App() {
                           {reactionBar}
                         </div>
                       ) : (
-                        <div className="message">
+                        <div
+                          className={`message${activeMsg === m.id ? ' message-active' : ''}`}
+                          onClick={() => setActiveMsg(activeMsg === m.id ? null : m.id)}
+                        >
                           <img
                             src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.username))}`}
                             width={36}
