@@ -289,6 +289,19 @@ function App() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
+  // Track visible viewport height so the app shrinks when the keyboard opens.
+  // Only vv.height is used — vv.offsetTop causes a black gap on Chrome Android.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      document.documentElement.style.setProperty('--vvh', `${vv.height}px`);
+    };
+    vv.addEventListener('resize', update);
+    update();
+    return () => vv.removeEventListener('resize', update);
+  }, []);
+
   const [db, setDb] = useState<Db | null>(null);
 
   // Cross-tab sync: post here after any write; listen to reload the current view
