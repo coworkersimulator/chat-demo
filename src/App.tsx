@@ -277,6 +277,7 @@ function App() {
   const [newTopicTitle, setNewTopicTitle] = useState('');
   const [ready, setReady] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const userIdRef = useRef('');
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
@@ -409,6 +410,7 @@ function App() {
 
   async function toggleReaction(noteId: string, reactionId: string) {
     if (!db) return;
+    setActiveMsg(null);
     const existing = await db.rel.findFirst({
       where: { onNoteId: noteId, asReactionId: reactionId, by: userId },
       select: { id: true, deletedAt: true },
@@ -615,8 +617,9 @@ function App() {
     }
   }, [messages, sidebarOpen]);
 
-
-
+  useEffect(() => {
+    if (pickerFor === null) setActiveMsg(null);
+  }, [pickerFor]);
 
   useEffect(() => {
     const bc = new BroadcastChannel('chat-sync');
@@ -649,6 +652,7 @@ function App() {
     await loadMessages(channelId);
     if (dmId) await loadDms(dmId);
     syncBc.current?.postMessage({});
+    messageInputRef.current?.focus();
   }
 
   function handleUserChange(id: string) {
@@ -980,6 +984,7 @@ function App() {
               <div className="message-entry">
                 <div className="message-entry-box">
                   <textarea
+                    ref={messageInputRef}
                     className="message-input"
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
