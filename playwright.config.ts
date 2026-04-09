@@ -5,6 +5,7 @@ export default defineConfig({
   snapshotDir: './test/e2e/snapshots',
   updateSnapshots: 'missing',
   timeout: 30_000,
+  fullyParallel: true,
   workers: 4,
   retries: 0,
   reporter: [['list'], ['html', { open: 'never' }]],

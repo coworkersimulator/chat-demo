@@ -13,7 +13,7 @@
     "pglite:server:dev": "tsx db/server.ts",
     "prisma:pull": "prisma db pull --force && tsx prisma/rename-rels.ts && npx prisma-case-format --file prisma/schema.prisma && prisma generate",
     "kysely:codegen": "tsx db/kysely-codegen.ts",
-    "test": "tsx --test test/**/*.test.ts",
+    "test": "tsx --test test/unit/**/*.test.ts",
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots"
   },

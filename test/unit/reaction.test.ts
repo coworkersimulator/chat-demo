@@ -3,7 +3,7 @@
 
 import assert from 'node:assert/strict';
 import { after, describe, it } from 'node:test';
-import db from '../db/db';
+import db from '../../db/db';
 
 after(() => db.destroy());
 
