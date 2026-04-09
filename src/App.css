@@ -1,5 +1,10 @@
 *, *::before, *::after {
   box-sizing: border-box;
+  min-width: 0;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 body {
@@ -8,6 +13,7 @@ body {
   font-size: 15px;
   color: #d1d2d3;
   background: #1a1d21;
+  overflow-x: hidden;
 }
 
 /* ── Loading screen ─────────────────────────────────────── */
@@ -790,12 +796,10 @@ body {
     overflow: hidden;
   }
 
-  /* Sidebar fills the whole panel */
+  /* Sidebar fills the whole panel — inset:0 sets all four edges, no need for width/height */
   .sidebar {
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
     z-index: 2;
     overflow: hidden;
     transition: transform 0.22s ease;
@@ -810,8 +814,6 @@ body {
   .channel {
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
     z-index: 1;
     overflow: hidden;
     transform: translateX(100%);
@@ -890,22 +892,25 @@ body {
   /* ── DM composer: collapse topics, expand DM section ── */
 
   .sidebar.dm-composing .sidebar-section:first-child {
-    flex: 0 0 0;
-    max-height: 0;
-    min-height: 0;
+    flex: 0 0 auto;
+    max-height: 0 !important;
     overflow: hidden;
   }
 
   .sidebar.dm-composing .sidebar-section:last-child {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     min-height: 0;
   }
 
   .dm-composer {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     max-height: none;
     min-height: 0;
     overflow: hidden;
+  }
+
+  .dm-start-btn {
+    flex-shrink: 0;
   }
 
   .dm-list-hidden {
