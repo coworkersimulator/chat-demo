@@ -285,8 +285,9 @@ function App() {
   const onSyncRef = useRef<() => void>(() => {});
   // Keep the callback current on every render so the channel handler never captures stale state
   onSyncRef.current = () => {
+    void loadTopics();
     if (channelId) void loadMessages(channelId);
-    if (dmId) void loadDms(dmId);
+    void loadDms(dmId ?? undefined);
   };
 
   useEffect(() => {
@@ -434,6 +435,7 @@ function App() {
     await loadTopics();
     setTopicId(note.id);
     setDmId(null);
+    syncBc.current?.postMessage({});
   }
 
   const loadDms = useCallback(
@@ -529,6 +531,7 @@ function App() {
     setNewDmSelected([]);
     setTopicId(null);
     await loadDms(note.id);
+    syncBc.current?.postMessage({});
   }
 
   const channelId = topicId ?? dmId;
