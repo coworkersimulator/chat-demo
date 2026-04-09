@@ -289,7 +289,7 @@ body {
   outline: none;
   color: #d1d2d3;
   font-size: 13px;
-  min-width: 80px;
+  min-width: 0;
   flex: 1;
   padding: 2px 0;
 }
@@ -301,6 +301,7 @@ body {
 .dm-suggestions {
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 
 .sidebar-new-topic {
@@ -786,8 +787,8 @@ body {
   .sidebar {
     position: absolute;
     inset: 0;
-    width: 100%;
     z-index: 10;
+    overflow: hidden;
     transform: translateX(0);
     transition: transform 0.22s ease;
   }
