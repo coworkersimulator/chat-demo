@@ -5,7 +5,14 @@ import { PrismaClient } from '@prisma/client/edge';
 import type { SqlMigrationAwareDriverAdapterFactory } from '@prisma/driver-adapter-utils';
 import { format, isToday, isYesterday } from 'date-fns';
 import { PrismaPGlite } from 'pglite-prisma-adapter';
-import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import './App.css';
 import PgSharedWorker from './db/pglite-shared-worker.ts?sharedworker';
@@ -151,10 +158,7 @@ function ReactionPicker({
     : allReactions;
 
   return createPortal(
-    <div
-      ref={pickerRef}
-      className="reaction-picker"
-    >
+    <div ref={pickerRef} className="reaction-picker">
       <div className="reaction-picker-search">
         <input
           ref={inputRef}
@@ -205,7 +209,10 @@ function ReactionBar({
   onToggle: (noteId: string, reactionId: string, emoji: string) => void;
 }) {
   const [addBtnEl, setAddBtnEl] = useState<HTMLButtonElement | null>(null);
-  const addBtnRef = useCallback((el: HTMLButtonElement | null) => setAddBtnEl(el), []);
+  const addBtnRef = useCallback(
+    (el: HTMLButtonElement | null) => setAddBtnEl(el),
+    [],
+  );
   return (
     <div className="reaction-bar">
       {reactions.map((r) => (
@@ -328,45 +335,45 @@ function App() {
       .then(setAllReactions);
   }, [db]);
 
-  const loadReactions = useCallback(async (messageIds: string[]) => {
-    if (!db) return;
-    if (messageIds.length === 0) {
-      setReactions({});
-      return;
-    }
-    const rels = await db.rel.findMany({
-      where: { onNoteId: { in: messageIds }, asReactionId: { not: null } },
-      select: {
-        onNoteId: true,
-        by: true,
-        asReaction: { select: { emoji: true } },
-      },
-    });
-    const grouped: Record<
-      string,
-      { emoji: string; count: number; mine: boolean }[]
-    > = {};
-    for (const rel of rels) {
-      if (!rel.onNoteId || !rel.asReaction) continue;
-      const existing = (grouped[rel.onNoteId] ??= []);
-      const slot = existing.find((e) => e.emoji === rel.asReaction!.emoji);
-      if (slot) {
-        slot.count++;
-        if (rel.by === userId) slot.mine = true;
-      } else
-        existing.push({
-          emoji: rel.asReaction.emoji,
-          count: 1,
-          mine: rel.by === userId,
-        });
-    }
-    setReactions(grouped);
-  }, [db, userId]);
+  const loadReactions = useCallback(
+    async (messageIds: string[]) => {
+      if (!db) return;
+      if (messageIds.length === 0) {
+        setReactions({});
+        return;
+      }
+      const rels = await db.rel.findMany({
+        where: { onNoteId: { in: messageIds }, asReactionId: { not: null } },
+        select: {
+          onNoteId: true,
+          by: true,
+          asReaction: { select: { emoji: true } },
+        },
+      });
+      const grouped: Record<
+        string,
+        { emoji: string; count: number; mine: boolean }[]
+      > = {};
+      for (const rel of rels) {
+        if (!rel.onNoteId || !rel.asReaction) continue;
+        const existing = (grouped[rel.onNoteId] ??= []);
+        const slot = existing.find((e) => e.emoji === rel.asReaction!.emoji);
+        if (slot) {
+          slot.count++;
+          if (rel.by === userId) slot.mine = true;
+        } else
+          existing.push({
+            emoji: rel.asReaction.emoji,
+            count: 1,
+            mine: rel.by === userId,
+          });
+      }
+      setReactions(grouped);
+    },
+    [db, userId],
+  );
 
-  async function toggleReaction(
-    noteId: string,
-    reactionId: string,
-  ) {
+  async function toggleReaction(noteId: string, reactionId: string) {
     if (!db) return;
     const existing = await db.rel.findFirst({
       where: { onNoteId: noteId, asReactionId: reactionId, by: userId },
@@ -403,7 +410,9 @@ function App() {
     );
   }, [db, userId]);
 
-  useEffect(() => { void loadTopics(); }, [loadTopics]);
+  useEffect(() => {
+    void loadTopics();
+  }, [loadTopics]);
 
   async function handleNewTopic() {
     if (!db || !newTopicTitle.trim()) return;
@@ -424,64 +433,70 @@ function App() {
     setDmId(null);
   }
 
-  const loadDms = useCallback(async (selectId?: string) => {
-    if (!db || !userId) return;
-    const dmRels = await db.rel.findMany({
-      where: {
-        asTag: { name: ':dm:' },
-        onNote: { onRels: { some: { asUserId: userId } } },
-      },
-      select: {
-        onNoteId: true,
-        onNote: {
-          select: {
-            asRels: { select: { onNote: { select: { at: true } } } },
-            onRels: {
-              where: { asUserId: { not: null } },
-              select: {
-                asUser: { select: { id: true, username: true, name: true } },
+  const loadDms = useCallback(
+    async (selectId?: string) => {
+      if (!db || !userId) return;
+      const dmRels = await db.rel.findMany({
+        where: {
+          asTag: { name: ':dm:' },
+          onNote: { onRels: { some: { asUserId: userId } } },
+        },
+        select: {
+          onNoteId: true,
+          onNote: {
+            select: {
+              asRels: { select: { onNote: { select: { at: true } } } },
+              onRels: {
+                where: { asUserId: { not: null } },
+                select: {
+                  asUser: { select: { id: true, username: true, name: true } },
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    const grouped: Record<string, Dm[]> = {};
-    for (const dmRel of dmRels) {
-      const noteId = dmRel.onNoteId!;
-      const times =
-        dmRel.onNote?.asRels
-          .map((r) => r.onNote?.at)
-          .filter((t): t is Date => t != null) ?? [];
-      const lastAt =
-        times.length > 0
-          ? new Date(Math.max(...times.map((t) => t.getTime())))
-          : new Date(0);
-      for (const { asUser: u } of dmRel.onNote?.onRels ?? []) {
-        if (!u) continue;
-        (grouped[noteId] ??= []).push({
-          noteId,
-          userId: u.id,
-          username: u.username,
-          userName: u.name,
-          lastAt,
-        });
+      const grouped: Record<string, Dm[]> = {};
+      for (const dmRel of dmRels) {
+        const noteId = dmRel.onNoteId!;
+        const times =
+          dmRel.onNote?.asRels
+            .map((r) => r.onNote?.at)
+            .filter((t): t is Date => t != null) ?? [];
+        const lastAt =
+          times.length > 0
+            ? new Date(Math.max(...times.map((t) => t.getTime())))
+            : new Date(0);
+        for (const { asUser: u } of dmRel.onNote?.onRels ?? []) {
+          if (!u) continue;
+          (grouped[noteId] ??= []).push({
+            noteId,
+            userId: u.id,
+            username: u.username,
+            userName: u.name,
+            lastAt,
+          });
+        }
       }
-    }
 
-    const sorted = Object.fromEntries(
-      Object.entries(grouped).sort(
-        ([, a], [, b]) => b[0].lastAt.getTime() - a[0].lastAt.getTime(),
-      ),
-    );
-    setDms(sorted);
-    const nextDmId = selectId ?? Object.keys(sorted)[0] ?? null;
-    setDmId(nextDmId);
-    setTopicId(null);
-  }, [db, userId]);
+      const sorted = Object.fromEntries(
+        Object.entries(grouped).sort(
+          ([, a], [, b]) => b[0].lastAt.getTime() - a[0].lastAt.getTime(),
+        ),
+      );
+      setDms(sorted);
+      const nextDmId = selectId ?? Object.keys(sorted)[0] ?? null;
+      setDmId(nextDmId);
+      setTopicId(null);
+    },
+    [db, userId],
+  );
 
-  useEffect(() => { if (!userId) return; loadDms().then(() => setReady(true)); }, [loadDms, userId]);
+  useEffect(() => {
+    if (!userId) return;
+    loadDms().then(() => setReady(true));
+  }, [loadDms, userId]);
 
   async function handleNewDm() {
     if (!db || newDmSelected.length === 0) return;
@@ -515,41 +530,47 @@ function App() {
 
   const channelId = topicId ?? dmId;
 
-  const loadMessages = useCallback(async (cId: string) => {
-    if (!db) return;
-    const rels = await db.rel.findMany({
-      where: { asNoteId: cId },
-      select: {
-        onNote: {
-          select: {
-            id: true,
-            body: true,
-            at: true,
-            user: { select: { id: true, username: true, name: true } },
+  const loadMessages = useCallback(
+    async (cId: string) => {
+      if (!db) return;
+      const rels = await db.rel.findMany({
+        where: { asNoteId: cId },
+        select: {
+          onNote: {
+            select: {
+              id: true,
+              body: true,
+              at: true,
+              user: { select: { id: true, username: true, name: true } },
+            },
           },
         },
-      },
-      orderBy: { onNote: { at: 'asc' } },
-    });
-    const msgs: Message[] = rels.flatMap((r) =>
-      r.onNote && r.onNote.user
-        ? [
-            {
-              id: r.onNote.id,
-              body: r.onNote.body,
-              at: r.onNote.at,
-              authorId: r.onNote.user.id,
-              username: r.onNote.user.username,
-              userName: r.onNote.user.name,
-            },
-          ]
-        : [],
-    );
-    setMessages(msgs);
-    await loadReactions(msgs.map((m) => m.id));
-  }, [db, loadReactions]);
+        orderBy: { onNote: { at: 'asc' } },
+      });
+      const msgs: Message[] = rels.flatMap((r) =>
+        r.onNote && r.onNote.user
+          ? [
+              {
+                id: r.onNote.id,
+                body: r.onNote.body,
+                at: r.onNote.at,
+                authorId: r.onNote.user.id,
+                username: r.onNote.user.username,
+                userName: r.onNote.user.name,
+              },
+            ]
+          : [],
+      );
+      setMessages(msgs);
+      await loadReactions(msgs.map((m) => m.id));
+    },
+    [db, loadReactions],
+  );
 
-  useEffect(() => { if (!channelId) return; void loadMessages(channelId); }, [channelId, loadMessages]);
+  useEffect(() => {
+    if (!channelId) return;
+    void loadMessages(channelId);
+  }, [channelId, loadMessages]);
 
   useEffect(() => {
     if (messagesRef.current) {
@@ -561,7 +582,10 @@ function App() {
     const bc = new BroadcastChannel('chat-sync');
     syncBc.current = bc;
     bc.onmessage = () => onSyncRef.current();
-    return () => { bc.close(); syncBc.current = null; };
+    return () => {
+      bc.close();
+      syncBc.current = null;
+    };
   }, []);
 
   useEffect(() => {
@@ -618,7 +642,7 @@ function App() {
           />
           View Source
         </a>
-        <span className="app-title">Work Chat</span>
+        <span className="app-title">Chat Demo</span>
         <div className="app-header-right">
           <div className="switch-user-wrapper" ref={userDropdownRef}>
             <button
@@ -814,7 +838,7 @@ function App() {
         <div className="channel">
           {!channelId ? (
             <div className="empty-state">
-              <div className="empty-state-title">Work Chat</div>
+              <div className="empty-state-title">Chat Demo</div>
               <div className="empty-state-body">
                 Select a topic or direct message to start chatting.
               </div>
