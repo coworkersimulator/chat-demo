@@ -967,13 +967,14 @@ function App() {
                         void handleSend();
                       }
                     }}
-                    placeholder={
-                      topicId
+                    placeholder={(() => {
+                      const text = topicId
                         ? `Message #${topics.find((t) => t.id === topicId)?.title ?? ''}`
                         : dmTitle
                           ? `Message ${dmTitle}`
-                          : 'Message'
-                    }
+                          : 'Message';
+                      return text.length > 50 ? text.slice(0, 47) + '…' : text;
+                    })()}
                     rows={1}
                   />
                   <div className="message-entry-toolbar">
