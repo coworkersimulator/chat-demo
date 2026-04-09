@@ -854,7 +854,29 @@ body {
   }
 
   .message-entry {
-    padding: 0 12px 12px;
+    padding: 0 10px 10px;
+  }
+
+  .message-entry-box {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .message-input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* DM composer takes full sidebar space */
+  .dm-composer {
+    flex: 1;
+    max-height: none;
+    overflow: hidden;
+  }
+
+  .dm-list-hidden {
+    display: none;
   }
 
   /* Reaction picker full-width */

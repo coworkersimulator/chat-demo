@@ -436,6 +436,7 @@ function App() {
     await loadTopics();
     setTopicId(note.id);
     setDmId(null);
+    setSidebarOpen(false);
     syncBc.current?.postMessage({});
   }
 
@@ -533,6 +534,7 @@ function App() {
     setNewDm(false);
     setNewDmSelected([]);
     setTopicId(null);
+    setSidebarOpen(false);
     await loadDms(note.id);
     syncBc.current?.postMessage({});
   }
@@ -828,7 +830,7 @@ function App() {
                 </button>
               </div>
             )}
-            <ul className="sidebar-list">
+            <ul className={`sidebar-list${newDm ? ' dm-list-hidden' : ''}`}>
               {Object.entries(dms).map(([noteId, rows]) => (
                 <li
                   key={noteId}
