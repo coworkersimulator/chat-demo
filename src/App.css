@@ -782,6 +782,23 @@ body {
     white-space: nowrap;
   }
 
+  /* ── App shell ──
+     position: fixed prevents iOS from scrolling the app off-screen when the
+     keyboard opens. top/height track the visual viewport via JS variables so
+     the app stays exactly within the visible area above the keyboard. */
+
+  .app {
+    position: fixed;
+    top: var(--vv-offset, 0px);
+    left: 0;
+    width: 100%;
+  }
+
+  /* Prevent browser auto-zoom on input focus (triggered when font-size < 16px) */
+  input, textarea {
+    font-size: 16px;
+  }
+
   /* ── Sliding panels ──
      app-body clips both panels. Each panel is absolute,
      explicit width: 100% overrides the desktop sidebar width: 240px. */

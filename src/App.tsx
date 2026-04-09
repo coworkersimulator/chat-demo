@@ -289,17 +289,23 @@ function App() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Track visible viewport height so the app shrinks when the keyboard opens.
-  // Only vv.height is used — vv.offsetTop causes a black gap on Chrome Android.
+  // Track visible viewport height and scroll offset so the app stays above the
+  // keyboard on iOS Safari. offsetTop is safe here because interactive-widget=
+  // resizes-content makes Chrome Android resize rather than scroll (offsetTop=0).
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
     const update = () => {
       document.documentElement.style.setProperty('--vvh', `${vv.height}px`);
+      document.documentElement.style.setProperty('--vv-offset', `${vv.offsetTop}px`);
     };
     vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
     update();
-    return () => vv.removeEventListener('resize', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
   }, []);
 
   const [db, setDb] = useState<Db | null>(null);
