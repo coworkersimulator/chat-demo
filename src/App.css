@@ -490,8 +490,10 @@ body {
   padding: 10px 24px 2px;
 }
 
-.message:hover {
-  background: #222529;
+@media (hover: hover) {
+  .message:hover {
+    background: #222529;
+  }
 }
 
 .message-continuation {
@@ -595,9 +597,11 @@ body {
   color: #6b6f76;
 }
 
-.message:hover .reaction-add-btn,
-.message-continuation:hover .reaction-add-btn {
-  opacity: 1;
+@media (hover: hover) {
+  .message:hover .reaction-add-btn,
+  .message-continuation:hover .reaction-add-btn {
+    opacity: 1;
+  }
 }
 
 .reaction-add-btn:hover {
