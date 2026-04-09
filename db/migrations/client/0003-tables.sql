@@ -111,6 +111,27 @@ CREATE INDEX IF NOT EXISTS file_deleted_at_idx     ON file (deleted_at);
 CREATE INDEX IF NOT EXISTS file_meta_idx           ON file USING gin (meta);
 
 
+CREATE TABLE IF NOT EXISTS note_tag (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
+
+  note_id uuid NOT NULL REFERENCES note (id),
+  tag_id uuid NOT NULL REFERENCES tag (id),
+
+  by uuid REFERENCES "user" (id),
+  at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  deleted_at timestamptz,
+  meta jsonb
+);
+CREATE INDEX IF NOT EXISTS note_tag_note_id_idx      ON note_tag (note_id);
+CREATE INDEX IF NOT EXISTS note_tag_tag_id_idx       ON note_tag (tag_id);
+CREATE INDEX IF NOT EXISTS note_tag_by_idx           ON note_tag ("by");
+CREATE INDEX IF NOT EXISTS note_tag_at_idx           ON note_tag (at);
+CREATE INDEX IF NOT EXISTS note_tag_deleted_at_idx   ON note_tag (deleted_at);
+CREATE INDEX IF NOT EXISTS note_tag_meta_idx         ON note_tag USING gin (meta);
+CREATE UNIQUE INDEX IF NOT EXISTS note_tag_uniq      ON note_tag (note_id, tag_id) WHERE deleted_at IS NULL;
+
+
 CREATE TABLE IF NOT EXISTS rel (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
