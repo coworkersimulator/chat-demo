@@ -19,6 +19,11 @@ const connectedTabs = new Set<string>();
 
 const pgliteReady: Promise<PGlite> = createPglite();
 
+// Keep the worker's event loop active so Chrome doesn't terminate it between
+// tab refreshes (Chrome kills SharedWorkers as soon as the last port closes,
+// unlike Safari which is more lenient).
+setInterval(() => {}, 500);
+
 bc.onmessage = async (e: MessageEvent) => {
   if (e.data.type === 'tab-here') {
     const tabId = e.data.id as string;
