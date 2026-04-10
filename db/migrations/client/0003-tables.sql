@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS note (
   created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb,
-  CHECK (title IS NOT NULL OR body IS NOT NULL)
+  CHECK (deleted_at IS NOT NULL OR title IS NOT NULL OR body IS NOT NULL)
 );
 CREATE INDEX IF NOT EXISTS note_title_idx           ON note (title);
 CREATE INDEX IF NOT EXISTS note_body_idx            ON note USING gin (to_tsvector('english', body));

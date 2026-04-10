@@ -1,3 +1,5 @@
+SET app.user_id = '00000000-0000-0000-0000-000000000000';
+
 INSERT INTO reaction (emoji, name, created_by)
 SELECT v.emoji, v.name, '00000000-0000-0000-0000-000000000000'
 FROM (VALUES

@@ -15,7 +15,10 @@ export function softDeleteExtension(baseClient: PrismaClient) {
       $allModels: {
         async $allOperations({ model, operation, args, query }: OperationParams): Promise<unknown> {
           if (READ_OPS.has(operation)) {
-            args.where = { deletedAt: null, ...args.where as object };
+            // Note is exempted: deleted notes stay visible in the feed with nulled content
+            if (model !== 'Note') {
+              args.where = { deletedAt: null, ...args.where as object };
+            }
             return query(args);
           }
           const m = (baseClient as unknown as Record<string, Record<string, (a: unknown) => unknown>>)[model];

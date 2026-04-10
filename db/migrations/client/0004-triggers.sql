@@ -6,52 +6,52 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER _user_bump_seq
+CREATE TRIGGER __user_bump_seq
   BEFORE UPDATE ON "user"
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER _role_bump_seq
+CREATE TRIGGER __role_bump_seq
   BEFORE UPDATE ON role
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER _tag_bump_seq
+CREATE TRIGGER __tag_bump_seq
   BEFORE UPDATE ON tag
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER _reaction_bump_seq
+CREATE TRIGGER __reaction_bump_seq
   BEFORE UPDATE ON reaction
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER _note_bump_seq
+CREATE TRIGGER __note_bump_seq
   BEFORE UPDATE ON note
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER _file_bump_seq
+CREATE TRIGGER __file_bump_seq
   BEFORE UPDATE ON file
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER _note_user_bump_seq
+CREATE TRIGGER __note_user_bump_seq
   BEFORE UPDATE ON note_user
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER _note_reaction_bump_seq
+CREATE TRIGGER __note_reaction_bump_seq
   BEFORE UPDATE ON note_reaction
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER _note_note_bump_seq
+CREATE TRIGGER __note_note_bump_seq
   BEFORE UPDATE ON note_note
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER _note_tag_bump_seq
+CREATE TRIGGER __note_tag_bump_seq
   BEFORE UPDATE ON note_tag
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
@@ -427,3 +427,20 @@ CREATE TRIGGER reaction_unique_on_delete
   BEFORE UPDATE ON reaction
   FOR EACH ROW
   EXECUTE FUNCTION unique_reaction_on_delete();
+
+
+CREATE OR REPLACE FUNCTION clear_note_content_on_delete()
+RETURNS trigger AS $$
+BEGIN
+  IF NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
+    NEW.title := NULL;
+    NEW.body  := NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER _note_clear_content_on_delete
+  BEFORE UPDATE ON note
+  FOR EACH ROW
+  EXECUTE FUNCTION clear_note_content_on_delete();
