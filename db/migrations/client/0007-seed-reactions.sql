@@ -1,4 +1,6 @@
-INSERT INTO reaction (emoji, name) VALUES
+INSERT INTO reaction (emoji, name, by)
+SELECT v.emoji, v.name, '00000000-0000-0000-0000-000000000000'
+FROM (VALUES
   -- Smileys & emotion
   ('😀', 'grinning'), ('😃', 'smiley'), ('😄', 'smile'), ('😁', 'grin'), ('😆', 'laughing'), ('😅', 'sweat_smile'), ('🤣', 'rofl'), ('😂', 'joy'), ('🙂', 'slightly_smiling_face'), ('🙃', 'upside_down_face'),
   ('😉', 'wink'), ('😊', 'blush'), ('😇', 'innocent'), ('🥰', 'smiling_face_with_3_hearts'), ('😍', 'heart_eyes'), ('🤩', 'star_struck'), ('😘', 'kissing_heart'), ('😗', 'kissing'), ('😚', 'kissing_closed_eyes'), ('😙', 'kissing_smiling_eyes'),
@@ -91,4 +93,5 @@ INSERT INTO reaction (emoji, name) VALUES
   ('⏫', 'arrow_double_up'), ('⏬', 'arrow_double_down'), ('⏸️', 'pause_button'), ('⏹️', 'stop_button'), ('⏺️', 'record_button'), ('🔼', 'arrow_up_small'), ('🔽', 'arrow_down_small'), ('➕', 'heavy_plus_sign'), ('➖', 'heavy_minus_sign'), ('➗', 'heavy_division_sign'),
   ('✖️', 'heavy_multiplication_x'), ('♾️', 'infinity'), ('💲', 'heavy_dollar_sign'), ('💱', 'currency_exchange'), ('‼️', 'bangbang'), ('⁉️', 'interrobang'), ('❓', 'question'), ('❔', 'grey_question'), ('❕', 'grey_exclamation'), ('❗', 'exclamation'),
   ('🔴', 'red_circle'), ('🟠', 'orange_circle'), ('🟡', 'yellow_circle'), ('🟢', 'green_circle'), ('🔵', 'blue_circle'), ('🟣', 'purple_circle'), ('⚫', 'black_circle'), ('⚪', 'white_circle'), ('🟤', 'brown_circle'),
-  ('🏁', 'checkered_flag'), ('🚩', 'triangular_flag_on_post'), ('🎌', 'crossed_flags'), ('🏴', 'black_flag'), ('🏳️', 'white_flag');
+  ('🏁', 'checkered_flag'), ('🚩', 'triangular_flag_on_post'), ('🎌', 'crossed_flags'), ('🏴', 'black_flag'), ('🏳️', 'white_flag')
+) AS v(emoji, name);

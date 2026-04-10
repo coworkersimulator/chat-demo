@@ -10,10 +10,12 @@ after(() => db.destroy());
 let seq = 0;
 const nextName = () => `test_${++seq}`;
 
+const NIL_UUID = '00000000-0000-0000-0000-000000000000';
+
 async function insertReaction(emoji: string) {
   const inserted = await db
     .insertInto('reaction')
-    .values({ emoji, name: nextName() })
+    .values({ emoji, name: nextName(), by: NIL_UUID })
     .onConflict((oc) => oc.column('emoji').doNothing())
     .returningAll()
     .executeTakeFirst();
@@ -29,7 +31,7 @@ async function insertReaction(emoji: string) {
 
 async function rejectsReaction(emoji: string) {
   return assert.rejects(
-    db.insertInto('reaction').values({ emoji, name: nextName() }).execute(),
+    db.insertInto('reaction').values({ emoji, name: nextName(), by: NIL_UUID }).execute(),
     /reaction\.emoji must be an emoji/,
   );
 }

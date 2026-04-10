@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "user" (
   username text UNIQUE NOT NULL CHECK (username ~ '^[a-zA-Z0-9]+([._-]+[a-zA-Z0-9]+)*$'),
   name text CHECK (name = trim(name)),
 
-  by uuid REFERENCES "user" (id),
+  by uuid NOT NULL REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS role (
 
   name text UNIQUE NOT NULL CHECK (name = trim(name)),
 
-  by uuid REFERENCES "user" (id),
+  by uuid NOT NULL REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS tag (
 
   name text UNIQUE NOT NULL CHECK (name = trim(name)),
 
-  by uuid REFERENCES "user" (id),
+  by uuid NOT NULL REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS reaction (
   emoji text UNIQUE NOT NULL,
   name text UNIQUE NOT NULL CHECK (name ~ '^[a-z0-9_]+$'),
 
-  by uuid REFERENCES "user" (id),
+  by uuid NOT NULL REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS note (
   title text CHECK (title IS NULL OR title = trim(title)),
   body text CHECK (body IS NULL OR body = trim(body)),
 
-  by uuid REFERENCES "user" (id),
+  by uuid NOT NULL REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb,
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS file (
   mime text NOT NULL CHECK (mime = trim(mime)),
   data bytea NOT NULL,
 
-  by uuid REFERENCES "user" (id),
+  by uuid NOT NULL REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS note_tag (
   note_id uuid NOT NULL REFERENCES note (id),
   tag_id uuid NOT NULL REFERENCES tag (id),
 
-  by uuid REFERENCES "user" (id),
+  by uuid NOT NULL REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS rel (
   as_rel_id uuid REFERENCES rel (id),
   as_reaction_id uuid REFERENCES reaction (id),
 
-  by uuid REFERENCES "user" (id),
+  by uuid NOT NULL REFERENCES "user" (id),
   at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at timestamptz,
   meta jsonb,
