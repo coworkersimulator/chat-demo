@@ -106,8 +106,8 @@ function App() {
       })
       .then((rows) => {
         setUsers(rows);
-        const saved = sessionStorage.getItem('chat-userId');
-        const initial = (saved && rows.find((r) => r.id === saved)) || rows[0];
+        const saved = sessionStorage.getItem('chat-username');
+        const initial = (saved && rows.find((r) => r.username === saved)) || rows[0];
         if (initial) handleUserChange(initial.id);
       });
   }, [db]);
@@ -347,7 +347,8 @@ function App() {
   }
 
   function handleUserChange(id: string) {
-    sessionStorage.setItem('chat-userId', id);
+    const user = users.find((u) => u.id === id);
+    if (user) sessionStorage.setItem('chat-username', user.username);
     setUserId(id);
     userIdRef.current = id;
     setChannelId(null);
