@@ -36,6 +36,11 @@ CREATE TRIGGER _file_bump_seq
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
+CREATE TRIGGER _note_user_bump_seq
+  BEFORE UPDATE ON note_user
+  FOR EACH ROW
+  EXECUTE FUNCTION bump_seq();
+
 CREATE TRIGGER _note_reaction_bump_seq
   BEFORE UPDATE ON note_reaction
   FOR EACH ROW
@@ -100,6 +105,11 @@ CREATE TRIGGER note_guard_immutable
 
 CREATE TRIGGER file_guard_immutable
   BEFORE UPDATE ON file
+  FOR EACH ROW
+  EXECUTE FUNCTION guard_immutable_fields();
+
+CREATE TRIGGER note_user_guard_immutable
+  BEFORE UPDATE ON note_user
   FOR EACH ROW
   EXECUTE FUNCTION guard_immutable_fields();
 
@@ -219,6 +229,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE TRIGGER note_user_log_change
+  BEFORE UPDATE ON note_user
+  FOR EACH ROW
+  EXECUTE FUNCTION log_change();
+
 CREATE TRIGGER note_reaction_log_change
   BEFORE UPDATE ON note_reaction
   FOR EACH ROW
@@ -276,6 +291,29 @@ BEGIN
   RAISE EXCEPTION 'hard deletes are not allowed, use soft delete instead';
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION guard_note_user_fk_immutable()
+RETURNS trigger AS $$
+BEGIN
+  IF NEW.note_id IS DISTINCT FROM OLD.note_id THEN
+    RAISE EXCEPTION 'note_user.note_id cannot be modified';
+  END IF;
+  IF NEW.user_id IS DISTINCT FROM OLD.user_id THEN
+    RAISE EXCEPTION 'note_user.user_id cannot be modified';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER note_user_guard_fk_immutable
+  BEFORE UPDATE ON note_user
+  FOR EACH ROW
+  EXECUTE FUNCTION guard_note_user_fk_immutable();
+
+CREATE TRIGGER note_user_guard_hard_delete
+  BEFORE DELETE ON note_user
+  FOR EACH ROW
+  EXECUTE FUNCTION guard_hard_delete();
 
 CREATE OR REPLACE FUNCTION guard_note_reaction_fk_immutable()
 RETURNS trigger AS $$

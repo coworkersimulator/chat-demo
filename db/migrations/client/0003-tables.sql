@@ -132,6 +132,27 @@ CREATE INDEX IF NOT EXISTS note_tag_meta_idx         ON note_tag USING gin (meta
 CREATE UNIQUE INDEX IF NOT EXISTS note_tag_uniq      ON note_tag (note_id, tag_id) WHERE deleted_at IS NULL;
 
 
+CREATE TABLE IF NOT EXISTS note_user (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
+
+  note_id uuid NOT NULL REFERENCES note (id),
+  user_id uuid NOT NULL REFERENCES "user" (id),
+
+  by uuid NOT NULL REFERENCES "user" (id),
+  at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  deleted_at timestamptz,
+  meta jsonb
+);
+CREATE INDEX IF NOT EXISTS note_user_note_id_idx      ON note_user (note_id);
+CREATE INDEX IF NOT EXISTS note_user_user_id_idx      ON note_user (user_id);
+CREATE INDEX IF NOT EXISTS note_user_by_idx           ON note_user ("by");
+CREATE INDEX IF NOT EXISTS note_user_at_idx           ON note_user (at);
+CREATE INDEX IF NOT EXISTS note_user_deleted_at_idx   ON note_user (deleted_at);
+CREATE INDEX IF NOT EXISTS note_user_meta_idx         ON note_user USING gin (meta);
+CREATE UNIQUE INDEX IF NOT EXISTS note_user_uniq      ON note_user (note_id, user_id) WHERE deleted_at IS NULL;
+
+
 CREATE TABLE IF NOT EXISTS note_reaction (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq uuid DEFAULT uuidv7_now() UNIQUE NOT NULL,
