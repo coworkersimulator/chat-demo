@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "pglite:server": "pglite-server --extensions pgcrypto,@electric-sql/pglite/contrib/uuid_ossp:uuid_ossp --db=memory://",
     "pglite:server:dev": "tsx db/server.ts",
-    "prisma:pull": "prisma db pull --force && tsx prisma/rename-rels.ts && npx prisma-case-format --file prisma/schema.prisma && prisma generate",
+    "prisma:pull": "prisma db pull --force && npx prisma-case-format --file prisma/schema.prisma && tsx prisma/rename-relations.ts && prisma generate",
     "kysely:codegen": "tsx db/kysely-codegen.ts",
     "test": "tsx --test test/unit/**/*.test.ts",
     "test:e2e": "playwright test",

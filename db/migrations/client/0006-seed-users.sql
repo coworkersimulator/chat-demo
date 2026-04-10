@@ -1,7 +1,7 @@
-INSERT INTO "user" (id, username, name, by) VALUES
+INSERT INTO "user" (id, username, name, created_by) VALUES
   ('00000000-0000-0000-0000-000000000000', 'root', null, '00000000-0000-0000-0000-000000000000');
 
-INSERT INTO "user" (username, name, by)
+INSERT INTO "user" (username, name, created_by)
 SELECT v.username, v.name, '00000000-0000-0000-0000-000000000000'
 FROM (VALUES
   ('amara.osei',        'Amara Osei'          ),

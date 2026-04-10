@@ -24,8 +24,8 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface File {
-  at: Generated<Timestamp>;
-  by: string | null;
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
   data: Buffer;
   deletedAt: Timestamp | null;
   filename: string | null;
@@ -35,14 +35,10 @@ export interface File {
   seq: Generated<string>;
 }
 
-export interface Migration {
-  version: string;
-}
-
 export interface Note {
-  at: Generated<Timestamp>;
   body: string | null;
-  by: string | null;
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
   deletedAt: Timestamp | null;
   id: Generated<string>;
   meta: Json | null;
@@ -50,9 +46,53 @@ export interface Note {
   title: string | null;
 }
 
+export interface NoteNote {
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
+  deletedAt: Timestamp | null;
+  id: Generated<string>;
+  meta: Json | null;
+  noteId: string;
+  parentId: string;
+  seq: Generated<string>;
+}
+
+export interface NoteReaction {
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
+  deletedAt: Timestamp | null;
+  id: Generated<string>;
+  meta: Json | null;
+  noteId: string;
+  reactionId: string;
+  seq: Generated<string>;
+}
+
+export interface NoteTag {
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
+  deletedAt: Timestamp | null;
+  id: Generated<string>;
+  meta: Json | null;
+  noteId: string;
+  seq: Generated<string>;
+  tagId: string;
+}
+
+export interface NoteUser {
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
+  deletedAt: Timestamp | null;
+  id: Generated<string>;
+  meta: Json | null;
+  noteId: string;
+  seq: Generated<string>;
+  userId: string;
+}
+
 export interface Reaction {
-  at: Generated<Timestamp>;
-  by: string | null;
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
   deletedAt: Timestamp | null;
   emoji: string;
   id: Generated<string>;
@@ -61,32 +101,9 @@ export interface Reaction {
   seq: Generated<string>;
 }
 
-export interface Rel {
-  asFileId: string | null;
-  asNoteId: string | null;
-  asReactionId: string | null;
-  asRelId: string | null;
-  asRoleId: string | null;
-  asTagId: string | null;
-  asUserId: string | null;
-  at: Generated<Timestamp>;
-  by: string | null;
-  deletedAt: Timestamp | null;
-  id: Generated<string>;
-  meta: Json | null;
-  onFileId: string | null;
-  onNoteId: string | null;
-  onReactionId: string | null;
-  onRelId: string | null;
-  onRoleId: string | null;
-  onTagId: string | null;
-  onUserId: string | null;
-  seq: Generated<string>;
-}
-
 export interface Role {
-  at: Generated<Timestamp>;
-  by: string | null;
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
   deletedAt: Timestamp | null;
   id: Generated<string>;
   meta: Json | null;
@@ -95,8 +112,8 @@ export interface Role {
 }
 
 export interface Tag {
-  at: Generated<Timestamp>;
-  by: string | null;
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
   deletedAt: Timestamp | null;
   id: Generated<string>;
   meta: Json | null;
@@ -105,8 +122,8 @@ export interface Tag {
 }
 
 export interface User {
-  at: Generated<Timestamp>;
-  by: string | null;
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
   deletedAt: Timestamp | null;
   id: Generated<string>;
   meta: Json | null;
@@ -117,10 +134,12 @@ export interface User {
 
 export interface DB {
   file: File;
-  migration: Migration;
   note: Note;
+  noteNote: NoteNote;
+  noteReaction: NoteReaction;
+  noteTag: NoteTag;
+  noteUser: NoteUser;
   reaction: Reaction;
-  rel: Rel;
   role: Role;
   tag: Tag;
   user: User;

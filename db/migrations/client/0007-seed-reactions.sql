@@ -1,4 +1,4 @@
-INSERT INTO reaction (emoji, name, by)
+INSERT INTO reaction (emoji, name, created_by)
 SELECT v.emoji, v.name, '00000000-0000-0000-0000-000000000000'
 FROM (VALUES
   -- Smileys & emotion

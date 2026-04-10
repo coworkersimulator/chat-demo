@@ -14,16 +14,14 @@ model File {
   filename  String?
   mime      String
   data      Bytes
-  by        String?   @db.Uuid
-  at        DateTime  @default(now()) @db.Timestamptz(6)
+  createdBy String    @map("created_by") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
   meta      Json?
-  user      User?     @relation(fields: [by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  asRels    Rel[]     @relation("rel_as_file_idTofile")
-  onRels    Rel[]     @relation("rel_on_file_idTofile")
+  user      User      @relation(fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([at])
-  @@index([by])
+  @@index([createdAt])
+  @@index([createdBy])
   @@index([deletedAt])
   @@index([filename])
   @@index([meta], type: Gin)
@@ -34,42 +32,136 @@ model File {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model Note {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  seq       String    @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
-  title     String?
-  body      String?
-  by        String?   @db.Uuid
-  at        DateTime  @default(now()) @db.Timestamptz(6)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
-  meta      Json?
-  user      User?     @relation(fields: [by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  asRels    Rel[]     @relation("rel_as_note_idTonote")
-  onRels    Rel[]     @relation("rel_on_note_idTonote")
+  id                             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seq                            String         @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
+  title                          String?
+  body                           String?
+  createdBy                      String         @map("created_by") @db.Uuid
+  createdAt                      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt                      DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  meta                           Json?
+  user                           User           @relation(fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  asChild   NoteNote[]     @relation("NoteAsChild")
+  asParent NoteNote[]     @relation("NoteAsParent")
+  noteReaction                   NoteReaction[]
+  noteTag                        NoteTag[]
+  noteUser                       NoteUser[]
 
-  @@index([at])
-  @@index([by])
+  @@index([createdAt])
+  @@index([createdBy])
   @@index([deletedAt])
   @@index([meta], type: Gin)
   @@index([title])
   @@map("note")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model Reaction {
+model NoteNote {
+  id                         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seq                        String    @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
+  noteId                     String    @map("note_id") @db.Uuid
+  parentId                   String    @map("parent_id") @db.Uuid
+  createdBy                  String    @map("created_by") @db.Uuid
+  createdAt                  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt                  DateTime? @map("deleted_at") @db.Timestamptz(6)
+  meta                       Json?
+  user                       User      @relation(fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  note   Note      @relation("NoteAsChild", fields: [noteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent Note      @relation("NoteAsParent", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([noteId, parentId], map: "note_note_uniq", where: raw("(deleted_at IS NULL)"))
+  @@index([createdAt])
+  @@index([createdBy])
+  @@index([deletedAt])
+  @@index([meta], type: Gin)
+  @@index([noteId])
+  @@index([parentId])
+  @@map("note_note")
+}
+
+model NoteReaction {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seq        String    @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
+  noteId     String    @map("note_id") @db.Uuid
+  reactionId String    @map("reaction_id") @db.Uuid
+  createdBy  String    @map("created_by") @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+  meta       Json?
+  user       User      @relation(fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  note       Note      @relation(fields: [noteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reaction   Reaction  @relation(fields: [reactionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([noteId, reactionId, createdBy], map: "note_reaction_uniq", where: raw("(deleted_at IS NULL)"))
+  @@index([createdAt])
+  @@index([createdBy])
+  @@index([deletedAt])
+  @@index([meta], type: Gin)
+  @@index([noteId])
+  @@index([reactionId])
+  @@map("note_reaction")
+}
+
+model NoteTag {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   seq       String    @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
-  emoji     String    @unique
-  name      String    @unique
-  by        String?   @db.Uuid
-  at        DateTime  @default(now()) @db.Timestamptz(6)
+  noteId    String    @map("note_id") @db.Uuid
+  tagId     String    @map("tag_id") @db.Uuid
+  createdBy String    @map("created_by") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
   meta      Json?
-  user      User?     @relation(fields: [by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  asRels    Rel[]     @relation("rel_as_reaction_idToreaction")
-  onRels    Rel[]     @relation("rel_on_reaction_idToreaction")
+  user      User      @relation(fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  note      Note      @relation(fields: [noteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([at])
-  @@index([by])
+  @@unique([noteId, tagId], map: "note_tag_uniq", where: raw("(deleted_at IS NULL)"))
+  @@index([createdAt])
+  @@index([createdBy])
+  @@index([deletedAt])
+  @@index([meta], type: Gin)
+  @@index([noteId])
+  @@index([tagId])
+  @@map("note_tag")
+}
+
+model NoteUser {
+  id                          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seq                         String    @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
+  noteId                      String    @map("note_id") @db.Uuid
+  userId                      String    @map("user_id") @db.Uuid
+  createdBy                   String    @map("created_by") @db.Uuid
+  createdAt                   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt                   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  meta                        Json?
+  creator User      @relation("NoteUserCreator", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  note                        Note      @relation(fields: [noteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  member    User      @relation("NoteUserMember", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([noteId, userId], map: "note_user_uniq", where: raw("(deleted_at IS NULL)"))
+  @@index([createdAt])
+  @@index([createdBy])
+  @@index([deletedAt])
+  @@index([meta], type: Gin)
+  @@index([noteId])
+  @@index([userId])
+  @@map("note_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Reaction {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seq          String         @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
+  emoji        String         @unique
+  name         String         @unique
+  createdBy    String         @map("created_by") @db.Uuid
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt    DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  meta         Json?
+  noteReaction NoteReaction[]
+  user         User           @relation(fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([createdAt])
+  @@index([createdBy])
   @@index([deletedAt])
   @@index([emoji])
   @@index([meta], type: Gin)
@@ -77,84 +169,18 @@ model Reaction {
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model Rel {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  seq          String    @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
-  onUserId     String?   @map("on_user_id") @db.Uuid
-  onRoleId     String?   @map("on_role_id") @db.Uuid
-  onTagId      String?   @map("on_tag_id") @db.Uuid
-  onNoteId     String?   @map("on_note_id") @db.Uuid
-  onFileId     String?   @map("on_file_id") @db.Uuid
-  onRelId      String?   @map("on_rel_id") @db.Uuid
-  onReactionId String?   @map("on_reaction_id") @db.Uuid
-  asUserId     String?   @map("as_user_id") @db.Uuid
-  asRoleId     String?   @map("as_role_id") @db.Uuid
-  asTagId      String?   @map("as_tag_id") @db.Uuid
-  asNoteId     String?   @map("as_note_id") @db.Uuid
-  asFileId     String?   @map("as_file_id") @db.Uuid
-  asRelId      String?   @map("as_rel_id") @db.Uuid
-  asReactionId String?   @map("as_reaction_id") @db.Uuid
-  by           String?   @db.Uuid
-  at           DateTime  @default(now()) @db.Timestamptz(6)
-  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
-  meta         Json?
-  asFile       File?     @relation("rel_as_file_idTofile", fields: [asFileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  asNote       Note?     @relation("rel_as_note_idTonote", fields: [asNoteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  asReaction   Reaction? @relation("rel_as_reaction_idToreaction", fields: [asReactionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  asRel        Rel?      @relation("rel_as_rel_idTorel", fields: [asRelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  asRels       Rel[]     @relation("rel_as_rel_idTorel")
-  asRole       Role?     @relation("rel_as_role_idTorole", fields: [asRoleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  asTag        Tag?      @relation("rel_as_tag_idTotag", fields: [asTagId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  asUser       User?     @relation("rel_as_user_idTouser", fields: [asUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  byUser       User?     @relation("rel_byTouser", fields: [by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  onFile       File?     @relation("rel_on_file_idTofile", fields: [onFileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  onNote       Note?     @relation("rel_on_note_idTonote", fields: [onNoteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  onReaction   Reaction? @relation("rel_on_reaction_idToreaction", fields: [onReactionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  onRel        Rel?      @relation("rel_on_rel_idTorel", fields: [onRelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  onRels       Rel[]     @relation("rel_on_rel_idTorel")
-  onRole       Role?     @relation("rel_on_role_idTorole", fields: [onRoleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  onTag        Tag?      @relation("rel_on_tag_idTotag", fields: [onTagId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  onUser       User?     @relation("rel_on_user_idTouser", fields: [onUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@unique([onRelId, asRelId, asTagId], map: "rel_on_rel_as_rel_tag_uniq", where: raw("((on_rel_id IS NOT NULL) AND (as_rel_id IS NOT NULL) AND (deleted_at IS NULL))"))
-  @@unique([onUserId, asRoleId, asTagId], map: "rel_on_user_as_role_tag_uniq", where: raw("((on_user_id IS NOT NULL) AND (as_role_id IS NOT NULL) AND (deleted_at IS NULL))"))
-  @@unique([onUserId, asUserId, asTagId], map: "rel_on_user_as_user_tag_uniq", where: raw("((on_user_id IS NOT NULL) AND (as_user_id IS NOT NULL) AND (deleted_at IS NULL))"))
-  @@index([asFileId], where: raw("(as_file_id IS NOT NULL)"))
-  @@index([by], map: "rel_as_idx")
-  @@index([asNoteId], where: raw("(as_note_id IS NOT NULL)"))
-  @@index([asReactionId], where: raw("(as_reaction_id IS NOT NULL)"))
-  @@index([asRelId], map: "rel_as_rel_idx", where: raw("(as_rel_id IS NOT NULL)"))
-  @@index([asRoleId], where: raw("(as_role_id IS NOT NULL)"))
-  @@index([asTagId], where: raw("(as_tag_id IS NOT NULL)"))
-  @@index([asUserId], where: raw("(as_user_id IS NOT NULL)"))
-  @@index([at])
-  @@index([deletedAt])
-  @@index([meta], type: Gin)
-  @@index([onFileId], where: raw("(on_file_id IS NOT NULL)"))
-  @@index([onNoteId], where: raw("(on_note_id IS NOT NULL)"))
-  @@index([onReactionId], where: raw("(on_reaction_id IS NOT NULL)"))
-  @@index([onRelId], map: "rel_on_rel_idx", where: raw("(on_rel_id IS NOT NULL)"))
-  @@index([onRoleId], where: raw("(on_role_id IS NOT NULL)"))
-  @@index([onTagId], where: raw("(on_tag_id IS NOT NULL)"))
-  @@index([onUserId], where: raw("(on_user_id IS NOT NULL)"))
-  @@map("rel")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Role {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   seq       String    @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
   name      String    @unique
-  by        String?   @db.Uuid
-  at        DateTime  @default(now()) @db.Timestamptz(6)
+  createdBy String    @map("created_by") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
   meta      Json?
-  asRels    Rel[]     @relation("rel_as_role_idTorole")
-  onRels    Rel[]     @relation("rel_on_role_idTorole")
-  user      User?     @relation(fields: [by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user      User      @relation(fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([at])
-  @@index([by])
+  @@index([createdAt])
+  @@index([createdBy])
   @@index([deletedAt])
   @@index([meta], type: Gin)
   @@map("role")
@@ -165,16 +191,15 @@ model Tag {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   seq       String    @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
   name      String    @unique
-  by        String?   @db.Uuid
-  at        DateTime  @default(now()) @db.Timestamptz(6)
+  createdBy String    @map("created_by") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
   meta      Json?
-  asRels    Rel[]     @relation("rel_as_tag_idTotag")
-  onRels    Rel[]     @relation("rel_on_tag_idTotag")
-  user      User?     @relation(fields: [by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  noteTag   NoteTag[]
+  user      User      @relation(fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([at])
-  @@index([by])
+  @@index([createdAt])
+  @@index([createdBy])
   @@index([deletedAt])
   @@index([meta], type: Gin)
   @@map("tag")
@@ -182,27 +207,29 @@ model Tag {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model User {
-  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  seq       String     @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
-  username  String     @unique
-  name      String?
-  by        String?    @db.Uuid
-  at        DateTime   @default(now()) @db.Timestamptz(6)
-  deletedAt DateTime?  @map("deleted_at") @db.Timestamptz(6)
-  meta      Json?
-  file      File[]
-  note      Note[]
-  reaction  Reaction[]
-  asRels    Rel[]      @relation("rel_as_user_idTouser")
-  byRels    Rel[]      @relation("rel_byTouser")
-  onRels    Rel[]      @relation("rel_on_user_idTouser")
-  role      Role[]
-  tag       Tag[]
-  user      User?      @relation("userTouser", fields: [by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  otherUser User[]     @relation("userTouser")
+  id                              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seq                             String         @unique @default(dbgenerated("uuidv7_now()")) @db.Uuid
+  username                        String         @unique
+  name                            String?
+  createdBy                       String         @map("created_by") @db.Uuid
+  createdAt                       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt                       DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  meta                            Json?
+  file                            File[]
+  note                            Note[]
+  noteNote                        NoteNote[]
+  noteReaction                    NoteReaction[]
+  noteTag                         NoteTag[]
+  createdMemberships NoteUser[]     @relation("NoteUserCreator")
+  memberships    NoteUser[]     @relation("NoteUserMember")
+  reaction                        Reaction[]
+  role                            Role[]
+  tag                             Tag[]
+  creator                            User           @relation("UserCreator", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdUsers                       User[]         @relation("UserCreator")
 
-  @@index([at])
-  @@index([by])
+  @@index([createdAt])
+  @@index([createdBy])
   @@index([deletedAt])
   @@index([meta], type: Gin)
   @@map("user")

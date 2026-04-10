@@ -64,11 +64,11 @@ BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id THEN
     RAISE EXCEPTION '%.id cannot be modified', TG_TABLE_NAME;
   END IF;
-  IF NEW.by IS DISTINCT FROM OLD.by THEN
-    RAISE EXCEPTION '%.by cannot be modified', TG_TABLE_NAME;
+  IF NEW.created_by IS DISTINCT FROM OLD.created_by THEN
+    RAISE EXCEPTION '%.created_by cannot be modified', TG_TABLE_NAME;
   END IF;
-  IF NEW.at IS DISTINCT FROM OLD.at THEN
-    RAISE EXCEPTION '%.at cannot be modified', TG_TABLE_NAME;
+  IF NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+    RAISE EXCEPTION '%.created_at cannot be modified', TG_TABLE_NAME;
   END IF;
   RETURN NEW;
 END;
@@ -165,8 +165,8 @@ BEGIN
     COALESCE(NEW.meta->'changes', '[]'::jsonb) || jsonb_build_object(
       'old', old_diff,
       'new', new_diff,
-      'by', current_setting('app.user_id', true),
-      'at', now()
+      'created_by', current_setting('app.user_id', true),
+      'created_at', now()
     )
   );
 
