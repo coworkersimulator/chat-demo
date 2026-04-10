@@ -1,10 +1,7 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { PGliteWorker } from '@electric-sql/pglite/worker';
 import multiavatar from '@multiavatar/multiavatar';
-import { PrismaClient } from '@prisma/client/edge';
-import type { SqlMigrationAwareDriverAdapterFactory } from '@prisma/driver-adapter-utils';
 import { format, isToday, isYesterday } from 'date-fns';
-import { PrismaPGlite } from 'pglite-prisma-adapter';
 import {
   Fragment,
   useCallback,
@@ -16,39 +13,10 @@ import {
 import { createPortal } from 'react-dom';
 import './App.css';
 import PgSharedWorker from './db/pglite-shared-worker.ts?sharedworker';
-import { softDeleteExtension } from './db/prisma-soft-delete';
+import { createPrismaPglite } from './db/prisma-pglite';
 const githubSvg = '/chat-demo/github.svg';
 
-function createDb(pgliteWorker: PGlite, getUserId: () => string) {
-  const factory = new PrismaPGlite(pgliteWorker);
-  const adapter: SqlMigrationAwareDriverAdapterFactory = {
-    provider: factory.provider,
-    adapterName: factory.adapterName,
-    async connect() {
-      const conn = await factory.connect();
-      const origStartTransaction = conn.startTransaction.bind(conn);
-      conn.startTransaction = async (
-        isolationLevel?: Parameters<typeof origStartTransaction>[0],
-      ) => {
-        const tx = await origStartTransaction(isolationLevel);
-        const userId = getUserId();
-        if (userId) {
-          await tx.executeRaw({
-            sql: `SET LOCAL app.user_id = '${userId}'`,
-            args: [],
-            argTypes: [],
-          });
-        }
-        return tx;
-      };
-      return conn;
-    },
-    connectToShadowDb: () => factory.connectToShadowDb(),
-  };
-  const base = new PrismaClient({ adapter });
-  return base.$extends(softDeleteExtension(base));
-}
-type Db = ReturnType<typeof createDb>;
+type Db = ReturnType<typeof createPrismaPglite>;
 
 interface User {
   id: string;
@@ -350,17 +318,17 @@ function App() {
     } as unknown as Worker;
     const pgWorker = new PGliteWorker(workerAdapter, { id: 'pglite' });
 
-    const dbRef = { current: null as Db | null };
+    let db: Db | null = null;
     pgWorker.waitReady.then(() => {
-      dbRef.current = createDb(
+      db = createPrismaPglite(
         pgWorker as unknown as PGlite,
         () => userIdRef.current,
       );
-      setDb(dbRef.current);
+      setDb(db);
     });
 
     return () => {
-      dbRef.current?.$disconnect();
+      db?.$disconnect();
       pgWorker.close();
     };
   }, []);
