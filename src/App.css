@@ -1,4 +1,6 @@
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   min-width: 0;
 }
@@ -38,7 +40,9 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── App shell ─────────────────────────────────────────── */
@@ -143,7 +147,7 @@ body {
   min-width: 160px;
   z-index: 100;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .switch-user-option {
@@ -310,7 +314,7 @@ body {
   min-height: 0;
 }
 
-.sidebar-new-topic {
+.sidebar-new-channel {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -318,7 +322,7 @@ body {
   border-bottom: 1px solid #2c2d30;
 }
 
-.sidebar-new-topic-input {
+.sidebar-new-channel-input {
   background: #2c2d30;
   border: 1px solid #4a4b4d;
   border-radius: 4px;
@@ -330,7 +334,7 @@ body {
   box-sizing: border-box;
 }
 
-.sidebar-new-topic-input:focus {
+.sidebar-new-channel-input:focus {
   border-color: #1d9bd1;
 }
 
@@ -517,7 +521,6 @@ body {
   color: #6b6f76;
 }
 
-
 .message-avatar {
   border-radius: 4px;
   flex-shrink: 0;
@@ -608,7 +611,6 @@ body {
   opacity: 1;
 }
 
-
 .reaction-add-btn:hover {
   background: #2c2d30;
   color: #d1d2d3;
@@ -621,7 +623,7 @@ body {
   border: 1px solid #4a4b4d;
   border-radius: 8px;
   z-index: 9999;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   width: 320px;
   display: flex;
   flex-direction: column;
@@ -745,7 +747,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .send-button-active {
@@ -767,7 +771,6 @@ body {
 /* ── Mobile layout ──────────────────────────────────────── */
 
 @media (max-width: 680px) {
-
   /* ── Header ── */
 
   .app-header {
@@ -776,8 +779,12 @@ body {
     column-gap: 8px;
   }
 
-  .app-header-github-label { display: none; }
-  .app-header-github { padding: 6px 8px; }
+  .app-header-github-label {
+    display: none;
+  }
+  .app-header-github {
+    padding: 6px 8px;
+  }
 
   .switch-user-label {
     font-size: 11px;
@@ -806,7 +813,7 @@ body {
   /* Prevent browser auto-zoom on input focus (triggered when font-size < 16px) */
   .message-input,
   .dm-composer-input,
-  .sidebar-new-topic-input,
+  .sidebar-new-channel-input,
   .reaction-picker-input {
     font-size: 16px;
   }
@@ -885,21 +892,31 @@ body {
 
   /* ── Messages ── */
 
-  .message { padding: 8px 12px 2px; }
-  .message-continuation { padding: 1px 12px 1px calc(12px + 36px + 12px); }
-  .message-continuation-time { left: 12px; }
-  .date-divider { margin: 16px 12px 4px; }
+  .message {
+    padding: 8px 12px 2px;
+  }
+  .message-continuation {
+    padding: 1px 12px 1px calc(12px + 36px + 12px);
+  }
+  .message-continuation-time {
+    left: 12px;
+  }
+  .date-divider {
+    margin: 16px 12px 4px;
+  }
 
   /* ── Message entry ── */
 
-  .message-entry { padding: 0 10px 10px; }
+  .message-entry {
+    padding: 0 10px 10px;
+  }
 
   .message-input {
     width: 100%;
     box-sizing: border-box;
   }
 
-  /* ── DM composer: collapse topics section, expand DM section ── */
+  /* ── DM composer: collapse channel section, expand DM section ── */
 
   .sidebar.dm-composing .sidebar-section:first-child {
     flex: 0 0 0px;
@@ -922,9 +939,13 @@ body {
     flex-shrink: 0;
   }
 
-  .dm-list-hidden { display: none; }
+  .dm-list-hidden {
+    display: none;
+  }
 
   /* ── Reaction picker ── */
 
-  .reaction-picker { width: calc(100vw - 16px); }
+  .reaction-picker {
+    width: calc(100vw - 16px);
+  }
 }

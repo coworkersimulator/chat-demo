@@ -56,7 +56,7 @@ interface User {
   name: string | null;
 }
 
-interface Topic {
+interface Channel {
   id: string;
   title: string | null;
 }
@@ -72,7 +72,7 @@ interface Dm {
 interface Message {
   id: string;
   body: string | null;
-  at: Date;
+  createdAt: Date;
   authorId: string;
   username: string;
   userName: string | null;
@@ -260,13 +260,18 @@ function ReactionBar({
 function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [userId, setUserId] = useState('');
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [channels, setChannels] = useState<Channel[]>([]);
   const [dms, setDms] = useState<Record<string, Dm[]>>({});
-  const [topicId, setTopicId] = useState<string | null>(null);
+  const [channelId, setChannelId] = useState<string | null>(null);
   const [dmId, setDmId] = useState<string | null>(null);
-  const dmTitle = dmId && dms[dmId]
-    ? dms[dmId].filter((r) => r.userId !== userId).map((r) => r.userName ?? r.username).sort().join(', ')
-    : '';
+  const dmTitle =
+    dmId && dms[dmId]
+      ? dms[dmId]
+          .filter((r) => r.userId !== userId)
+          .map((r) => r.userName ?? r.username)
+          .sort()
+          .join(', ')
+      : '';
   const [messages, setMessages] = useState<Message[]>([]);
   const [reactions, setReactions] = useState<
     Record<string, { emoji: string; count: number; mine: boolean }[]>
@@ -280,8 +285,8 @@ function App() {
   const [newDm, setNewDm] = useState(false);
   const [newDmSelected, setNewDmSelected] = useState<string[]>([]);
   const [newDmQuery, setNewDmQuery] = useState('');
-  const [newTopic, setNewTopic] = useState(false);
-  const [newTopicTitle, setNewTopicTitle] = useState('');
+  const [newChannel, setNewChannel] = useState(false);
+  const [newChannelTitle, setNewChannelTitle] = useState('');
   const [ready, setReady] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
@@ -308,7 +313,10 @@ function App() {
     if (!vv) return;
     const update = () => {
       document.documentElement.style.setProperty('--vvh', `${vv.height}px`);
-      document.documentElement.style.setProperty('--vv-offset', `${vv.offsetTop}px`);
+      document.documentElement.style.setProperty(
+        '--vv-offset',
+        `${vv.offsetTop}px`,
+      );
     };
     vv.addEventListener('resize', update);
     vv.addEventListener('scroll', update);
@@ -326,8 +334,8 @@ function App() {
   const onSyncRef = useRef<() => void>(() => {});
   // Keep the callback current on every render so the channel handler never captures stale state
   onSyncRef.current = () => {
-    void loadTopics();
-    if (channelId) void loadMessages(channelId);
+    void loadChannels();
+    if (activeId) void loadMessages(activeId);
     void loadDms(undefined, false);
   };
 
@@ -384,30 +392,29 @@ function App() {
         setReactions({});
         return;
       }
-      const rels = await db.rel.findMany({
-        where: { onNoteId: { in: messageIds }, asReactionId: { not: null } },
+      const rows = await db.noteReaction.findMany({
+        where: { noteId: { in: messageIds } },
         select: {
-          onNoteId: true,
-          by: true,
-          asReaction: { select: { emoji: true } },
+          noteId: true,
+          createdBy: true,
+          reaction: { select: { emoji: true } },
         },
       });
       const grouped: Record<
         string,
         { emoji: string; count: number; mine: boolean }[]
       > = {};
-      for (const rel of rels) {
-        if (!rel.onNoteId || !rel.asReaction) continue;
-        const existing = (grouped[rel.onNoteId] ??= []);
-        const slot = existing.find((e) => e.emoji === rel.asReaction!.emoji);
+      for (const row of rows) {
+        const existing = (grouped[row.noteId] ??= []);
+        const slot = existing.find((e) => e.emoji === row.reaction.emoji);
         if (slot) {
           slot.count++;
-          if (rel.by === userId) slot.mine = true;
+          if (row.createdBy === userId) slot.mine = true;
         } else
           existing.push({
-            emoji: rel.asReaction.emoji,
+            emoji: row.reaction.emoji,
             count: 1,
-            mine: rel.by === userId,
+            mine: row.createdBy === userId,
           });
       }
       setReactions(grouped);
@@ -418,20 +425,20 @@ function App() {
   async function toggleReaction(noteId: string, reactionId: string) {
     if (!db) return;
     setActiveMsg(null);
-    const existing = await db.rel.findFirst({
-      where: { onNoteId: noteId, asReactionId: reactionId, by: userId },
+    const existing = await db.noteReaction.findFirst({
+      where: { noteId, reactionId, createdBy: userId },
       select: { id: true, deletedAt: true },
     });
     if (existing) {
       if (!existing.deletedAt) {
-        await db.rel.update({
+        await db.noteReaction.update({
           where: { id: existing.id },
           data: { deletedAt: new Date() },
         });
       }
     } else {
-      await db.rel.create({
-        data: { onNoteId: noteId, asReactionId: reactionId, by: userId },
+      await db.noteReaction.create({
+        data: { noteId, reactionId, createdBy: userId },
       });
     }
     setPickerFor(null);
@@ -439,43 +446,45 @@ function App() {
     syncBc.current?.postMessage({});
   }
 
-  const loadTopics = useCallback(async () => {
+  const loadChannels = useCallback(async () => {
     if (!db || !userId) return;
-    const rels = await db.rel.findMany({
-      where: { asTag: { name: ':topic:' } },
-      select: { onNote: { select: { id: true, title: true } } },
+    const rows = await db.noteTag.findMany({
+      where: { tag: { name: ':channel:' } },
+      select: { note: { select: { id: true, title: true } } },
     });
-    setTopics(
-      rels
-        .flatMap((r) =>
-          r.onNote ? [{ id: r.onNote.id, title: r.onNote.title }] : [],
-        )
+    setChannels(
+      rows
+        .map((r) => ({ id: r.note.id, title: r.note.title }))
         .sort((a, b) =>
-          (a.title ?? '').toLowerCase().localeCompare((b.title ?? '').toLowerCase()),
+          (a.title ?? '')
+            .toLowerCase()
+            .localeCompare((b.title ?? '').toLowerCase()),
         ),
     );
   }, [db, userId]);
 
   useEffect(() => {
-    void loadTopics();
-  }, [loadTopics]);
+    void loadChannels();
+  }, [loadChannels]);
 
-  async function handleNewTopic() {
-    if (!db || !newTopicTitle.trim()) return;
+  async function handleNewChannel() {
+    if (!db || !newChannelTitle.trim()) return;
     const tag = await db.tag.findFirst({
-      where: { name: ':topic:' },
+      where: { name: ':channel:' },
       select: { id: true },
     });
     if (!tag) return;
     const note = await db.note.create({
-      data: { title: newTopicTitle.trim(), by: userId },
+      data: { title: newChannelTitle.trim(), createdBy: userId },
       select: { id: true },
     });
-    await db.rel.create({ data: { onNoteId: note.id, asTagId: tag.id } });
-    setNewTopic(false);
-    setNewTopicTitle('');
-    await loadTopics();
-    setTopicId(note.id);
+    await db.noteTag.create({
+      data: { noteId: note.id, tagId: tag.id, createdBy: userId },
+    });
+    setNewChannel(false);
+    setNewChannelTitle('');
+    await loadChannels();
+    setChannelId(note.id);
     setDmId(null);
     setSidebarOpen(false);
     syncBc.current?.postMessage({});
@@ -484,40 +493,33 @@ function App() {
   const loadDms = useCallback(
     async (selectId?: string, navigate = true) => {
       if (!db || !userId) return;
-      const dmRels = await db.rel.findMany({
+      const dmNotes = await db.note.findMany({
         where: {
-          asTag: { name: ':dm:' },
-          onNote: { onRels: { some: { asUserId: userId } } },
+          noteTag: { some: { tag: { name: ':dm:' } } },
+          noteUser: { some: { userId } },
         },
         select: {
-          onNoteId: true,
-          onNote: {
+          id: true,
+          asParent: {
+            select: { note: { select: { createdAt: true } } },
+          },
+          noteUser: {
             select: {
-              asRels: { select: { onNote: { select: { at: true } } } },
-              onRels: {
-                where: { asUserId: { not: null } },
-                select: {
-                  asUser: { select: { id: true, username: true, name: true } },
-                },
-              },
+              member: { select: { id: true, username: true, name: true } },
             },
           },
         },
       });
 
       const grouped: Record<string, Dm[]> = {};
-      for (const dmRel of dmRels) {
-        const noteId = dmRel.onNoteId!;
-        const times =
-          dmRel.onNote?.asRels
-            .map((r) => r.onNote?.at)
-            .filter((t): t is Date => t != null) ?? [];
+      for (const dmNote of dmNotes) {
+        const noteId = dmNote.id;
+        const times = dmNote.asParent.map((nn) => nn.note.createdAt);
         const lastAt =
           times.length > 0
             ? new Date(Math.max(...times.map((t) => t.getTime())))
             : new Date(0);
-        for (const { asUser: u } of dmRel.onNote?.onRels ?? []) {
-          if (!u) continue;
+        for (const { member: u } of dmNote.noteUser) {
           (grouped[noteId] ??= []).push({
             noteId,
             userId: u.id,
@@ -537,7 +539,7 @@ function App() {
       if (navigate) {
         const nextDmId = selectId ?? Object.keys(sorted)[0] ?? null;
         setDmId(nextDmId);
-        setTopicId(null);
+        setChannelId(null);
       }
     },
     [db, userId],
@@ -556,57 +558,57 @@ function App() {
     });
     if (!tag) return;
     const note = await db.note.create({
-      data: { body: '', by: userId },
+      data: { body: '', createdBy: userId },
       select: { id: true },
     });
-    await db.rel.createMany({
+    await db.noteTag.create({
+      data: { noteId: note.id, tagId: tag.id, createdBy: userId },
+    });
+    await db.noteUser.createMany({
       data: [
-        { onNoteId: note.id, asTagId: tag.id },
-        { onNoteId: note.id, asUserId: userId },
-        ...newDmSelected.map((id) => ({ onNoteId: note.id, asUserId: id })),
+        { noteId: note.id, userId, createdBy: userId },
+        ...newDmSelected.map((id) => ({
+          noteId: note.id,
+          userId: id,
+          createdBy: userId,
+        })),
       ],
     });
     setNewDm(false);
     setNewDmSelected([]);
-    setTopicId(null);
+    setChannelId(null);
     setSidebarOpen(false);
     await loadDms(note.id);
     syncBc.current?.postMessage({});
   }
 
-  const channelId = topicId ?? dmId;
+  const activeId = channelId ?? dmId;
 
   const loadMessages = useCallback(
     async (cId: string) => {
       if (!db) return;
-      const rels = await db.rel.findMany({
-        where: { asNoteId: cId },
+      const rows = await db.noteNote.findMany({
+        where: { parentId: cId },
         select: {
-          onNote: {
+          note: {
             select: {
               id: true,
               body: true,
-              at: true,
+              createdAt: true,
               user: { select: { id: true, username: true, name: true } },
             },
           },
         },
-        orderBy: { onNote: { at: 'asc' } },
+        orderBy: { note: { createdAt: 'asc' } },
       });
-      const msgs: Message[] = rels.flatMap((r) =>
-        r.onNote && r.onNote.user
-          ? [
-              {
-                id: r.onNote.id,
-                body: r.onNote.body,
-                at: r.onNote.at,
-                authorId: r.onNote.user.id,
-                username: r.onNote.user.username,
-                userName: r.onNote.user.name,
-              },
-            ]
-          : [],
-      );
+      const msgs: Message[] = rows.map((r) => ({
+        id: r.note.id,
+        body: r.note.body,
+        createdAt: r.note.createdAt,
+        authorId: r.note.user.id,
+        username: r.note.user.username,
+        userName: r.note.user.name,
+      }));
       setMessages(msgs);
       await loadReactions(msgs.map((m) => m.id));
     },
@@ -614,9 +616,9 @@ function App() {
   );
 
   useEffect(() => {
-    if (!channelId) return;
-    void loadMessages(channelId);
-  }, [channelId, loadMessages]);
+    if (!activeId) return;
+    void loadMessages(activeId);
+  }, [activeId, loadMessages]);
 
   useEffect(() => {
     if (messagesRef.current) {
@@ -649,16 +651,18 @@ function App() {
   }, [userDropdownOpen]);
 
   async function handleSend() {
-    if (!db || !draft.trim() || !channelId) return;
+    if (!db || !draft.trim() || !activeId) return;
     const body = draft.trim();
     setDraft('');
     messageInputRef.current?.focus();
     const note = await db.note.create({
-      data: { body, by: userId },
+      data: { body, createdBy: userId },
       select: { id: true },
     });
-    await db.rel.create({ data: { onNoteId: note.id, asNoteId: channelId } });
-    await loadMessages(channelId);
+    await db.noteNote.create({
+      data: { noteId: note.id, parentId: activeId, createdBy: userId },
+    });
+    await loadMessages(activeId);
     if (dmId) await loadDms(dmId);
     syncBc.current?.postMessage({});
   }
@@ -666,7 +670,7 @@ function App() {
   function handleUserChange(id: string) {
     setUserId(id);
     userIdRef.current = id;
-    setTopicId(null);
+    setChannelId(null);
     setDmId(null);
     setMessages([]);
     setSidebarOpen(true);
@@ -734,49 +738,49 @@ function App() {
         <div className={`sidebar${newDm ? ' dm-composing' : ''}`}>
           <div className="sidebar-section">
             <div className="sidebar-section-header">
-              Topics
+              Channels
               <button
                 className="sidebar-new-btn"
-                onClick={() => setNewTopic((v) => !v)}
+                onClick={() => setNewChannel((v) => !v)}
               >
                 +
               </button>
             </div>
-            {newTopic && (
-              <div className="sidebar-new-topic">
+            {newChannel && (
+              <div className="sidebar-new-channel">
                 <input
-                  className="sidebar-new-topic-input"
-                  value={newTopicTitle}
-                  onChange={(e) => setNewTopicTitle(e.target.value)}
+                  className="sidebar-new-channel-input"
+                  value={newChannelTitle}
+                  onChange={(e) => setNewChannelTitle(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') void handleNewTopic();
+                    if (e.key === 'Enter') void handleNewChannel();
                     if (e.key === 'Escape') {
-                      setNewTopic(false);
-                      setNewTopicTitle('');
+                      setNewChannel(false);
+                      setNewChannelTitle('');
                     }
                   }}
-                  placeholder="Topic name"
+                  placeholder="Channel name"
                   autoFocus
                 />
                 <button
-                  className={`dm-start-btn ${newTopicTitle.trim() ? 'dm-start-btn-active' : ''}`}
-                  disabled={!newTopicTitle.trim()}
-                  onClick={() => void handleNewTopic()}
+                  className={`dm-start-btn ${newChannelTitle.trim() ? 'dm-start-btn-active' : ''}`}
+                  disabled={!newChannelTitle.trim()}
+                  onClick={() => void handleNewChannel()}
                 >
                   Create
                 </button>
               </div>
             )}
             <ul className="sidebar-list">
-              {topics.map((t) => (
+              {channels.map((t) => (
                 <li
                   key={t.id}
                   onClick={() => {
-                    setTopicId(t.id);
+                    setChannelId(t.id);
                     setDmId(null);
                     setSidebarOpen(false);
                   }}
-                  className={t.id === topicId ? 'active' : undefined}
+                  className={t.id === channelId ? 'active' : undefined}
                 >
                   # {t.title}
                 </li>
@@ -871,7 +875,7 @@ function App() {
                   key={noteId}
                   onClick={() => {
                     setDmId(noteId);
-                    setTopicId(null);
+                    setChannelId(null);
                     setSidebarOpen(false);
                   }}
                   className={noteId === dmId ? 'active' : undefined}
@@ -886,146 +890,155 @@ function App() {
             </ul>
           </div>
         </div>
-        {(!isMobile || !sidebarOpen) && <div className="channel">
-          {!channelId ? (
-            <div className="empty-state">
-              <div className="empty-state-title">Chat Demo</div>
-              <div className="empty-state-body">
-                Select a topic or direct message to start chatting.
+        {(!isMobile || !sidebarOpen) && (
+          <div className="channel">
+            {!activeId ? (
+              <div className="empty-state">
+                <div className="empty-state-title">Chat Demo</div>
+                <div className="empty-state-body">
+                  Select a channel or direct message to start chatting.
+                </div>
               </div>
-            </div>
-          ) : (
-            <>
-              <div className="channel-header">
-                <button
-                  className="channel-back-btn"
-                  onClick={() => setSidebarOpen(true)}
-                >
-                  ‹
-                </button>
-                {dmId && (
-                  <div className="channel-header-text">
-                    <span className="channel-title">{dmTitle}</span>
-                    {(dms[dmId]?.length ?? 0) > 2 && (
-                      <span className="channel-subtitle">
-                        {dms[dmId].length} members
-                      </span>
-                    )}
-                  </div>
-                )}
-                {topicId && (
-                  <div className="channel-header-text">
-                    <span className="channel-title">
-                      # {topics.find((t) => t.id === topicId)?.title}
-                    </span>
-                    <span className="channel-subtitle">Topic</span>
-                  </div>
-                )}
-              </div>
-              <div className="messages" ref={messagesRef}>
-                {messages.map((m, i) => {
-                  const name = m.userName ?? m.username;
-                  const prev = messages[i - 1];
-                  const at = new Date(m.at);
-                  const showDivider =
-                    !prev || !isSameDay(new Date(prev.at), at);
-                  const isContinuation =
-                    !showDivider &&
-                    prev &&
-                    prev.authorId === m.authorId &&
-                    at.getTime() - new Date(prev.at).getTime() < 5 * 60 * 1000;
-                  const reactionBar = (
-                    <ReactionBar
-                      noteId={m.id}
-                      reactions={reactions[m.id] ?? []}
-                      allReactions={allReactions}
-                      pickerFor={pickerFor}
-                      setPickerFor={setPickerFor}
-                      onToggle={toggleReaction}
-                    />
-                  );
-                  return (
-                    <Fragment key={m.id}>
-                      {showDivider && (
-                        <div className="date-divider">
-                          <span>{formatDivider(at)}</span>
-                        </div>
+            ) : (
+              <>
+                <div className="channel-header">
+                  <button
+                    className="channel-back-btn"
+                    onClick={() => setSidebarOpen(true)}
+                  >
+                    ‹
+                  </button>
+                  {dmId && (
+                    <div className="channel-header-text">
+                      <span className="channel-title">{dmTitle}</span>
+                      {(dms[dmId]?.length ?? 0) > 2 && (
+                        <span className="channel-subtitle">
+                          {dms[dmId].length} members
+                        </span>
                       )}
-                      {isContinuation ? (
-                        <div
-                          className={`message message-continuation${activeMsg === m.id ? ' message-active' : ''}`}
-                          onClick={() => setActiveMsg(activeMsg === m.id ? null : m.id)}
-                        >
-                          <div className="message-continuation-time">
-                            {formatAt(at)}
+                    </div>
+                  )}
+                  {channelId && (
+                    <div className="channel-header-text">
+                      <span className="channel-title">
+                        # {channels.find((t) => t.id === channelId)?.title}
+                      </span>
+                      <span className="channel-subtitle">Channel</span>
+                    </div>
+                  )}
+                </div>
+                <div className="messages" ref={messagesRef}>
+                  {messages.map((m, i) => {
+                    const name = m.userName ?? m.username;
+                    const prev = messages[i - 1];
+                    const at = new Date(m.createdAt);
+                    const showDivider =
+                      !prev || !isSameDay(new Date(prev.createdAt), at);
+                    const isContinuation =
+                      !showDivider &&
+                      prev &&
+                      prev.authorId === m.authorId &&
+                      at.getTime() - new Date(prev.createdAt).getTime() <
+                        5 * 60 * 1000;
+                    const reactionBar = (
+                      <ReactionBar
+                        noteId={m.id}
+                        reactions={reactions[m.id] ?? []}
+                        allReactions={allReactions}
+                        pickerFor={pickerFor}
+                        setPickerFor={setPickerFor}
+                        onToggle={toggleReaction}
+                      />
+                    );
+                    return (
+                      <Fragment key={m.id}>
+                        {showDivider && (
+                          <div className="date-divider">
+                            <span>{formatDivider(at)}</span>
                           </div>
-                          <p className="message-body">{m.body}</p>
-                          {reactionBar}
-                        </div>
-                      ) : (
-                        <div
-                          className={`message${activeMsg === m.id ? ' message-active' : ''}`}
-                          onClick={() => setActiveMsg(activeMsg === m.id ? null : m.id)}
-                        >
-                          <img
-                            src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.username))}`}
-                            width={36}
-                            height={36}
-                            className="message-avatar"
-                          />
-                          <div className="message-content">
-                            <div className="message-meta">
-                              <span className="message-author">{name}</span>
-                              <span className="message-time">
-                                {formatAt(at)}
-                              </span>
+                        )}
+                        {isContinuation ? (
+                          <div
+                            className={`message message-continuation${activeMsg === m.id ? ' message-active' : ''}`}
+                            onClick={() =>
+                              setActiveMsg(activeMsg === m.id ? null : m.id)
+                            }
+                          >
+                            <div className="message-continuation-time">
+                              {formatAt(at)}
                             </div>
                             <p className="message-body">{m.body}</p>
                             {reactionBar}
                           </div>
-                        </div>
-                      )}
-                    </Fragment>
-                  );
-                })}
-              </div>
-              <div className="message-entry">
-                <div className="message-entry-box">
-                  <textarea
-                    ref={messageInputRef}
-                    className="message-input"
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        void handleSend();
-                      }
-                    }}
-                    placeholder={(() => {
-                      const text = topicId
-                        ? `Message #${topics.find((t) => t.id === topicId)?.title ?? ''}`
-                        : dmTitle
-                          ? `Message ${dmTitle}`
-                          : 'Message';
-                      return text.length > 50 ? text.slice(0, 47) + '…' : text;
-                    })()}
-                    rows={1}
-                  />
-                  <div className="message-entry-toolbar">
-                    <button
-                      className={`send-button ${draft.trim() ? 'send-button-active' : ''}`}
-                      disabled={!draft.trim()}
-                      onClick={() => void handleSend()}
-                    >
-                      &#9658;
-                    </button>
+                        ) : (
+                          <div
+                            className={`message${activeMsg === m.id ? ' message-active' : ''}`}
+                            onClick={() =>
+                              setActiveMsg(activeMsg === m.id ? null : m.id)
+                            }
+                          >
+                            <img
+                              src={`data:image/svg+xml;utf8,${encodeURIComponent(multiavatar(m.username))}`}
+                              width={36}
+                              height={36}
+                              className="message-avatar"
+                            />
+                            <div className="message-content">
+                              <div className="message-meta">
+                                <span className="message-author">{name}</span>
+                                <span className="message-time">
+                                  {formatAt(at)}
+                                </span>
+                              </div>
+                              <p className="message-body">{m.body}</p>
+                              {reactionBar}
+                            </div>
+                          </div>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </div>
+                <div className="message-entry">
+                  <div className="message-entry-box">
+                    <textarea
+                      ref={messageInputRef}
+                      className="message-input"
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          void handleSend();
+                        }
+                      }}
+                      placeholder={(() => {
+                        const text = channelId
+                          ? `Message #${channels.find((t) => t.id === channelId)?.title ?? ''}`
+                          : dmTitle
+                            ? `Message ${dmTitle}`
+                            : 'Message';
+                        return text.length > 50
+                          ? text.slice(0, 47) + '…'
+                          : text;
+                      })()}
+                      rows={1}
+                    />
+                    <div className="message-entry-toolbar">
+                      <button
+                        className={`send-button ${draft.trim() ? 'send-button-active' : ''}`}
+                        disabled={!draft.trim()}
+                        onClick={() => void handleSend()}
+                      >
+                        &#9658;
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
-        </div>}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

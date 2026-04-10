@@ -8,7 +8,7 @@ Open the app in two browser tabs and pick a different user in each. Send message
 
 ## Features
 
-- **Topics** — create named channels for team discussions
+- **Channels** — create named channels for team discussions
 - **Direct messages** — one-on-one or group conversations
 - **Emoji reactions** — react to any message
 - **Multi-user** — switch between users to simulate conversations

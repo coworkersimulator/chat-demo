@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 const URL = '/chat-demo/';
 
@@ -17,14 +17,18 @@ async function waitForApp(page: Page) {
 }
 
 async function goToFirstDm(page: Page) {
-  const firstDm = page.locator('.sidebar-section:last-child .sidebar-list li').first();
+  const firstDm = page
+    .locator('.sidebar-section:last-child .sidebar-list li')
+    .first();
   await firstDm.tap();
   await page.waitForSelector('.channel-header', { state: 'visible' });
 }
 
-async function goToFirstTopic(page: Page) {
-  const firstTopic = page.locator('.sidebar-section:first-child .sidebar-list li').first();
-  await firstTopic.tap();
+async function goToFirstChannel(page: Page) {
+  const firstChannel = page
+    .locator('.sidebar-section:first-child .sidebar-list li')
+    .first();
+  await firstChannel.tap();
   await page.waitForSelector('.channel-header', { state: 'visible' });
 }
 
@@ -34,7 +38,6 @@ async function openNewDmComposer(page: Page) {
 }
 
 test.describe('Mobile layout', () => {
-
   // ── Structural assertions (never flaky) ─────────────────────────────────
 
   test('sidebar fills full viewport width', async ({ page }) => {
@@ -56,7 +59,9 @@ test.describe('Mobile layout', () => {
     expect(box!.x).toBe(0);
   });
 
-  test('app-header stays at top when message input focused', async ({ page }) => {
+  test('app-header stays at top when message input focused', async ({
+    page,
+  }) => {
     await waitForApp(page);
     await goToFirstDm(page);
     await page.locator('.message-input').tap();
@@ -65,7 +70,9 @@ test.describe('Mobile layout', () => {
     expect(box!.y).toBeLessThanOrEqual(5);
   });
 
-  test('channel-header stays visible when message input focused', async ({ page }) => {
+  test('channel-header stays visible when message input focused', async ({
+    page,
+  }) => {
     await waitForApp(page);
     await goToFirstDm(page);
     await page.locator('.message-input').tap();
@@ -76,7 +83,9 @@ test.describe('Mobile layout', () => {
     expect(box!.y + box!.height).toBeLessThanOrEqual(vh);
   });
 
-  test('message-entry bottom is within viewport when input focused', async ({ page }) => {
+  test('message-entry bottom is within viewport when input focused', async ({
+    page,
+  }) => {
     await waitForApp(page);
     await goToFirstDm(page);
     await page.locator('.message-input').tap();
@@ -86,7 +95,9 @@ test.describe('Mobile layout', () => {
     expect(box!.y + box!.height).toBeLessThanOrEqual(vh + 2);
   });
 
-  test('message-entry bottom is within viewport after blurring input', async ({ page }) => {
+  test('message-entry bottom is within viewport after blurring input', async ({
+    page,
+  }) => {
     await waitForApp(page);
     await goToFirstDm(page);
     await page.locator('.message-input').tap();
@@ -109,7 +120,9 @@ test.describe('Mobile layout', () => {
     expect(box!.y).toBeLessThanOrEqual(5);
   });
 
-  test('channel-header stays visible after blurring input', async ({ page }) => {
+  test('channel-header stays visible after blurring input', async ({
+    page,
+  }) => {
     await waitForApp(page);
     await goToFirstDm(page);
     await page.locator('.message-input').tap();
@@ -124,7 +137,7 @@ test.describe('Mobile layout', () => {
 
   test('channel fills full width on topic channel', async ({ page }) => {
     await waitForApp(page);
-    await goToFirstTopic(page);
+    await goToFirstChannel(page);
     const channel = page.locator('.channel');
     const box = await channel.boundingBox();
     const vw = page.viewportSize()!.width;
@@ -132,18 +145,22 @@ test.describe('Mobile layout', () => {
     expect(box!.x).toBe(0);
   });
 
-  test('app-header stays at top when input focused on topic channel', async ({ page }) => {
+  test('app-header stays at top when input focused on topic channel', async ({
+    page,
+  }) => {
     await waitForApp(page);
-    await goToFirstTopic(page);
+    await goToFirstChannel(page);
     await page.locator('.message-input').tap();
     await page.waitForTimeout(600);
     const box = await page.locator('.app-header').boundingBox();
     expect(box!.y).toBeLessThanOrEqual(5);
   });
 
-  test('message-entry within viewport when input focused on topic channel', async ({ page }) => {
+  test('message-entry within viewport when input focused on topic channel', async ({
+    page,
+  }) => {
     await waitForApp(page);
-    await goToFirstTopic(page);
+    await goToFirstChannel(page);
     await page.locator('.message-input').tap();
     await page.waitForTimeout(600);
     const box = await page.locator('.message-entry').boundingBox();
@@ -175,7 +192,9 @@ test.describe('Mobile layout', () => {
     expect(box!.y + box!.height).toBeLessThanOrEqual(vh);
   });
 
-  test('DM open button stays in viewport with many recipients', async ({ page }) => {
+  test('DM open button stays in viewport with many recipients', async ({
+    page,
+  }) => {
     await waitForApp(page);
     await openNewDmComposer(page);
     // Add 5 recipients by clicking suggestions
@@ -193,7 +212,9 @@ test.describe('Mobile layout', () => {
     expect(box!.y + box!.height).toBeLessThanOrEqual(vh + 2);
   });
 
-  test('DM suggestions still visible after adding recipients', async ({ page }) => {
+  test('DM suggestions still visible after adding recipients', async ({
+    page,
+  }) => {
     await waitForApp(page);
     await openNewDmComposer(page);
     const suggestions = page.locator('.dm-suggestions li');
@@ -210,8 +231,8 @@ test.describe('Mobile layout', () => {
   test('new topic composer is visible', async ({ page }) => {
     await waitForApp(page);
     await page.locator('.sidebar-section:first-child .sidebar-new-btn').tap();
-    await page.waitForSelector('.sidebar-new-topic', { state: 'visible' });
-    const box = await page.locator('.sidebar-new-topic').boundingBox();
+    await page.waitForSelector('.sidebar-new-channel', { state: 'visible' });
+    const box = await page.locator('.sidebar-new-channel').boundingBox();
     const vh = page.viewportSize()!.height;
     expect(box!.y).toBeGreaterThanOrEqual(0);
     expect(box!.y + box!.height).toBeLessThanOrEqual(vh);
@@ -269,7 +290,10 @@ test.describe('Mobile layout', () => {
     await goToFirstDm(page);
     await page.locator('.message-input').tap();
     await page.waitForTimeout(600);
-    await expect(page).toHaveScreenshot('03-input-focused.png', SCREENSHOT_OPTS);
+    await expect(page).toHaveScreenshot(
+      '03-input-focused.png',
+      SCREENSHOT_OPTS,
+    );
   });
 
   test('screenshot: message input blurred', async ({ page }) => {
@@ -279,7 +303,10 @@ test.describe('Mobile layout', () => {
     await page.waitForTimeout(600);
     await page.locator('.messages').tap();
     await page.waitForTimeout(400);
-    await expect(page).toHaveScreenshot('04-input-blurred.png', SCREENSHOT_OPTS);
+    await expect(page).toHaveScreenshot(
+      '04-input-blurred.png',
+      SCREENSHOT_OPTS,
+    );
   });
 
   test('screenshot: DM composer', async ({ page }) => {
@@ -298,21 +325,27 @@ test.describe('Mobile layout', () => {
       await suggestions.first().tap();
       await page.waitForTimeout(100);
     }
-    await expect(page).toHaveScreenshot('05b-dm-composer-many.png', SCREENSHOT_OPTS);
+    await expect(page).toHaveScreenshot(
+      '05b-dm-composer-many.png',
+      SCREENSHOT_OPTS,
+    );
   });
 
   test('screenshot: topic channel', async ({ page }) => {
     await waitForApp(page);
-    await goToFirstTopic(page);
+    await goToFirstChannel(page);
     await expect(page).toHaveScreenshot('06-topic-view.png', SCREENSHOT_OPTS);
   });
 
   test('screenshot: topic input focused', async ({ page }) => {
     await waitForApp(page);
-    await goToFirstTopic(page);
+    await goToFirstChannel(page);
     await page.locator('.message-input').tap();
     await page.waitForTimeout(600);
-    await expect(page).toHaveScreenshot('06b-topic-input-focused.png', SCREENSHOT_OPTS);
+    await expect(page).toHaveScreenshot(
+      '06b-topic-input-focused.png',
+      SCREENSHOT_OPTS,
+    );
   });
 
   test('screenshot: reaction picker open', async ({ page }) => {
@@ -320,6 +353,9 @@ test.describe('Mobile layout', () => {
     await goToFirstDm(page);
     await page.locator('.reaction-add-btn').first().tap();
     await page.waitForSelector('.reaction-picker', { state: 'visible' });
-    await expect(page).toHaveScreenshot('07-reaction-picker.png', SCREENSHOT_OPTS);
+    await expect(page).toHaveScreenshot(
+      '07-reaction-picker.png',
+      SCREENSHOT_OPTS,
+    );
   });
 });
