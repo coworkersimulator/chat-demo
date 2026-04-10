@@ -56,10 +56,6 @@ CREATE TRIGGER _note_tag_bump_seq
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER _rel_bump_seq
-  BEFORE UPDATE ON rel
-  FOR EACH ROW
-  EXECUTE FUNCTION bump_seq();
 
 
 CREATE OR REPLACE FUNCTION guard_immutable_fields()
@@ -128,10 +124,6 @@ CREATE TRIGGER note_tag_guard_immutable
   FOR EACH ROW
   EXECUTE FUNCTION guard_immutable_fields();
 
-CREATE TRIGGER rel_guard_immutable
-  BEFORE UPDATE ON rel
-  FOR EACH ROW
-  EXECUTE FUNCTION guard_immutable_fields();
 
 
 CREATE OR REPLACE FUNCTION guard_file_data_immutable()
@@ -150,53 +142,6 @@ CREATE TRIGGER file_guard_data_immutable
   EXECUTE FUNCTION guard_file_data_immutable();
 
 
-CREATE OR REPLACE FUNCTION guard_rel_fk_immutable()
-RETURNS trigger AS $$
-BEGIN
-  IF NEW.on_user_id IS DISTINCT FROM OLD.on_user_id THEN
-    RAISE EXCEPTION 'rel.on_user_id cannot be modified';
-  END IF;
-  IF NEW.on_role_id IS DISTINCT FROM OLD.on_role_id THEN
-    RAISE EXCEPTION 'rel.on_role_id cannot be modified';
-  END IF;
-  IF NEW.on_tag_id IS DISTINCT FROM OLD.on_tag_id THEN
-    RAISE EXCEPTION 'rel.on_tag_id cannot be modified';
-  END IF;
-  IF NEW.on_note_id IS DISTINCT FROM OLD.on_note_id THEN
-    RAISE EXCEPTION 'rel.on_note_id cannot be modified';
-  END IF;
-  IF NEW.on_file_id IS DISTINCT FROM OLD.on_file_id THEN
-    RAISE EXCEPTION 'rel.on_file_id cannot be modified';
-  END IF;
-  IF NEW.on_rel_id IS DISTINCT FROM OLD.on_rel_id THEN
-    RAISE EXCEPTION 'rel.on_rel_id cannot be modified';
-  END IF;
-  IF NEW.as_user_id IS DISTINCT FROM OLD.as_user_id THEN
-    RAISE EXCEPTION 'rel.as_user_id cannot be modified';
-  END IF;
-  IF NEW.as_role_id IS DISTINCT FROM OLD.as_role_id THEN
-    RAISE EXCEPTION 'rel.as_role_id cannot be modified';
-  END IF;
-  IF NEW.as_tag_id IS DISTINCT FROM OLD.as_tag_id THEN
-    RAISE EXCEPTION 'rel.as_tag_id cannot be modified';
-  END IF;
-  IF NEW.as_note_id IS DISTINCT FROM OLD.as_note_id THEN
-    RAISE EXCEPTION 'rel.as_note_id cannot be modified';
-  END IF;
-  IF NEW.as_file_id IS DISTINCT FROM OLD.as_file_id THEN
-    RAISE EXCEPTION 'rel.as_file_id cannot be modified';
-  END IF;
-  IF NEW.as_rel_id IS DISTINCT FROM OLD.as_rel_id THEN
-    RAISE EXCEPTION 'rel.as_rel_id cannot be modified';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER rel_guard_fk_immutable
-  BEFORE UPDATE ON rel
-  FOR EACH ROW
-  EXECUTE FUNCTION guard_rel_fk_immutable();
 
 
 CREATE OR REPLACE FUNCTION log_change()
@@ -249,10 +194,6 @@ CREATE TRIGGER note_tag_log_change
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
 
-CREATE TRIGGER rel_log_change
-  BEFORE UPDATE ON rel
-  FOR EACH ROW
-  EXECUTE FUNCTION log_change();
 
 CREATE TRIGGER user_log_change
   BEFORE UPDATE ON "user"
@@ -384,10 +325,6 @@ CREATE TRIGGER note_tag_guard_hard_delete
   FOR EACH ROW
   EXECUTE FUNCTION guard_hard_delete();
 
-CREATE TRIGGER rel_guard_hard_delete
-  BEFORE DELETE ON rel
-  FOR EACH ROW
-  EXECUTE FUNCTION guard_hard_delete();
 
 CREATE TRIGGER user_guard_hard_delete
   BEFORE DELETE ON "user"
