@@ -219,7 +219,6 @@ function App() {
       if (navigate) {
         const nextDmId = selectId ?? Object.keys(sorted)[0] ?? null;
         setDmId(nextDmId);
-        setChannelId(null);
       }
     },
     [db, userId],
