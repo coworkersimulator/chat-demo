@@ -64,6 +64,12 @@ export function ChannelView({
     }
   }, [messages, sidebarOpen]);
 
+  useEffect(() => {
+    if (!editingId || !messagesRef.current) return;
+    const el = messagesRef.current.querySelector(`[data-message-id="${editingId}"]`);
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [editingId]);
+
   function handleSetPickerFor(id: string | null) {
     setPickerFor(id);
     if (id === null) setActiveMsg(null);
@@ -166,26 +172,9 @@ export function ChannelView({
                   onToggle={handleToggleReaction}
                 />
               ) : null;
-              const editArea = (
-                <div className="message-edit-area" onClick={(e) => e.stopPropagation()}>
-                  <textarea
-                    className="message-edit-input"
-                    ref={editInputRef}
-                    value={editingText}
-                    rows={Math.max(3, editingText.split('\n').length)}
-                    onChange={(e) => setEditingText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSaveEdit(); }
-                      if (e.key === 'Escape') { setEditingId(null); setEditingText(''); setActiveMsg(null); }
-                    }}
-                  />
-                  <div className="message-edit-buttons">
-                    <button className="message-edit-cancel-btn" onClick={() => { setEditingId(null); setEditingText(''); setActiveMsg(null); }}>Cancel</button>
-                    <button className="message-edit-save-btn" onClick={() => void handleSaveEdit()}>Save</button>
-                  </div>
-                </div>
-              );
-              const bodyEl = isEditing ? editArea : isDeleted ? (
+              const bodyEl = isEditing ? (
+                <p className="message-body message-body-editing">{m.body}</p>
+              ) : isDeleted ? (
                 <p className="message-body message-deleted"><em>This message was deleted.</em></p>
               ) : (
                 <p className="message-body">
@@ -226,6 +215,7 @@ export function ChannelView({
                   )}
                   {isContinuation ? (
                     <div
+                      data-message-id={m.id}
                       className={`message message-continuation${activeMsg === m.id ? ' message-active' : ''}`}
                       onClick={() => setActiveMsg(activeMsg === m.id ? null : m.id)}
                     >
@@ -236,6 +226,7 @@ export function ChannelView({
                     </div>
                   ) : (
                     <div
+                      data-message-id={m.id}
                       className={`message${activeMsg === m.id ? ' message-active' : ''}`}
                       onClick={() => setActiveMsg(activeMsg === m.id ? null : m.id)}
                     >
@@ -261,31 +252,67 @@ export function ChannelView({
             })}
           </div>
           <div className="message-entry">
-            <div className="message-entry-box">
-              <textarea
-                ref={messageInputRef}
-                className="message-input"
-                value={draft}
-                onChange={(e) => onDraftChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    void handleSend();
-                  }
-                }}
-                placeholder={placeholder}
-                rows={1}
-              />
-              <div className="message-entry-toolbar">
-                <button
-                  className={`send-button ${draft.trim() ? 'send-button-active' : ''}`}
-                  disabled={!draft.trim()}
-                  onClick={() => void handleSend()}
-                >
-                  &#9658;
-                </button>
+            {editingId ? (
+              <>
+                <div className="message-edit-context">
+                  <span className="message-edit-context-label">✏ Editing message</span>
+                  <button
+                    className="message-edit-cancel-btn"
+                    onClick={() => { setEditingId(null); setEditingText(''); setActiveMsg(null); }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <div className="message-entry-box">
+                  <textarea
+                    ref={editInputRef}
+                    className="message-input"
+                    value={editingText}
+                    rows={1}
+                    onChange={(e) => setEditingText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSaveEdit(); }
+                      if (e.key === 'Escape') { setEditingId(null); setEditingText(''); setActiveMsg(null); }
+                    }}
+                  />
+                  <div className="message-entry-toolbar">
+                    <button
+                      className={`send-button ${editingText.trim() ? 'send-button-active' : ''}`}
+                      disabled={!editingText.trim()}
+                      onClick={() => void handleSaveEdit()}
+                    >
+                      &#10003;
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="message-entry-box">
+                <textarea
+                  ref={messageInputRef}
+                  className="message-input"
+                  value={draft}
+                  onChange={(e) => onDraftChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      void handleSend();
+                    }
+                  }}
+                  placeholder={placeholder}
+                  rows={1}
+                />
+                <div className="message-entry-toolbar">
+                  <button
+                    className={`send-button ${draft.trim() ? 'send-button-active' : ''}`}
+                    disabled={!draft.trim()}
+                    onClick={() => void handleSend()}
+                  >
+                    &#9658;
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </>
       )}
