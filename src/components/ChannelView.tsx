@@ -266,7 +266,7 @@ export function ChannelView({
                 <div className="message-entry-box">
                   <textarea
                     ref={editInputRef}
-                    className="message-input"
+                    className="message-input message-edit-input"
                     value={editingText}
                     rows={1}
                     onChange={(e) => setEditingText(e.target.value)}
