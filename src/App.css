@@ -831,10 +831,41 @@ body {
   border-color: #1d9bd1;
 }
 
-.message-edit-hint {
-  font-size: 11px;
-  color: #6b6f76;
-  margin: 4px 0 0;
+.message-edit-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.message-edit-cancel-btn {
+  background: #4a4b4d;
+  border: none;
+  border-radius: 4px;
+  color: #d1d2d3;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 10px;
+}
+
+.message-edit-cancel-btn:hover {
+  background: #5e5f61;
+}
+
+.message-edit-save-btn {
+  background: #007a5a;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 10px;
+}
+
+.message-edit-save-btn:hover {
+  background: #148567;
 }
 
 .message-edited-label {
@@ -949,6 +980,7 @@ body {
 
   /* Prevent browser auto-zoom on input focus (triggered when font-size < 16px) */
   .message-input,
+  .message-edit-input,
   .dm-composer-input,
   .sidebar-new-channel-input,
   .reaction-picker-input {

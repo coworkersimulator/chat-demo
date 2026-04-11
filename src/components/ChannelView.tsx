@@ -1,5 +1,5 @@
 import multiavatar from '@multiavatar/multiavatar';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { formatAt, formatDivider, isSameDay } from '../lib/format';
 import type { Channel, Dm, Message } from '../types';
 import { ReactionBar } from './ReactionBar';
@@ -52,6 +52,11 @@ export function ChannelView({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
+  // Stable ref callback: fires only when the textarea mounts/unmounts, not on
+  // every re-render, so it won't steal focus back while the user types a draft.
+  const editInputRef = useCallback((el: HTMLTextAreaElement | null) => {
+    if (el) el.focus();
+  }, []);
 
   useEffect(() => {
     if (messagesRef.current) {
@@ -164,16 +169,19 @@ export function ChannelView({
                 <div className="message-edit-area" onClick={(e) => e.stopPropagation()}>
                   <textarea
                     className="message-edit-input"
+                    ref={editInputRef}
                     value={editingText}
-                    autoFocus
-                    rows={Math.max(1, editingText.split('\n').length)}
+                    rows={Math.max(3, editingText.split('\n').length)}
                     onChange={(e) => setEditingText(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSaveEdit(); }
                       if (e.key === 'Escape') { setEditingId(null); setEditingText(''); }
                     }}
                   />
-                  <p className="message-edit-hint">Escape to cancel · Enter to save</p>
+                  <div className="message-edit-buttons">
+                    <button className="message-edit-cancel-btn" onClick={() => { setEditingId(null); setEditingText(''); }}>Cancel</button>
+                    <button className="message-edit-save-btn" onClick={() => void handleSaveEdit()}>Save</button>
+                  </div>
                 </div>
               );
               const bodyEl = isEditing ? editArea : isDeleted ? (
