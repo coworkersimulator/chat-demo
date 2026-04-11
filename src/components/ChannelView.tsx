@@ -55,7 +55,11 @@ export function ChannelView({
   // Stable ref callback: fires only when the textarea mounts/unmounts, not on
   // every re-render, so it won't steal focus back while the user types a draft.
   const editInputRef = useCallback((el: HTMLTextAreaElement | null) => {
-    if (el) el.focus();
+    if (el) {
+      el.focus();
+      el.style.height = 'auto';
+      el.style.height = `${el.scrollHeight}px`;
+    }
   }, []);
 
   useEffect(() => {
@@ -268,8 +272,11 @@ export function ChannelView({
                     ref={editInputRef}
                     className="message-input message-edit-input"
                     value={editingText}
-                    rows={1}
-                    onChange={(e) => setEditingText(e.target.value)}
+                    onChange={(e) => {
+                      setEditingText(e.target.value);
+                      e.target.style.height = 'auto';
+                      e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSaveEdit(); }
                       if (e.key === 'Escape') { setEditingId(null); setEditingText(''); setActiveMsg(null); }
