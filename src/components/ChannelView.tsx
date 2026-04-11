@@ -80,6 +80,7 @@ export function ChannelView({
     await onEditMessage(editingId, editingText.trim());
     setEditingId(null);
     setEditingText('');
+    setActiveMsg(null);
   }
 
   async function handleSend() {
@@ -175,11 +176,11 @@ export function ChannelView({
                     onChange={(e) => setEditingText(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSaveEdit(); }
-                      if (e.key === 'Escape') { setEditingId(null); setEditingText(''); }
+                      if (e.key === 'Escape') { setEditingId(null); setEditingText(''); setActiveMsg(null); }
                     }}
                   />
                   <div className="message-edit-buttons">
-                    <button className="message-edit-cancel-btn" onClick={() => { setEditingId(null); setEditingText(''); }}>Cancel</button>
+                    <button className="message-edit-cancel-btn" onClick={() => { setEditingId(null); setEditingText(''); setActiveMsg(null); }}>Cancel</button>
                     <button className="message-edit-save-btn" onClick={() => void handleSaveEdit()}>Save</button>
                   </div>
                 </div>
