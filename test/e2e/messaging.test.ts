@@ -82,6 +82,76 @@ async function addReactionToLastMessage(page: Page) {
   await expect(page.locator('.reaction-picker')).not.toBeVisible();
 }
 
+test.describe('Drafts', () => {
+  test('draft is preserved when switching channels', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    const [first, second] = channels;
+
+    await goToChannel(page, first);
+    await page.locator('.message-input').tap();
+    await page.locator('.message-input').fill('draft in first');
+
+    await goToChannel(page, second);
+    await expect(page.locator('.message-input')).toHaveValue('');
+
+    await goToChannel(page, first);
+    await expect(page.locator('.message-input')).toHaveValue('draft in first');
+  });
+
+  test('each channel keeps its own draft', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    const [first, second] = channels;
+
+    await goToChannel(page, first);
+    await page.locator('.message-input').tap();
+    await page.locator('.message-input').fill('draft A');
+
+    await goToChannel(page, second);
+    await page.locator('.message-input').tap();
+    await page.locator('.message-input').fill('draft B');
+
+    await goToChannel(page, first);
+    await expect(page.locator('.message-input')).toHaveValue('draft A');
+
+    await goToChannel(page, second);
+    await expect(page.locator('.message-input')).toHaveValue('draft B');
+  });
+
+  test('drafts are cleared when switching users', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    const [first, second] = channels;
+
+    await goToChannel(page, first);
+    await page.locator('.message-input').tap();
+    await page.locator('.message-input').fill('draft in first');
+
+    await goToChannel(page, second);
+    await page.locator('.message-input').tap();
+    await page.locator('.message-input').fill('draft in second');
+
+    await switchUser(page, 1);
+
+    await goToChannel(page, first);
+    await expect(page.locator('.message-input')).toHaveValue('');
+
+    await goToChannel(page, second);
+    await expect(page.locator('.message-input')).toHaveValue('');
+  });
+
+  test('sending clears the draft for that channel', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    const [first] = channels;
+
+    await goToChannel(page, first);
+    await sendMessage(page, 'hello');
+    await expect(page.locator('.message-input')).toHaveValue('');
+  });
+});
+
 test.describe('Messaging', () => {
   test('user A sends multiple messages in every channel', async ({ page }) => {
     test.setTimeout(90_000);

@@ -17,6 +17,7 @@ function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [dms, setDms] = useState<Record<string, Dm[]>>({});
   const [channelId, setChannelId] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [dmId, setDmId] = useState<string | null>(null);
   const dmTitle =
     dmId && dms[dmId]
@@ -354,6 +355,7 @@ function App() {
     setChannelId(null);
     setDmId(null);
     setMessages([]);
+    setDrafts({});
     setSidebarOpen(true);
   }
 
@@ -399,6 +401,8 @@ function App() {
           messages={messages}
           reactions={reactions}
           allReactions={allReactions}
+          draft={activeId ? (drafts[activeId] ?? '') : ''}
+          onDraftChange={(value) => activeId && setDrafts((d) => ({ ...d, [activeId]: value }))}
           isMobile={isMobile}
           sidebarOpen={sidebarOpen}
           onBack={() => setSidebarOpen(true)}

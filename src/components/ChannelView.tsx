@@ -14,6 +14,8 @@ export function ChannelView({
   messages,
   reactions,
   allReactions,
+  draft,
+  onDraftChange,
   isMobile,
   sidebarOpen,
   onBack,
@@ -29,6 +31,8 @@ export function ChannelView({
   messages: Message[];
   reactions: Record<string, { emoji: string; count: number; mine: boolean }[]>;
   allReactions: { id: string; emoji: string; name: string }[];
+  draft: string;
+  onDraftChange: (value: string) => void;
   isMobile: boolean;
   sidebarOpen: boolean;
   onBack: () => void;
@@ -37,7 +41,6 @@ export function ChannelView({
 }) {
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [activeMsg, setActiveMsg] = useState<string | null>(null);
-  const [draft, setDraft] = useState('');
   const messagesRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -54,7 +57,7 @@ export function ChannelView({
   async function handleSend() {
     if (!draft.trim() || !activeId) return;
     const body = draft.trim();
-    setDraft('');
+    onDraftChange('');
     messageInputRef.current?.focus();
     await onSend(body);
   }
@@ -178,7 +181,7 @@ export function ChannelView({
                 ref={messageInputRef}
                 className="message-input"
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={(e) => onDraftChange(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
