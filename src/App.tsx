@@ -241,20 +241,25 @@ function App() {
               id: true,
               body: true,
               createdAt: true,
+              meta: true,
               user: { select: { id: true, username: true, name: true } },
             },
           },
         },
         orderBy: { note: { createdAt: 'asc' } },
       });
-      const msgs: Message[] = rows.map((r) => ({
-        id: r.note.id,
-        body: r.note.body,
-        createdAt: r.note.createdAt,
-        authorId: r.note.user.id,
-        username: r.note.user.username,
-        userName: r.note.user.name,
-      }));
+      const msgs: Message[] = rows.map((r) => {
+        const meta = r.note.meta as { changes?: { new?: Record<string, unknown> }[] } | null;
+        return {
+          id: r.note.id,
+          body: r.note.body,
+          createdAt: r.note.createdAt,
+          authorId: r.note.user.id,
+          username: r.note.user.username,
+          userName: r.note.user.name,
+          isEdited: !!(meta?.changes?.some((c) => c?.new && 'body' in c.new)),
+        };
+      });
       setMessages(msgs);
       await loadReactions(msgs.map((m) => m.id));
     },
@@ -347,6 +352,13 @@ function App() {
     syncBc.current?.postMessage({});
   }
 
+  async function handleEditMessage(noteId: string, body: string) {
+    if (!db) return;
+    await db.note.update({ where: { id: noteId }, data: { body } });
+    if (activeId) await loadMessages(activeId);
+    syncBc.current?.postMessage({});
+  }
+
   function handleUserChange(id: string) {
     const user = users.find((u) => u.id === id);
     if (user) sessionStorage.setItem('chat-username', user.username);
@@ -398,6 +410,7 @@ function App() {
           dmTitle={dmTitle}
           channels={channels}
           dms={dms}
+          userId={userId}
           messages={messages}
           reactions={reactions}
           allReactions={allReactions}
@@ -408,6 +421,7 @@ function App() {
           onBack={() => setSidebarOpen(true)}
           onSend={handleSend}
           onToggleReaction={handleToggleReaction}
+          onEditMessage={handleEditMessage}
         />
       </div>
     </div>

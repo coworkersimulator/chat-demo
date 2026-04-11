@@ -82,6 +82,139 @@ async function addReactionToLastMessage(page: Page) {
   await expect(page.locator('.reaction-picker')).not.toBeVisible();
 }
 
+// Taps the edit button on the last message and waits for the edit input
+async function startEditLastMessage(page: Page) {
+  await page.locator('.message').last().tap();
+  await page.locator('.message').last().locator('.message-edit-btn').tap();
+  await page.waitForSelector('.message-edit-input', { state: 'visible' });
+}
+
+// Submits the edit by pressing Enter
+async function submitEdit(page: Page, newText: string) {
+  const input = page.locator('.message-edit-input');
+  await input.fill(newText);
+  await input.press('Enter');
+  await expect(page.locator('.message-edit-input')).not.toBeVisible({ timeout: 5_000 });
+}
+
+test.describe('Editing', () => {
+  test('user A edits own message in a channel', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    await goToChannel(page, channels[0]);
+
+    await sendMessage(page, 'original text');
+    await startEditLastMessage(page);
+    await submitEdit(page, 'edited text');
+
+    await expect(page.locator('.message-body').last()).toHaveText(/edited text/);
+    await expect(page.locator('.message-edited-label').last()).toBeVisible();
+  });
+
+  test('user A edits, user B sees the updated text in the same channel', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    await goToChannel(page, channels[0]);
+
+    await sendMessage(page, 'before edit');
+    await startEditLastMessage(page);
+    await submitEdit(page, 'after edit');
+
+    await switchUser(page, 1);
+    await goToChannel(page, channels[0]);
+    await expect(page.locator('.message-body').last()).toHaveText(/after edit/);
+    await expect(page.locator('.message-edited-label').last()).toBeVisible();
+  });
+
+  test('user B cannot edit user A message (edit button absent)', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    await goToChannel(page, channels[0]);
+
+    await sendMessage(page, 'user A message');
+
+    await switchUser(page, 1);
+    await goToChannel(page, channels[0]);
+
+    // Tap the last message and confirm no edit button appears
+    await page.locator('.message').last().tap();
+    await expect(page.locator('.message').last().locator('.message-edit-btn')).not.toBeVisible();
+  });
+
+  test('escape cancels an edit without changing the message', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    await goToChannel(page, channels[0]);
+
+    await sendMessage(page, 'keep this text');
+    await startEditLastMessage(page);
+    await page.locator('.message-edit-input').fill('discarded');
+    await page.locator('.message-edit-input').press('Escape');
+
+    await expect(page.locator('.message-edit-input')).not.toBeVisible();
+    await expect(page.locator('.message-body').last()).toHaveText('keep this text');
+    await expect(page.locator('.message-edited-label')).not.toBeVisible();
+  });
+
+  test('user A edits own message in a DM, user B sees update', async ({ page }) => {
+    await waitForApp(page);
+    const displayNames = await getUserDisplayNames(page);
+    const [, userBDisplay] = displayNames;
+
+    await createDm(page, userBDisplay);
+    await sendMessage(page, 'dm original');
+    await startEditLastMessage(page);
+    await submitEdit(page, 'dm edited');
+
+    await expect(page.locator('.message-body').last()).toHaveText(/dm edited/);
+    await expect(page.locator('.message-edited-label').last()).toBeVisible();
+
+    const [userADisplay] = displayNames;
+    await switchUser(page, 1);
+    await page.waitForTimeout(500);
+    await page
+      .locator('.sidebar-section:last-child .sidebar-list li', { hasText: userADisplay })
+      .first()
+      .tap();
+    await page.waitForSelector('.channel-header', { state: 'visible' });
+
+    await expect(page.locator('.message-body').last()).toHaveText(/dm edited/);
+    await expect(page.locator('.message-edited-label').last()).toBeVisible();
+  });
+
+  test('user B edits own reply in a DM, user A sees update', async ({ page }) => {
+    await waitForApp(page);
+    const displayNames = await getUserDisplayNames(page);
+    const [userADisplay, userBDisplay] = displayNames;
+
+    await createDm(page, userBDisplay);
+    await sendMessage(page, 'hello from A');
+
+    await switchUser(page, 1);
+    await page.waitForTimeout(500);
+    await page
+      .locator('.sidebar-section:last-child .sidebar-list li', { hasText: userADisplay })
+      .first()
+      .tap();
+    await page.waitForSelector('.channel-header', { state: 'visible' });
+
+    await sendMessage(page, 'reply from B');
+    await startEditLastMessage(page);
+    await submitEdit(page, 'edited reply from B');
+
+    await switchUser(page, 0);
+    await page.waitForTimeout(500);
+    await page
+      .locator('.sidebar-section:last-child .sidebar-list li', { hasText: userBDisplay })
+      .first()
+      .tap();
+    await page.waitForSelector('.channel-header', { state: 'visible' });
+
+    await expect(page.locator('.message-body').last()).toHaveText(/edited reply from B/);
+    await expect(page.locator('.message-edited-label').last()).toBeVisible();
+  });
+});
+
 test.describe('Drafts', () => {
   test('draft is preserved when switching channels', async ({ page }) => {
     await waitForApp(page);

@@ -24,4 +24,5 @@ export interface Message {
   authorId: string;
   username: string;
   userName: string | null;
+  isEdited: boolean;
 }

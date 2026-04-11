@@ -11,6 +11,7 @@ export function ChannelView({
   dmTitle,
   channels,
   dms,
+  userId,
   messages,
   reactions,
   allReactions,
@@ -21,6 +22,7 @@ export function ChannelView({
   onBack,
   onSend,
   onToggleReaction,
+  onEditMessage,
 }: {
   activeId: string | null;
   channelId: string | null;
@@ -28,6 +30,7 @@ export function ChannelView({
   dmTitle: string;
   channels: Channel[];
   dms: Record<string, Dm[]>;
+  userId: string;
   messages: Message[];
   reactions: Record<string, { emoji: string; count: number; mine: boolean }[]>;
   allReactions: { id: string; emoji: string; name: string }[];
@@ -38,9 +41,12 @@ export function ChannelView({
   onBack: () => void;
   onSend: (body: string) => Promise<void>;
   onToggleReaction: (noteId: string, reactionId: string) => Promise<void>;
+  onEditMessage: (noteId: string, body: string) => Promise<void>;
 }) {
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [activeMsg, setActiveMsg] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
   const messagesRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -53,6 +59,18 @@ export function ChannelView({
   useEffect(() => {
     if (pickerFor === null) setActiveMsg(null);
   }, [pickerFor]);
+
+  useEffect(() => {
+    setEditingId(null);
+    setEditingText('');
+  }, [activeId]);
+
+  async function handleSaveEdit() {
+    if (!editingId || !editingText.trim()) return;
+    await onEditMessage(editingId, editingText.trim());
+    setEditingId(null);
+    setEditingText('');
+  }
 
   async function handleSend() {
     if (!draft.trim() || !activeId) return;
@@ -124,6 +142,8 @@ export function ChannelView({
                 prev &&
                 prev.authorId === m.authorId &&
                 at.getTime() - new Date(prev.createdAt).getTime() < 5 * 60 * 1000;
+              const isEditing = editingId === m.id;
+              const isOwn = m.authorId === userId;
               const reactionBar = (
                 <ReactionBar
                   noteId={m.id}
@@ -134,6 +154,38 @@ export function ChannelView({
                   onToggle={handleToggleReaction}
                 />
               );
+              const editArea = (
+                <div className="message-edit-area" onClick={(e) => e.stopPropagation()}>
+                  <textarea
+                    className="message-edit-input"
+                    value={editingText}
+                    autoFocus
+                    rows={Math.max(1, editingText.split('\n').length)}
+                    onChange={(e) => setEditingText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSaveEdit(); }
+                      if (e.key === 'Escape') { setEditingId(null); setEditingText(''); }
+                    }}
+                  />
+                  <p className="message-edit-hint">Escape to cancel · Enter to save</p>
+                </div>
+              );
+              const bodyEl = isEditing ? editArea : (
+                <p className="message-body">
+                  {m.body}
+                  {m.isEdited && <span className="message-edited-label"> (edited)</span>}
+                </p>
+              );
+              const editBtn = isOwn && !isEditing ? (
+                <div className="message-actions" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className="message-edit-btn"
+                    onClick={() => { setEditingId(m.id); setEditingText(m.body ?? ''); setActiveMsg(m.id); }}
+                  >
+                    ✏
+                  </button>
+                </div>
+              ) : null;
               return (
                 <Fragment key={m.id}>
                   {showDivider && (
@@ -147,8 +199,9 @@ export function ChannelView({
                       onClick={() => setActiveMsg(activeMsg === m.id ? null : m.id)}
                     >
                       <div className="message-continuation-time">{formatAt(at)}</div>
-                      <p className="message-body">{m.body}</p>
+                      {bodyEl}
                       {reactionBar}
+                      {editBtn}
                     </div>
                   ) : (
                     <div
@@ -166,9 +219,10 @@ export function ChannelView({
                           <span className="message-author">{name}</span>
                           <span className="message-time">{formatAt(at)}</span>
                         </div>
-                        <p className="message-body">{m.body}</p>
+                        {bodyEl}
                         {reactionBar}
                       </div>
+                      {editBtn}
                     </div>
                   )}
                 </Fragment>
