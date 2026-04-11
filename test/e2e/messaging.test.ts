@@ -97,6 +97,124 @@ async function submitEdit(page: Page, newText: string) {
   await expect(page.locator('.message-edit-input')).not.toBeVisible({ timeout: 5_000 });
 }
 
+// Taps the delete button on the last message, confirms, and waits for the placeholder
+async function deleteLastMessage(page: Page) {
+  await page.locator('.message').last().tap();
+  await page.locator('.message').last().locator('.message-delete-btn').tap();
+  await page.locator('.message-delete-yes-btn').tap();
+  await expect(page.locator('.message-deleted').last()).toBeVisible({ timeout: 5_000 });
+}
+
+test.describe('Deleting', () => {
+  test('user A deletes own message in a channel', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    await goToChannel(page, channels[0]);
+
+    await sendMessage(page, 'to be deleted');
+    await deleteLastMessage(page);
+
+    await expect(page.locator('.message-body').last()).toContainText('deleted');
+    await expect(page.locator('.message-delete-btn')).not.toBeVisible();
+    await expect(page.locator('.message-edit-btn')).not.toBeVisible();
+  });
+
+  test('cancel keeps the message intact', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    await goToChannel(page, channels[0]);
+
+    await sendMessage(page, 'do not delete');
+
+    await page.locator('.message').last().tap();
+    await page.locator('.message').last().locator('.message-delete-btn').tap();
+    await page.locator('.message-delete-no-btn').tap();
+
+    await expect(page.locator('.message-deleted')).not.toBeVisible();
+    await expect(page.locator('.message-body').last()).toHaveText('do not delete');
+  });
+
+  test('user B sees deleted placeholder in same channel', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    await goToChannel(page, channels[0]);
+
+    await sendMessage(page, 'A will delete this');
+    await deleteLastMessage(page);
+
+    await switchUser(page, 1);
+    await goToChannel(page, channels[0]);
+
+    await expect(page.locator('.message-body').last()).toContainText('deleted');
+  });
+
+  test('user B cannot delete user A message (delete button absent)', async ({ page }) => {
+    await waitForApp(page);
+    const channels = await getChannelTitles(page);
+    await goToChannel(page, channels[0]);
+
+    await sendMessage(page, 'only A can delete this');
+
+    await switchUser(page, 1);
+    await goToChannel(page, channels[0]);
+
+    await page.locator('.message').last().tap();
+    await expect(page.locator('.message').last().locator('.message-delete-btn')).not.toBeVisible();
+  });
+
+  test('user A deletes own message in a DM, user B sees placeholder', async ({ page }) => {
+    await waitForApp(page);
+    const displayNames = await getUserDisplayNames(page);
+    const [userADisplay, userBDisplay] = displayNames;
+
+    await createDm(page, userBDisplay);
+    await sendMessage(page, 'dm to delete');
+    await deleteLastMessage(page);
+
+    await expect(page.locator('.message-body').last()).toContainText('deleted');
+
+    await switchUser(page, 1);
+    await page.waitForTimeout(500);
+    await page
+      .locator('.sidebar-section:last-child .sidebar-list li', { hasText: userADisplay })
+      .first()
+      .tap();
+    await page.waitForSelector('.channel-header', { state: 'visible' });
+
+    await expect(page.locator('.message-body').last()).toContainText('deleted');
+  });
+
+  test('user B deletes own reply in a DM, user A sees placeholder', async ({ page }) => {
+    await waitForApp(page);
+    const displayNames = await getUserDisplayNames(page);
+    const [userADisplay, userBDisplay] = displayNames;
+
+    await createDm(page, userBDisplay);
+    await sendMessage(page, 'hello from A');
+
+    await switchUser(page, 1);
+    await page.waitForTimeout(500);
+    await page
+      .locator('.sidebar-section:last-child .sidebar-list li', { hasText: userADisplay })
+      .first()
+      .tap();
+    await page.waitForSelector('.channel-header', { state: 'visible' });
+
+    await sendMessage(page, 'reply from B');
+    await deleteLastMessage(page);
+
+    await switchUser(page, 0);
+    await page.waitForTimeout(500);
+    await page
+      .locator('.sidebar-section:last-child .sidebar-list li', { hasText: userBDisplay })
+      .first()
+      .tap();
+    await page.waitForSelector('.channel-header', { state: 'visible' });
+
+    await expect(page.locator('.message-body').last()).toContainText('deleted');
+  });
+});
+
 test.describe('Editing', () => {
   test('user A edits own message in a channel', async ({ page }) => {
     await waitForApp(page);

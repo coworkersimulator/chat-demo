@@ -23,6 +23,7 @@ export function ChannelView({
   onSend,
   onToggleReaction,
   onEditMessage,
+  onDeleteMessage,
 }: {
   activeId: string | null;
   channelId: string | null;
@@ -42,11 +43,13 @@ export function ChannelView({
   onSend: (body: string) => Promise<void>;
   onToggleReaction: (noteId: string, reactionId: string) => Promise<void>;
   onEditMessage: (noteId: string, body: string) => Promise<void>;
+  onDeleteMessage: (noteId: string) => Promise<void>;
 }) {
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [activeMsg, setActiveMsg] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -56,14 +59,16 @@ export function ChannelView({
     }
   }, [messages, sidebarOpen]);
 
-  useEffect(() => {
-    if (pickerFor === null) setActiveMsg(null);
-  }, [pickerFor]);
+  function handleSetPickerFor(id: string | null) {
+    setPickerFor(id);
+    if (id === null) setActiveMsg(null);
+  }
 
-  useEffect(() => {
-    setEditingId(null);
-    setEditingText('');
-  }, [activeId]);
+  async function handleConfirmDelete(noteId: string) {
+    setDeletingId(null);
+    setActiveMsg(null);
+    await onDeleteMessage(noteId);
+  }
 
   async function handleSaveEdit() {
     if (!editingId || !editingText.trim()) return;
@@ -80,7 +85,7 @@ export function ChannelView({
     await onSend(body);
   }
 
-  async function handleToggleReaction(noteId: string, reactionId: string, _emoji: string) {
+  async function handleToggleReaction(noteId: string, reactionId: string) {
     setActiveMsg(null);
     await onToggleReaction(noteId, reactionId);
     setPickerFor(null);
@@ -144,16 +149,17 @@ export function ChannelView({
                 at.getTime() - new Date(prev.createdAt).getTime() < 5 * 60 * 1000;
               const isEditing = editingId === m.id;
               const isOwn = m.authorId === userId;
-              const reactionBar = (
+              const isDeleted = m.body === null;
+              const reactionBar = !isDeleted ? (
                 <ReactionBar
                   noteId={m.id}
                   reactions={reactions[m.id] ?? []}
                   allReactions={allReactions}
                   pickerFor={pickerFor}
-                  setPickerFor={setPickerFor}
+                  setPickerFor={handleSetPickerFor}
                   onToggle={handleToggleReaction}
                 />
-              );
+              ) : null;
               const editArea = (
                 <div className="message-edit-area" onClick={(e) => e.stopPropagation()}>
                   <textarea
@@ -170,13 +176,15 @@ export function ChannelView({
                   <p className="message-edit-hint">Escape to cancel · Enter to save</p>
                 </div>
               );
-              const bodyEl = isEditing ? editArea : (
+              const bodyEl = isEditing ? editArea : isDeleted ? (
+                <p className="message-body message-deleted"><em>This message was deleted.</em></p>
+              ) : (
                 <p className="message-body">
                   {m.body}
                   {m.isEdited && <span className="message-edited-label"> (edited)</span>}
                 </p>
               );
-              const editBtn = isOwn && !isEditing ? (
+              const messageTools = isOwn && !isEditing && !isDeleted ? (
                 <div className="message-actions" onClick={(e) => e.stopPropagation()}>
                   <button
                     className="message-edit-btn"
@@ -184,6 +192,20 @@ export function ChannelView({
                   >
                     ✏
                   </button>
+                  {deletingId === m.id ? (
+                    <>
+                      <span className="message-delete-confirm-label">Delete?</span>
+                      <button className="message-delete-yes-btn" onClick={() => void handleConfirmDelete(m.id)}>Yes</button>
+                      <button className="message-delete-no-btn" onClick={() => setDeletingId(null)}>No</button>
+                    </>
+                  ) : (
+                    <button
+                      className="message-delete-btn"
+                      onClick={() => { setDeletingId(m.id); setActiveMsg(m.id); }}
+                    >
+                      🗑
+                    </button>
+                  )}
                 </div>
               ) : null;
               return (
@@ -201,7 +223,7 @@ export function ChannelView({
                       <div className="message-continuation-time">{formatAt(at)}</div>
                       {bodyEl}
                       {reactionBar}
-                      {editBtn}
+                      {messageTools}
                     </div>
                   ) : (
                     <div
@@ -222,7 +244,7 @@ export function ChannelView({
                         {bodyEl}
                         {reactionBar}
                       </div>
-                      {editBtn}
+                      {messageTools}
                     </div>
                   )}
                 </Fragment>

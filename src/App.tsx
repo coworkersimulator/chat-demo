@@ -110,7 +110,16 @@ function App() {
         setUsers(rows);
         const saved = sessionStorage.getItem('chat-username');
         const initial = (saved && rows.find((r) => r.username === saved)) || rows[0];
-        if (initial) handleUserChange(initial.id);
+        if (initial) {
+          sessionStorage.setItem('chat-username', initial.username);
+          setUserId(initial.id);
+          userIdRef.current = initial.id;
+          setChannelId(null);
+          setDmId(null);
+          setMessages([]);
+          setDrafts({});
+          setSidebarOpen(true);
+        }
       });
   }, [db]);
 
@@ -352,6 +361,13 @@ function App() {
     syncBc.current?.postMessage({});
   }
 
+  async function handleDeleteMessage(noteId: string) {
+    if (!db) return;
+    await db.note.delete({ where: { id: noteId } });
+    if (activeId) await loadMessages(activeId);
+    syncBc.current?.postMessage({});
+  }
+
   async function handleEditMessage(noteId: string, body: string) {
     if (!db) return;
     await db.note.update({ where: { id: noteId }, data: { body } });
@@ -422,6 +438,7 @@ function App() {
           onSend={handleSend}
           onToggleReaction={handleToggleReaction}
           onEditMessage={handleEditMessage}
+          onDeleteMessage={handleDeleteMessage}
         />
       </div>
     </div>
