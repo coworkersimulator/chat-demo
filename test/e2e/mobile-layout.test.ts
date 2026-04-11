@@ -8,6 +8,7 @@ const URL = '/chat-demo/';
 const SCREENSHOT_OPTS = {
   fullPage: false,
   maxDiffPixelRatio: 0.05,
+  // threshold: 0.2,
 } as const;
 
 async function waitForApp(page: Page) {

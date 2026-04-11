@@ -101,6 +101,7 @@ function App() {
     if (!db) return;
     db.user
       .findMany({
+        where: { username: { not: 'root' } },
         select: { id: true, username: true, name: true },
         orderBy: { username: 'asc' },
       })
@@ -335,7 +336,7 @@ function App() {
     if (existing) {
       if (!existing.deletedAt) {
         await db.noteReaction.update({
-          where: { id: existing.id },
+          where: { id: existing.id, createdBy: userId },
           data: { deletedAt: new Date() },
         });
       }

@@ -1,57 +1,60 @@
 CREATE OR REPLACE FUNCTION bump_seq()
 RETURNS trigger AS $$
 BEGIN
+  IF OLD IS NOT DISTINCT FROM NEW THEN
+    RETURN NEW;
+  END IF;
   NEW.seq := uuidv7_now();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER __user_bump_seq
+CREATE TRIGGER zzzz_user_seq_bump
   BEFORE UPDATE ON "user"
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER __role_bump_seq
+CREATE TRIGGER zzzz_role_seq_bump
   BEFORE UPDATE ON role
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER __tag_bump_seq
+CREATE TRIGGER zzzz_tag_seq_bump
   BEFORE UPDATE ON tag
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER __reaction_bump_seq
+CREATE TRIGGER zzzz_reaction_seq_bump
   BEFORE UPDATE ON reaction
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER __note_bump_seq
+CREATE TRIGGER zzzz_note_seq_bump
   BEFORE UPDATE ON note
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER __file_bump_seq
+CREATE TRIGGER zzzz_file_seq_bump
   BEFORE UPDATE ON file
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER __note_user_bump_seq
+CREATE TRIGGER zzzz_note_user_seq_bump
   BEFORE UPDATE ON note_user
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER __note_reaction_bump_seq
+CREATE TRIGGER zzzz_note_reaction_seq_bump
   BEFORE UPDATE ON note_reaction
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER __note_note_bump_seq
+CREATE TRIGGER zzzz_note_note_seq_bump
   BEFORE UPDATE ON note_note
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
 
-CREATE TRIGGER __note_tag_bump_seq
+CREATE TRIGGER zzzz_note_tag_seq_bump
   BEFORE UPDATE ON note_tag
   FOR EACH ROW
   EXECUTE FUNCTION bump_seq();
@@ -174,53 +177,53 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER note_user_log_change
+CREATE TRIGGER zzzzz_note_user_log_change
   BEFORE UPDATE ON note_user
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
 
-CREATE TRIGGER note_reaction_log_change
+CREATE TRIGGER zzzzz_note_reaction_log_change
   BEFORE UPDATE ON note_reaction
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
 
-CREATE TRIGGER note_note_log_change
+CREATE TRIGGER zzzzz_note_note_log_change
   BEFORE UPDATE ON note_note
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
 
-CREATE TRIGGER note_tag_log_change
+CREATE TRIGGER zzzzz_note_tag_log_change
   BEFORE UPDATE ON note_tag
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
 
 
-CREATE TRIGGER user_log_change
+CREATE TRIGGER zzzzz_user_log_change
   BEFORE UPDATE ON "user"
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
 
-CREATE TRIGGER role_log_change
+CREATE TRIGGER zzzzz_role_log_change
   BEFORE UPDATE ON role
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
 
-CREATE TRIGGER reaction_log_change
+CREATE TRIGGER zzzzz_reaction_log_change
   BEFORE UPDATE ON reaction
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
 
-CREATE TRIGGER tag_log_change
+CREATE TRIGGER zzzzz_tag_log_change
   BEFORE UPDATE ON tag
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
 
-CREATE TRIGGER note_log_change
+CREATE TRIGGER zzzzz_note_log_change
   BEFORE UPDATE ON note
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
 
-CREATE TRIGGER file_log_change
+CREATE TRIGGER zzzzz_file_log_change
   BEFORE UPDATE ON file
   FOR EACH ROW
   EXECUTE FUNCTION log_change();
@@ -429,7 +432,7 @@ CREATE TRIGGER reaction_unique_on_delete
   EXECUTE FUNCTION unique_reaction_on_delete();
 
 
-CREATE OR REPLACE FUNCTION clear_note_content_on_delete()
+CREATE OR REPLACE FUNCTION clear_note_content()
 RETURNS trigger AS $$
 BEGIN
   IF NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
@@ -440,7 +443,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER _note_clear_content_on_delete
+CREATE TRIGGER _note_clear_content
   BEFORE UPDATE ON note
   FOR EACH ROW
-  EXECUTE FUNCTION clear_note_content_on_delete();
+  EXECUTE FUNCTION clear_note_content();
